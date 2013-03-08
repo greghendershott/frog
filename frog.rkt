@@ -28,7 +28,7 @@
     [(eq? type 'file)
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
-       [(pregexp "^\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
+       [(pregexp "^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
         (define xs (with-input-from-file path read-markdown))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
@@ -59,7 +59,7 @@
        [else
         (eprintf
          (str "Skipping ~a\n"
-              "         Not named YYYY-MM-DD-HH-MM-SS-TITLE.{md,markdown}\n")
+              "         Not named YYYY-MM-DD-TITLE.{md,markdown}\n")
          (abs->rel/top path))
         v])]
     [else v]))
@@ -68,7 +68,8 @@
   (match-define (post title dest-path uri date tags blurb more? body) p)
   (eprintf "Generating ~a\n" (abs->rel/top dest-path))
   (~> (post-xexpr title date tags body older newer)
-      (bodies->page #:title title)
+      (bodies->page #:title title
+                    #:uri uri)
       xexpr->string
       (display-to-file dest-path #:exists 'replace)))
 
@@ -147,9 +148,9 @@
 ;; This is really a "master page" or "site template". It puts the body
 ;; elements in a container div.
 
-(define-runtime-path
-  google-analytics-template.js
-  "google-analytics-template.js")
+(define-runtime-path google-analytics.js "google-analytics.js")
+
+(define-runtime-path tweet-button.js "tweet-button.js")
 
 (define responsive? (make-parameter #f)) ;; Why isn't this working ???
 (define minified? (make-parameter #t))
@@ -169,8 +170,8 @@
 
 (define (bodies->page xs
                       #:title title
-                      #:feed [feed "all"]
-                      #:uri [uri ""]) ;; ... -> xexpr?
+                      #:uri uri
+                      #:feed [feed "all"]) ;; ... -> xexpr?
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
@@ -186,6 +187,7 @@
     `(p "Tags:"
         (ul ,@(for/list ([(k v) (in-dict alist)])
                 `(li ,(tag->xexpr k (format " (~a)" v)))))))
+  (define full-uri (str (current-scheme/host) uri))
 
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
@@ -207,7 +209,9 @@
                (script ([src "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"]))
                (script ([src ,(bs-js)]))
                (script ([type "text/javascript"])
-                       ,(format (file->string google-analytics-template.js)
+                       ,(file->string tweet-button.js))
+               (script ([type "text/javascript"])
+                       ,(format (file->string google-analytics.js)
                                 (current-google-analytics-account)
                                 (current-google-analytics-domain))))
 
@@ -230,9 +234,18 @@
                          (div ([class "span2 bs-docs-sidebar"])
                               ,(tag-cloud-xexpr)
                               ,(toc-xexpr))
-                         ;; Main content passed to bodies->page
+                         ;; Main content div
                          (div ([class "span8"])
-                              ,@xs)
+                              ;; Caller's content
+                              ,@xs
+                              ;; Share/social
+                              (hr)
+                              (p
+                               (a ([href "https://twitter.com/share"]
+                                   [class "twitter-share-button"]
+                                   [data-url ,full-uri]
+                                   [data-dnt "true"])
+                                  "Tweet")))
                          ;; Fill out space on right to equal 12 cols
                          (div ([class "span2"])
                               'nbsp))
@@ -266,11 +279,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-index xs title feed file) ;; (listof post?) -> any
+(define (write-index xs title tag feed file) ;; (listof post?) -> any
   (define (string-prepend s prepend)
     (string-append prepend s))
   (~> (cons
-       `(h1 ,title)
+       `(p ,@(cond [tag `("Posts tagged "
+                          (span ([class "label label-info"]) ,tag))]
+                   [else `(,title)]))
        (for/list ([x (in-list xs)])
         (match-define (post title dest-path uri date tags blurb more? body) x)
         `(div ([class "index-post"])
@@ -322,11 +337,12 @@
 
 (define (post->feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri date tags blurb more? body) x)
+  (define full-uri (str (current-scheme/host) uri))
   `(entry
     ()
     (title ([type "text"]) ,title)
     (link ([rel "alternate"]
-           [href ,uri]))
+           [href ,full-uri]))
     (id () ,title) ;; TODO: some other ID??
     (published () ,date)
     (updated () ,date)
@@ -335,7 +351,7 @@
      ,(xexpr->string
        `(html
          ,@blurb
-         ,@(cond [more? `((a ([href ,uri])
+         ,@(cond [more? `((a ([href ,full-uri])
                              "Continue reading ..."))]
                  [else '()]))))))
 
@@ -354,25 +370,26 @@ EOF
 )
 
 (define (new-post title)
-  (define date-str (parameterize ([date-display-format 'iso-8601])
-                     (date->string (current-date) #t)))
-  (define filename (str (~> (str (regexp-replace "T" date-str "-")
-                                 "-"
-                                 (~> title string-downcase))
-                            our-encode)
-                        ".md"))
-  (define pathname (build-path (src/posts-path) filename))
-  (when (file-exists? pathname)
-    (raise-user-error 'new-post "~a already exists." pathname))
-  (display-to-file (format new-post-template
-                           title date-str)
-                   pathname
-                   #:exists 'error)
-  (displayln pathname)
-  ;; (define editor (getenv "EDITOR"))
-  ;; (when editor
-  ;;   (system (format "~a ~a &" editor (path->string pathname))))
-  )
+  (parameterize ([date-display-format 'iso-8601])
+    (define d (current-date))
+    (define filename (str (~> (str (date->string d #f) ;don't inc time
+                                   "-"
+                                   (~> title string-downcase))
+                              our-encode)
+                          ".md"))
+    (define pathname (build-path (src/posts-path) filename))
+    (when (file-exists? pathname)
+      (raise-user-error 'new-post "~a already exists." pathname))
+    (display-to-file (format new-post-template
+                             title
+                             (date->string d #t)) ;do includde time
+                     pathname
+                     #:exists 'error)
+    (displayln pathname)
+    ;; (define editor (getenv "EDITOR"))
+    ;; (when editor
+    ;;   (system (format "~a ~a &" editor (path->string pathname))))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -386,11 +403,15 @@ EOF
       (define-values (base name must-be-dir?) (split-path path))
       (cond [(equal? path (build-path (www-path) "index.html"))
              (rm path)]
+            [(equal? path (build-path (www-path) "About.html"))
+             (rm path)]
+            [(equal? path (build-path (www-path) "Legal.html"))
+             (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
              (rm path)]
             [else (match (path->string name)
                     [(pregexp
-                      "^\\d{4}-\\d{2}-\\d{2}t\\d{2}-\\d{2}-\\d{2}-.+?\\.html$")
+                      "^\\d{4}-\\d{2}-\\d{2}-.+?\\.html$")
                      (rm path)]
                     [else (void)])])]))
   (fold-files maybe-delete '() (www-path) #f))
@@ -425,7 +446,6 @@ EOF
                       #:uri (str "/" (path-replace-suffix name ".html")))
         xexpr->string
         (display-to-file dest-path #:exists 'replace))
-    ;; TODO: Add link to nav bar
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -452,6 +472,7 @@ EOF
     (write-index
      xs-this-tag
      (str "Posts tagged '" tag "'")
+     tag
      (our-encode tag)
      (build-path (www-path) "tags" (str (our-encode tag) ".html")))
     (write-atom-feed
@@ -459,7 +480,7 @@ EOF
      (str "Posts tagged '" tag "'")
      (build-path (www-path) "feeds" (str (our-encode tag) ".xml"))))
   ;; Write the index page for all posts
-  (write-index xs "All Posts" "all" (build-path (www-path) "index.html"))
+  (write-index xs "All Posts" #f "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed xs "All Posts" (build-path (www-path) "feeds" "all.xml"))
   ;; Generate non-post pages.
@@ -471,8 +492,7 @@ EOF
 (require (prefix-in serve: lobe/serve-files)
          net/sendurl)
 
-(define (preview)
-  (define port 3000)
+(define (preview [port 3000])
   (printf "Start preview web server at localhost:~a\n" port)
   (define stop
     (parameterize ([serve:home (www-path)]
@@ -490,6 +510,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; These should probably be read from a per-project `.frogrc`?
+
+(define current-scheme/host (make-parameter "http://www.greghendershott.com"))
 
 (define current-title (make-parameter "Greg Hendershott"))
 (define current-author (make-parameter "Greg Hendershott"))
