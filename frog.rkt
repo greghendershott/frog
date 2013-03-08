@@ -170,8 +170,7 @@
 (define (bodies->page xs
                       #:title title
                       #:feed [feed "all"]
-                      #:newer [newer #f]
-                      #:older [older #f]) ;; ... -> xexpr?
+                      #:uri [uri ""]) ;; ... -> xexpr?
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
@@ -215,12 +214,14 @@
          (body (div ([class "navbar navbar-fixed-top"])
                     (div ([class "navbar-inner"])
                          (div ([class ,(bs-container)])
-                              (p ([class "pull-left"])
-                                 (img ([style "width: 42px; height:33px;"]
-                                       [src "/img/gh-head-bw.jpg"]) 'nbsp))
-                              (a ([class "brand"]
-                                  [href="#"])
-                                 ,(current-title)))))
+                              (ul ([class "nav"])
+                                  (li ([style "width: 60px;"])
+                                      (img ([style "width: 42px; height:33px;"]
+                                            [src "/img/gh-head-bw.jpg"])))
+                                  (li (a ([href "/index.html"][class "brand"])
+                                         ,(current-title)))
+                                  ,(nav-li "/index.html" "Home" uri)
+                                  ,(nav-li "/About.html" "About" uri) ))))
 
                (div ([class ,(bs-container)])
 
@@ -231,7 +232,10 @@
                               ,(toc-xexpr))
                          ;; Main content passed to bodies->page
                          (div ([class "span8"])
-                              ,@xs))
+                              ,@xs)
+                         ;; Fill out space on right to equal 12 cols
+                         (div ([class "span2"])
+                              'nbsp))
 
                     (hr)
                     (footer
@@ -255,6 +259,11 @@
 
                     ))))
 
+(define (nav-li href text uri)
+  `(li ,(cond [(string-ci=? href uri) `([class "active"])]
+              [else `()])
+       (a ([href ,href]) ,text)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-index xs title feed file) ;; (listof post?) -> any
@@ -273,7 +282,9 @@
                                   (em "Continue reading ...")))]
                       [else '()]))))
       (add-between `(hr))
-      (bodies->page #:title title #:feed feed)
+      (bodies->page #:title title
+                    #:feed feed
+                    #:uri (abs->rel/www file))
       xexpr->string
       (string-prepend "<!DOCTYPE html>\n")
       (display-to-file file #:exists 'replace)))
@@ -386,6 +397,39 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; We convert to HTML using bodies->page so they keep the overall look
+;; and feel.
+;;
+;; What to convert?
+;;
+;; These could be all *.md files anywhere in/under (src-path) that are
+;; NOT post pages (don't fit its naming format. But need to figure out
+;; how to link them in, e.g. do some tree from navbar?
+;;
+;; Meanwhile just look for a fixed set of files, such as About.md,
+;; Legal.md.
+
+(define (build-non-post-pages)
+  (maybe-add (build-path (src-path) "About.md") "About")
+  (maybe-add (build-path (src-path) "Legal.md") "Legal"))
+
+(define (maybe-add path title)
+  (when (file-exists? path)
+    (define xs (with-input-from-file path read-markdown))
+    (define-values (base name must-be-dir?) (split-path path))
+    (define dest-path (~> (build-path (www-path) name)
+                          (path-replace-suffix ".html")))
+    (eprintf "Generating non-post page ~a\n" (abs->rel/top dest-path))
+    (~> xs
+        (bodies->page #:title title
+                      #:uri (str "/" (path-replace-suffix name ".html")))
+        xexpr->string
+        (display-to-file dest-path #:exists 'replace))
+    ;; TODO: Add link to nav bar
+    ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (build)
   (define (post<=? a b)
     (string<=? (post-date a) (post-date b)))
@@ -417,7 +461,10 @@ EOF
   ;; Write the index page for all posts
   (write-index xs "All Posts" "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
-  (write-atom-feed xs "All Posts" (build-path (www-path) "feeds" "all.xml")))
+  (write-atom-feed xs "All Posts" (build-path (www-path) "feeds" "all.xml"))
+  ;; Generate non-post pages.
+  (build-non-post-pages))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -504,9 +551,10 @@ TODO:
 
 - Share buttons (at least mailto:, Twitter and Google+).
 
+- sitemap.txt
+
 - Get the responsive stuff working.
 
-- sitemap.txt
 
 DONE:
 
