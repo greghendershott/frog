@@ -10,8 +10,9 @@
 (define-runtime-path example "example")
 (define top (make-parameter example))
 
-;; source posts
-(define (posts-path) (build-path (top) "posts"))
+;; sources
+(define (src-path) (build-path (top) "src"))
+(define (src/posts-path) (build-path (top) "src" "posts"))
 
 ;; destinations, from root of the generated web site on down
 (define (www-path) (build-path (top) "www"))
@@ -21,16 +22,15 @@
 
 (struct index (title uri date tags blurb more?))
 
+;; A function for fold-files
 (define (do-post path type v)
   (cond
     [(eq? type 'file)
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
-       [(pregexp "^(\\d{4})-(\\d{2})-(\\d{2})-.+?\\.(?:md|markdown)$"
-                 (list _ yr mo dy))
+       [(pregexp "^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
         (define dest-path (~> (build-path (www-path) name)
                               (path-replace-suffix ".html")))
-        ;;(eprintf "~a =>\n~a\n" path dest-path)
         (define xs (with-input-from-file path read-markdown))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
@@ -46,6 +46,8 @@
             (bodies->page title)
             xexpr->string
             (display-to-file dest-path #:exists 'replace))
+        (eprintf (str "Generated ~a\n"
+                      "     from ~a\n") dest-path path)
         (cons (index title
                      (abs->rel dest-path)
                      date
@@ -57,7 +59,49 @@
         (eprintf "Skipping ~s; not named YYYY-MM-DD-title.{md,markdown}\n"
                  path)
         v])]
-    [else (eprintf "Skipping ~s: not a file\n" path) v]))
+    [else v]))
+
+;; A function for fold-files
+(define (do-feed-item path type v)
+  (cond
+    [(eq? type 'file)
+     (define-values (base name must-be-dir?) (split-path path))
+     (match (path->string name)
+       [(pregexp "^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
+        (define xs (with-input-from-file path read-markdown))
+        ;; Split to the meta-data and the body
+        (define-values (title date tags body) (meta-data xs))
+        ;; Add these tags to the set
+        (for ([x tags])
+          (unless (equal? x "")
+            (hash-set! all-tags x (add1 (hash-ref all-tags x 0)))))
+        ;; Split out the blurb (may be less than the entire body)
+        (define-values (blurb more?) (above-the-fold body))
+
+        (define uri (path->string path)) ;; TODO: real URI, with hostname
+        (cons
+         `(entry
+           ()
+           (title ([type "text"]) ,title)
+           (link ([rel "alternate"]
+                  [href ,uri]))
+           (id () ,title) ;; TODO: some other ID??
+           (published () ,date)
+           (updated () ,date)
+           (content
+            ([type "html"])
+            ,(xexpr->string
+              `(html
+                ,@blurb
+                ,@(cond [more? `((a ([href ,uri])
+                                    "Continue reading ..."))]
+                        [else '()])))))
+         v)]
+       [else
+        (eprintf "Skipping ~s; not named YYYY-MM-DD-title.{md,markdown}\n"
+                 path)
+        v])]
+    [else v]))
 
 (define (post-xexpr title date tags body)
   (list* `(h1 ,title)
@@ -95,8 +139,19 @@
     [(list p "<!-- more -->") #t]
     [else #f]))
 
+(define (abs->rel path)
+  (let ([path (path->string path)]
+        [root (path->string (www-path))])
+    (match path
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; This is really a "master page" or "site template". It puts the body
 ;; elements in a container div.
+(define-runtime-path
+  google-analytics-template.js
+  "google-analytics-template.js")
 (define (bodies->page xs title)
   (define (toc-xexpr)
     (match (toc xs)
@@ -119,20 +174,18 @@
      (title ,title)
      (meta ([name "viewport"]
             [content "width=device-width, initial-scale=1.0"]))
-     (meta ([name "author"][content "Greg Hendershott"]))
-     (link ([href "/css/bootstrap.css"]
-            [rel "stylesheet"]
-            [type "text/css"]))
-     (style ([type "text/css"])
-      "body {"
-      "  padding-top: 60px;"
-      "  padding-bottom: 40px;"
-      "}"
-      ".sidebar-nav {"
-      "  padding: 9px 0;"
-      "}"))
+     (meta ([name "author"][content ,(current-author)]))
+     (link ([href "/css/bootstrap.css"][rel "stylesheet"][type "text/css"]))
+     (link ([href "/css/custom.css"][rel "stylesheet"][type "text/css"]))
+     (link ([href "/atom.xml"]
+            [type "application/atom+xml"]
+            [rel "alternate"]
+            [title ,(current-title)]))
+     (script ([type "text/javascript"])
+             ,(format (file->string google-analytics-template.js)
+                      (current-google-analytics-account)
+                      (current-google-analytics-domain))))
     (body
-     ([data-spy "scroll"][data-target ".bs-docs-sidebar"])
 
      (div ([class "navbar navbar-fixed-top"])
           (div ([class "navbar-inner"])
@@ -142,7 +195,7 @@
                              [src "/img/gh-head-bw.jpg"]) 'nbsp))
                     (a ([class "brand"]
                         [href="#"])
-                       "Greg Hendershott"))))
+                       ,(current-title)))))
 
      (div ([class "container"])
           (div ([class "row"])
@@ -156,22 +209,27 @@
 
           (hr)
           (footer
-           (p "Markdown edited with "
-              (a ([href "http://www.gnu.org/software/emacs/"])
-                 "GNU Emacs") ".")
-           (p "Generated by Frog, the frozen blog tool.")
-           (p "Using " (a ([href "http://twitter.github.com/bootstrap/index.html"])
-                          "Bootstrap") ".")
-           (p "Names may be trademarks, yada yada.")
-           (p "Copyright " 'copy
-              "2012-2013 by Greg Hendershott. All rights reserved.")))
-     )))
+           ,@(with-input-from-file (build-path (src-path) "footer.md")
+               read-markdown))
 
-(define (abs->rel path)
-  (let ([path (path->string path)]
-        [root (path->string (www-path))])
-    (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x])))
+     ;; Bootstrap JS (optional)
+     ;; (script ([src "js/jquery.js"]))
+     ;; (script ([src "js/bootstrap-transition.js"]))
+     ;; (script ([src "js/bootstrap-alert.js"]))
+     ;; (script ([src "js/bootstrap-modal.js"]))
+     ;; (script ([src "js/bootstrap-dropdown.js"]))
+     ;; (script ([src "js/bootstrap-scrollspy.js"]))
+     ;; (script ([src "js/bootstrap-tab.js"]))
+     ;; (script ([src "js/bootstrap-tooltip.js"]))
+     ;; (script ([src "js/bootstrap-popover.js"]))
+     ;; (script ([src "js/bootstrap-button.js"]))
+     ;; (script ([src "js/bootstrap-collapse.js"]))
+     ;; (script ([src "js/bootstrap-carousel.js"]))
+     ;; (script ([src "js/bootstrap-typeahead.js"]))
+
+     ))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-index xs title file) ;; (listof index?) -> any
   (define (string-prepend s prepend)
@@ -234,7 +292,7 @@ EOF
                             string-downcase
                             our-encode)
                         ".md"))
-  (define pathname (build-path (posts-path) filename))
+  (define pathname (build-path (src/posts-path) filename))
   (when (file-exists? pathname)
     (raise-user-error "File ~a already exists! Did NOT overwrite" pathname))
   (display-to-file (format new-post-template
@@ -242,6 +300,26 @@ EOF
                    pathname
                    #:exists 'error)
   (eprintf "Created ~a\n" pathname))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (write-atom-feed)
+  (define x
+    `(feed
+      ([xmlns "http://www.w3.org/2005/Atom"]
+       [xml:lang "en"])
+      (title ([type "text"]) ,(current-title))
+      ;; (link ([href ,(gplus-self-uri g)]
+      ;;        [rel "self"]))
+      ;; (link ([href ,(gplus-self-uri g)]))
+      ;; (id () ,(gplus-id g))
+      ;; (etag () ,(gplus-etag g))
+      ;; (updated () ,(gplus-updated g))
+      ,@(fold-files do-feed-item '() (src/posts-path) #f)))
+  (~> x
+      xexpr->string
+      (display-to-file (build-path (www-path) "atom.xml")
+                       #:exists 'replace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -253,8 +331,6 @@ EOF
     (cond
      [(eq? type 'file)
       (define-values (base name must-be-dir?) (split-path path))
-      ;; (displayln (build-path base))
-      ;; (displayln (build-path (www-path) "tags/"))
       (cond [(equal? path (build-path (www-path) "index.html"))
              (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
@@ -262,15 +338,14 @@ EOF
             [else (match (path->string name)
                     [(pregexp "^\\d{4}-\\d{2}-\\d{2}-.+?\\.html$")
                      (rm path)]
-                    [else (void)])])])
-    (void))
+                    [else (void)])])]))
   (fold-files maybe-delete '() (www-path) #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (rebuild)
   ;; Write the posts
-  (define xs (fold-files do-post '() (posts-path) #t))
+  (define xs (fold-files do-post '() (src/posts-path) #t))
   ;; Write the index page for each tag
   (for ([(k _) (in-hash all-tags)])
     (write-index (filter (lambda (x)
@@ -279,7 +354,9 @@ EOF
                  k
                  (build-path (www-path) "tags" (str (our-encode k) ".html"))))
   ;; Write the index for all
-  (write-index xs "All Tags" (build-path (www-path) "index.html")))
+  (write-index xs "All Tags" (build-path (www-path) "index.html"))
+  ;; Write Atom feed file
+  (write-atom-feed))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -294,6 +371,15 @@ EOF
                    [serve:dotfiles? #f])
       (serve:start)))
   (send-url "http://localhost:3000/index.html"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; These should probably be read from a dotfile?
+(define current-title (make-parameter "Greg Hendershott"))
+(define current-author (make-parameter "Greg Hendershott"))
+
+(define current-google-analytics-account (make-parameter "UA-29709446-1"))
+(define current-google-analytics-domain (make-parameter "greghendershott.com"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
