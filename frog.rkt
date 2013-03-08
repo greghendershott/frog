@@ -97,7 +97,7 @@
                `(li ([class "next disabled"])
                     (a ([href "#"])
                        "Older" 'rarr))])))
-         
+
 (define (meta-data xs)
   (match (first xs)
     [(list 'pre (list 'code s))
@@ -105,7 +105,7 @@
        [(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
                  (list _ title date tags))
         (values title date (tag-string->tags tags) (rest xs))])]))
-    
+
 (define (tag->xexpr s [extra ""])
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s ,extra))
 
@@ -141,17 +141,37 @@
       [(pregexp (str "^" (regexp-quote root) "/(.+$)") (list _ x)) x])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;
+;; bodies->page
+;;
 ;; This is really a "master page" or "site template". It puts the body
 ;; elements in a container div.
+
 (define-runtime-path
   google-analytics-template.js
   "google-analytics-template.js")
+
+(define responsive? (make-parameter #f)) ;; Why isn't this working ???
+(define minified? (make-parameter #t))
+(define (bs-js)
+  (if (minified?) "/js/bootstrap.js" "/js/bootstrap.min.js"))
+(define (bs-css)
+  (cond [(minified?)
+         (cond [(responsive?) "/css/bootstrap-responsive.min.css"]
+               [else "/css/bootstrap.min.css"])]
+        [else
+         (cond [(responsive?) "/css/bootstrap-responsive.css"]
+               [else "/css/bootstrap.css"])]))
+(define (bs-container)
+  (if (responsive?) "container-fluid" "container"))
+(define (bs-row)
+  (if (responsive?) "row-fluid" "row"))
+
 (define (bodies->page xs
                       #:title title
                       #:feed [feed "all"]
                       #:newer [newer #f]
-                      #:older [older #f])
+                      #:older [older #f]) ;; ... -> xexpr?
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
@@ -167,66 +187,73 @@
     `(p "Tags:"
         (ul ,@(for/list ([(k v) (in-dict alist)])
                 `(li ,(tag->xexpr k (format " (~a)" v)))))))
-  `(html
-    ([lang "en"])
-    (head
-     (title ,title)
-     (meta ([name "viewport"]
-            [content "width=device-width, initial-scale=1.0"]))
-     (meta ([name "author"][content ,(current-author)]))
-     (link ([href "/css/bootstrap.css"][rel "stylesheet"][type "text/css"]))
-     (link ([href "/css/custom.css"][rel "stylesheet"][type "text/css"]))
-     (link ([href ,(str "/feeds/" feed ".xml")]
-            [type "application/atom+xml"]
-            [rel "alternate"]
-            [title ,(current-title)]))
-     (script ([type "text/javascript"])
-             ,(format (file->string google-analytics-template.js)
-                      (current-google-analytics-account)
-                      (current-google-analytics-domain))))
-    (body
 
-     (div ([class "navbar navbar-fixed-top"])
-          (div ([class "navbar-inner"])
-               (div ([class "container"])
-                    (p ([class "pull-left"])
-                       (img ([style "width: 42px; height:33px;"]
-                             [src "/img/gh-head-bw.jpg"]) 'nbsp))
-                    (a ([class "brand"]
-                        [href="#"])
-                       ,(current-title)))))
+  `(html ([lang "en"])
+         (head (meta ([charset "utf-8"]))
+               (title ,title)
+               (meta ([name "description"][content ,title]))
+               (meta ([name "author"][content ,(current-author)]))
+               (link ([href "favicon.ico"][rel "shortcut icon"]))
+               (meta ([name "viewport"]
+                      [content "width=device-width, initial-scale=1.0"]))
+               ;; CSS
+               (link ([href ,(bs-css)][rel "stylesheet"][media "screen"]))
+               (link ([href "/css/custom.css"][rel "stylesheet"][type "text/css"]))
+               ;; Atom feed
+               (link ([href ,(str "/feeds/" feed ".xml")]
+                      [type "application/atom+xml"]
+                      [rel "alternate"]
+                      [title ,(str (current-title) ": " feed)]))
+               ;; JS
+               (script ([src "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"]))
+               (script ([src ,(bs-js)]))
+               (script ([type "text/javascript"])
+                       ,(format (file->string google-analytics-template.js)
+                                (current-google-analytics-account)
+                                (current-google-analytics-domain))))
 
-     (div ([class "container"])
-          (div ([class "row"])
-               ;; Docs sidebar
-               (div ([class "span2 bs-docs-sidebar"])
-                    ,(tag-cloud-xexpr)
-                    ,(toc-xexpr))
-               ;; Main content
-               (div ([class "span8"])
-                    ,@xs))
+         (body (div ([class "navbar navbar-fixed-top"])
+                    (div ([class "navbar-inner"])
+                         (div ([class ,(bs-container)])
+                              (p ([class "pull-left"])
+                                 (img ([style "width: 42px; height:33px;"]
+                                       [src "/img/gh-head-bw.jpg"]) 'nbsp))
+                              (a ([class "brand"]
+                                  [href="#"])
+                                 ,(current-title)))))
 
-          (hr)
-          (footer
-           ,@(with-input-from-file (build-path (src-path) "footer.md")
-               read-markdown))
+               (div ([class ,(bs-container)])
 
-     ;; Bootstrap JS (optional)
-     ;; (script ([src "js/jquery.js"]))
-     ;; (script ([src "js/bootstrap-transition.js"]))
-     ;; (script ([src "js/bootstrap-alert.js"]))
-     ;; (script ([src "js/bootstrap-modal.js"]))
-     ;; (script ([src "js/bootstrap-dropdown.js"]))
-     ;; (script ([src "js/bootstrap-scrollspy.js"]))
-     ;; (script ([src "js/bootstrap-tab.js"]))
-     ;; (script ([src "js/bootstrap-tooltip.js"]))
-     ;; (script ([src "js/bootstrap-popover.js"]))
-     ;; (script ([src "js/bootstrap-button.js"]))
-     ;; (script ([src "js/bootstrap-collapse.js"]))
-     ;; (script ([src "js/bootstrap-carousel.js"]))
-     ;; (script ([src "js/bootstrap-typeahead.js"]))
+                    (div ([class ,(bs-row)])
+                         ;; Docs sidebar
+                         (div ([class "span2 bs-docs-sidebar"])
+                              ,(tag-cloud-xexpr)
+                              ,(toc-xexpr))
+                         ;; Main content passed to bodies->page
+                         (div ([class "span8"])
+                              ,@xs))
 
-     ))))
+                    (hr)
+                    (footer
+                     ,@(with-input-from-file (build-path (src-path) "footer.md")
+                         read-markdown))
+
+                    ;; Bootstrap JS (optional)
+                    ;; (script ([src "js/jquery.js"]))
+                    ;; (script ([src "js/bootstrap-transition.js"]))
+                    ;; (script ([src "js/bootstrap-alert.js"]))
+                    ;; (script ([src "js/bootstrap-modal.js"]))
+                    ;; (script ([src "js/bootstrap-dropdown.js"]))
+                    ;; (script ([src "js/bootstrap-scrollspy.js"]))
+                    ;; (script ([src "js/bootstrap-tab.js"]))
+                    ;; (script ([src "js/bootstrap-tooltip.js"]))
+                    ;; (script ([src "js/bootstrap-popover.js"]))
+                    ;; (script ([src "js/bootstrap-button.js"]))
+                    ;; (script ([src "js/bootstrap-collapse.js"]))
+                    ;; (script ([src "js/bootstrap-carousel.js"]))
+                    ;; (script ([src "js/bootstrap-typeahead.js"]))
+
+                    ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -307,7 +334,7 @@
 #<<EOF
     Title: ~a
     Date: ~a
-    Tags: 
+    Tags:
 
 _Replace this with your post text. Add one or more comma-separated
 tags above._
