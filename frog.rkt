@@ -299,7 +299,11 @@ EOF
                            title date-str)
                    pathname
                    #:exists 'error)
-  (eprintf "Created ~a\n" pathname))
+  (eprintf "Created ~a\n" pathname)
+  ;; (define editor (getenv "EDITOR"))
+  ;; (when editor
+  ;;   (system (format "~a ~a &" editor (path->string pathname))))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -343,7 +347,7 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (rebuild)
+(define (build)
   ;; Write the posts
   (define xs (fold-files do-post '() (src/posts-path) #t))
   ;; Write the index page for each tag
@@ -364,13 +368,17 @@ EOF
          net/sendurl)
 
 (define (preview)
-  ;; Fire up a local server to preview
+  (displayln "Starting local web server...")
   (define stop
     (parameterize ([serve:home (www-path)]
                    [serve:port 3000]
                    [serve:dotfiles? #f])
       (serve:start)))
-  (send-url "http://localhost:3000/index.html"))
+  (displayln "Server running. Press ENTER to stop it...")
+  (send-url "http://localhost:3000/index.html")
+  (read-line (current-input-port) 'any)
+  (display "Stopping the server...")
+  (stop))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -383,6 +391,31 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(clean)
-(rebuild)
-(preview)
+;; (clean)
+;; (build)
+;; (preview)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(module+ main
+  (define clean? #f)
+  (define build? #f)
+  (define preview? #f)
+  (command-line
+   #:once-each
+   [("-c" "--clean")
+    "Delete generated files."
+    (set! clean? #t)]
+   [("-m" "--make" "-b" "--build")
+    "Generate files."
+    (set! build? #t)]
+   [("-p" "--preview")
+    "Run a local server and starting your browser."
+    (set! preview? #t)]
+   [("-n" "--new") title
+    ("Create a file for a new post based on today's"
+    "date and your supplied <title>.")
+    (new-post title)])
+  (when clean? (clean))
+  (when build? (build))
+  (when preview? (preview)))
