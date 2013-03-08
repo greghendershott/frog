@@ -164,7 +164,7 @@
   (define (tag-cloud-xexpr)
     (define alist (~> (for/list ([(k v) (in-hash all-tags)])
                         (cons k v))
-                      (sort <= #:key cdr)))
+                      (sort string-ci<=? #:key car)))
     `(p "Posts tagged:"
         (ul ,@(for/list ([(k v) (in-dict alist)])
                 `(li ,(tag->xexpr k (format " (~a)" v)))))))
