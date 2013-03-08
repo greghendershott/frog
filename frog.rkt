@@ -80,15 +80,23 @@
     ,(older/newer-nav older newer)))
 
 (define (older/newer-nav older newer)
-  `(p ,(cond [newer
-              `(a ([href ,(post-uri newer)])
-                  'larr "Newer:" ,(post-title newer))]
-             [else ""])
-      'nbsp 'nbsp
-      ,(cond [older
-              `(a ([href ,(post-uri older)])
-                  "Older:" ,(post-title older) 'rarr)]
-             [else ""])))
+  `(ul ([class "pager"])
+       ,(cond [newer
+               `(li ([class "previous"])
+                    (a ([href ,(post-uri newer)])
+                       'larr "Newer" 'nbsp (em ,(post-title newer))))]
+              [else
+               `(li ([class "previous disabled"])
+                    (a ([href "#"])
+                       'larr "Newer"))])
+       ,(cond [older
+               `(li ([class "next"])
+                    (a ([href ,(post-uri older)])
+                       (em ,(post-title older)) 'nbsp "Older" 'rarr))]
+              [else
+               `(li ([class "next disabled"])
+                    (a ([href "#"])
+                       "Older" 'rarr))])))
          
 (define (meta-data xs)
   (match (first xs)
