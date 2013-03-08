@@ -469,9 +469,21 @@ TODO:
 - Index pages: Paingate, limiting to N posts per page, with
   Older/Newer nav.
 
-- Post pages: Add Older/Newer nav.
+- Non-post pages (e.g. About, whatever) authored in
+  Markdown. (Currently can plop any old HTML in WWW, but, (a) it won't
+  use the master page of bodies->page and (b) it won't be auto-linked.
+
+- Top navbar. Including non-post pages; see previous item.
+
+- Share buttons (at least mailto:, Twitter and Google+).
+
+- Get the responsive stuff working.
+
+- sitemap.txt
 
 DONE:
+
+- Post pages: Add Older/Newer nav.
 
 - Index pages: Sort posts in reverse date order.
 
