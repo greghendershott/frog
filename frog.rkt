@@ -371,14 +371,9 @@ EOF
   ;; add #f to one end.
   (define older (append (drop xs 1) (list #f)))
   (define newer (cons #f (take xs (sub1 (length xs)))))
-  (for ([x newer])
-    (displayln (if x (post-title x) "none")))
-  ;; Write the post page
-  (for-each write-post-page
-            xs
-            older
-            newer)
-  ;; For each tag, write the index page and Atom feed
+  ;; Write the post pages
+  (for-each write-post-page xs older newer)
+  ;; For each tag, write an index page and Atom feed
   (for ([(tag _) (in-hash all-tags)])
     (define xs-this-tag (filter (lambda (x)
                                   (member tag (post-tags x)))
@@ -392,9 +387,9 @@ EOF
      xs-this-tag
      (str "Posts tagged '" tag "'")
      (build-path (www-path) "feeds" (str (our-encode tag) ".xml"))))
-  ;; Write the index for all
+  ;; Write the index page for all posts
   (write-index xs "All Posts" "all" (build-path (www-path) "index.html"))
-  ;; Write Atom feed for all
+  ;; Write Atom feed for all posts
   (write-atom-feed xs "All Posts" (build-path (www-path) "feeds" "all.xml")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -403,7 +398,7 @@ EOF
          net/sendurl)
 
 (define (preview)
-  (define port 3001)
+  (define port 3000)
   (printf "Start preview web server at localhost:~a\n" port)
   (define stop
     (parameterize ([serve:home (www-path)]
