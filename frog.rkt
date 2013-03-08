@@ -23,7 +23,7 @@
 (struct index (title uri date tags blurb more?))
 
 ;; A function for fold-files
-(define (do-post path type v)
+(define (write-post path type v)
   (cond
     [(eq? type 'file)
      (define-values (base name must-be-dir?) (split-path path))
@@ -234,9 +234,7 @@
 (define (write-index xs title file) ;; (listof index?) -> any
   (define (string-prepend s prepend)
     (string-append prepend s))
-  (define (date<=? a b)
-    (string<=? (index-date a) (index-date b)))
-  (~> (for/list ([x (sort xs date<=?)])
+  (~> (for/list ([x (in-list xs)])
         (match-define (index title uri date tags blurb more?) x)
         `(div ([class "index-post"])
               (h1 (a ([href ,uri]) ,title))
@@ -262,6 +260,26 @@
 (define (pp v)
   (pretty-print v)
   v)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (write-atom-feed)
+  (define x
+    `(feed
+      ([xmlns "http://www.w3.org/2005/Atom"]
+       [xml:lang "en"])
+      (title ([type "text"]) ,(current-title))
+      ;; (link ([href ,(gplus-self-uri g)]
+      ;;        [rel "self"]))
+      ;; (link ([href ,(gplus-self-uri g)]))
+      ;; (id () ,(gplus-id g))
+      ;; (etag () ,(gplus-etag g))
+      ;; (updated () ,(gplus-updated g))
+      ,@(fold-files do-feed-item '() (src/posts-path) #f)))
+  (~> x
+      xexpr->string
+      (display-to-file (build-path (www-path) "atom.xml")
+                       #:exists 'replace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -294,36 +312,16 @@ EOF
                         ".md"))
   (define pathname (build-path (src/posts-path) filename))
   (when (file-exists? pathname)
-    (raise-user-error "File ~a already exists! Did NOT overwrite" pathname))
+    (raise-user-error 'new-post "~a already exists." pathname))
   (display-to-file (format new-post-template
                            title date-str)
                    pathname
                    #:exists 'error)
-  (eprintf "Created ~a\n" pathname)
+  (displayln pathname)
   ;; (define editor (getenv "EDITOR"))
   ;; (when editor
   ;;   (system (format "~a ~a &" editor (path->string pathname))))
   )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (write-atom-feed)
-  (define x
-    `(feed
-      ([xmlns "http://www.w3.org/2005/Atom"]
-       [xml:lang "en"])
-      (title ([type "text"]) ,(current-title))
-      ;; (link ([href ,(gplus-self-uri g)]
-      ;;        [rel "self"]))
-      ;; (link ([href ,(gplus-self-uri g)]))
-      ;; (id () ,(gplus-id g))
-      ;; (etag () ,(gplus-etag g))
-      ;; (updated () ,(gplus-updated g))
-      ,@(fold-files do-feed-item '() (src/posts-path) #f)))
-  (~> x
-      xexpr->string
-      (display-to-file (build-path (www-path) "atom.xml")
-                       #:exists 'replace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -348,15 +346,19 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build)
-  ;; Write the posts
-  (define xs (fold-files do-post '() (src/posts-path) #t))
+  (define (post<=? a b)
+    (string<=? (index-date a) (index-date b)))
+
+  ;; Write the posts and get (listof index?) with which to do more work.
+  (define xs (~> (fold-files write-post '() (src/posts-path) #f)
+                 (sort (negate post<=?))))
   ;; Write the index page for each tag
-  (for ([(k _) (in-hash all-tags)])
+  (for ([(tag _) (in-hash all-tags)])
     (write-index (filter (lambda (x)
-                           (member k (index-tags x)))
+                           (member tag (index-tags x)))
                          xs)
-                 k
-                 (build-path (www-path) "tags" (str (our-encode k) ".html"))))
+                 tag
+                 (build-path (www-path) "tags" (str (our-encode tag) ".html"))))
   ;; Write the index for all
   (write-index xs "All Tags" (build-path (www-path) "index.html"))
   ;; Write Atom feed file
@@ -368,21 +370,25 @@ EOF
          net/sendurl)
 
 (define (preview)
-  (displayln "Starting local web server...")
+  (define port 3000)
+  (printf "Start preview web server at localhost:~a\n" port)
   (define stop
     (parameterize ([serve:home (www-path)]
-                   [serve:port 3000]
+                   [serve:port port]
                    [serve:dotfiles? #f])
       (serve:start)))
-  (displayln "Server running. Press ENTER to stop it...")
-  (send-url "http://localhost:3000/index.html")
-  (read-line (current-input-port) 'any)
-  (display "Stopping the server...")
-  (stop))
+  (printf "Open web browser on http://localhost:~a/index.html\n" port)
+  (send-url (format "http://localhost:~a/index.html" port))
+  (displayln "Server running. Press CTRL-C to stop it...")
+  (with-handlers ([exn? (lambda (exn)
+                          (stop)
+                          (displayln "\nServer stopped."))])
+    (sync never-evt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; These should probably be read from a dotfile?
+;; These should probably be read from a per-project `.frogrc`?
+
 (define current-title (make-parameter "Greg Hendershott"))
 (define current-author (make-parameter "Greg Hendershott"))
 
@@ -390,6 +396,8 @@ EOF
 (define current-google-analytics-domain (make-parameter "greghendershott.com"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Can uncomment these during development -- but don't commit that way!
 
 ;; (clean)
 ;; (build)
@@ -419,3 +427,19 @@ EOF
   (when clean? (clean))
   (when build? (build))
   (when preview? (preview)))
+
+
+#|
+
+TODO:
+
+- Index pages: Sort posts in reverse date order.
+
+- Index pages: Paingate, limiting to N posts per page, with
+  Older/Newer nav.
+
+- Post pages: Add Older/Newer nav.
+
+- DRAFT tag to exclude from generation.
+
+|#
