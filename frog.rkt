@@ -245,7 +245,9 @@
                                    [class "twitter-share-button"]
                                    [data-url ,full-uri]
                                    [data-dnt "true"])
-                                  "Tweet")))
+                                  "Tweet")
+                               (g:plusone ([size "medium"]
+                                           [href ,full-uri]))))
                          ;; Fill out space on right to equal 12 cols
                          (div ([class "span2"])
                               'nbsp))
