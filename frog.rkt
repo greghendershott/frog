@@ -20,7 +20,7 @@
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
-(define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
+(define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-(.+?)\\.(?:md|markdown)$")
 
 (struct post (title dest-path uri date tags blurb more? body))
 
@@ -47,8 +47,15 @@
                    (hash-set! all-tags x (add1 (hash-ref all-tags x 0)))))
                ;; Split out the blurb (may be less than the entire body)
                (define-values (blurb more?) (above-the-fold body))
-               (define dest-path (~> (build-path (www-path) name)
-                                     (path-replace-suffix ".html")))
+               ;; Make the destination HTML pathname
+               (define year (substring date 0 4))
+               (define month (substring date 5 7))
+               (define dest-path (build-path (www-path) year month
+                                             (str (our-encode title) ".html")))
+               ;; Create the diretories if they don't yet exist
+               (maybe-make-directory (build-path (www-path) year))
+               (maybe-make-directory (build-path (www-path) year month))
+               ;; And return our result
                (cons (post title
                            dest-path
                            (abs->rel/www dest-path)
@@ -65,6 +72,11 @@
                  post-file-px)
         v])]
     [else v]))
+
+(define (maybe-make-directory p)
+  (unless (directory-exists? p)
+    (eprintf "Creating directory ~a\n" (abs->rel/top p))
+    (make-directory p)))
 
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri date tags blurb more? body) p)
@@ -418,9 +430,8 @@ EOF
              (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
              (rm path)]
-            [else (match (path->string name)
-                    [(pregexp
-                      "^\\d{4}-\\d{2}-\\d{2}-.+?\\.html$")
+            [else (match (path->string path)
+                    [(pregexp "\\d{4}/\\d{2}/.+?\\.html$")
                      (rm path)]
                     [else (void)])])]))
   (fold-files maybe-delete '() (www-path) #f))
