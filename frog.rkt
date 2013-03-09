@@ -20,6 +20,8 @@
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
+(define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
+
 (struct post (title dest-path uri date tags blurb more? body))
 
 ;; A function for fold-files
@@ -28,7 +30,7 @@
     [(eq? type 'file)
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
-       [(pregexp "^\\d{4}-\\d{2}-\\d{2}-.+?\\.(?:md|markdown)$")
+       [(pregexp post-file-px)
         (define xs (with-input-from-file path read-markdown))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
@@ -57,16 +59,16 @@
                            body)
                      v)])]
        [else
-        (eprintf
-         (str "Skipping ~a\n"
-              "         Not named YYYY-MM-DD-TITLE.{md,markdown}\n")
-         (abs->rel/top path))
+        (eprintf (str "Skipping ~a\n"
+                      "         Not named ~a\n")
+                 (abs->rel/top path)
+                 post-file-px)
         v])]
     [else v]))
 
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri date tags blurb more? body) p)
-  (eprintf "Generating ~a\n" (abs->rel/top dest-path))
+  (eprintf "Generating post ~a\n" (abs->rel/top dest-path))
   (~> (post-xexpr title date tags body older newer)
       (bodies->page #:title title
                     #:uri uri)
@@ -194,6 +196,7 @@
                (title ,title)
                (meta ([name "description"][content ,title]))
                (meta ([name "author"][content ,(current-author)]))
+               (link ([rel "canonical"][href ,full-uri]))
                (link ([href "favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
@@ -206,10 +209,14 @@
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
                ;; JS
-               (script ([src "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"]))
-               (script ([src ,(bs-js)]))
+               (script ([type "text/javascript"]
+                        [src "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"]))
+               (script ([type "text/javascript"]
+                        [src ,(bs-js)]))
                (script ([type "text/javascript"])
                        ,(file->string tweet-button.js))
+               (script ([type "text/javascript"]
+                        [src "https://apis.google.com/js/plusone.js"]))
                (script ([type "text/javascript"])
                        ,(format (file->string google-analytics.js)
                                 (current-google-analytics-account)
@@ -225,6 +232,7 @@
                                   (li (a ([href "/index.html"][class "brand"])
                                          ,(current-title)))
                                   ,(nav-li "/index.html" "Home" uri)
+                                  ;; Perhaps fill this from a Navbar.md file?
                                   ,(nav-li "/About.html" "About" uri) ))))
 
                (div ([class ,(bs-container)])
@@ -395,6 +403,9 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Note: This doesn't delete generic HTML files generated from
+;; Markdown files, it only deletes those genereated from post files
+;; (of a certain name format).
 (define (clean)
   (define (maybe-delete path type v)
     (define (rm p)
@@ -404,10 +415,6 @@ EOF
      [(eq? type 'file)
       (define-values (base name must-be-dir?) (split-path path))
       (cond [(equal? path (build-path (www-path) "index.html"))
-             (rm path)]
-            [(equal? path (build-path (www-path) "About.html"))
-             (rm path)]
-            [(equal? path (build-path (www-path) "Legal.html"))
              (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
              (rm path)]
@@ -420,35 +427,32 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; We convert to HTML using bodies->page so they keep the overall look
-;; and feel.
-;;
-;; What to convert?
-;;
-;; These could be all *.md files anywhere in/under (src-path) that are
-;; NOT post pages (don't fit its naming format. But need to figure out
-;; how to link them in, e.g. do some tree from navbar?
-;;
-;; Meanwhile just look for a fixed set of files, such as About.md,
-;; Legal.md.
-
 (define (build-non-post-pages)
-  (maybe-add (build-path (src-path) "About.md") "About")
-  (maybe-add (build-path (src-path) "Legal.md") "Legal"))
+  (void (fold-files write-non-post-page #f (src-path) #f)))
 
-(define (maybe-add path title)
-  (when (file-exists? path)
+(define (write-non-post-page path type v)
+  (define-values (base name must-be-dir?) (split-path path))
+  (cond
+   [(and (eq? type 'file)
+         (not (member (path->string name) '("footer.md")))
+         ;; Ignore post files
+         (not (regexp-match? post-file-px (path->string name))))
     (define xs (with-input-from-file path read-markdown))
-    (define-values (base name must-be-dir?) (split-path path))
     (define dest-path (~> (build-path (www-path) name)
                           (path-replace-suffix ".html")))
-    (eprintf "Generating non-post page ~a\n" (abs->rel/top dest-path))
+    (define title (~> path (path-replace-suffix "") basename path->string))
+    (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
                       #:uri (str "/" (path-replace-suffix name ".html")))
         xexpr->string
         (display-to-file dest-path #:exists 'replace))
-    ))
+    v]
+   [else v]))
+
+(define (basename p)
+  (define-values (base name must-be-dir?) (split-path p))
+  name)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
