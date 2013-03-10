@@ -6,17 +6,18 @@
          racket/date
          (only-in srfi/1 break))
 
-;; top is the source directory
+;; top is the project directory (e.g. the main dir in Git)
 (define-runtime-path example "example")
 (define top (make-parameter example))
 
 ;; sources
 (define (src-path) (build-path (top) "src"))
-(define (src/posts-path) (build-path (top) "src" "posts"))
+(define (src/posts-path) (build-path (src-path) "posts"))
 
 ;; destinations, from root of the generated web site on down
-(define (www-path) (build-path (top) "www"))
-(define (www/tags-path) (build-path (top) "www" "tags"))
+(define (www-path) (build-path (top)))
+(define (www/tags-path) (build-path (www-path) "tags"))
+(define (www/feeds-path) (build-path (www-path) "feeds"))
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
@@ -50,8 +51,10 @@
                ;; Make the destination HTML pathname
                (define year (substring date 0 4))
                (define month (substring date 5 7))
-               (define dest-path (build-path (www-path) year month
-                                             (str (our-encode title) ".html")))
+               (define dest-path
+                 (build-path (www-path) year month
+                             (str (~> title string-downcase our-encode)
+                                  ".html")))
                ;; Create the diretories if they don't yet exist
                (maybe-make-directory (build-path (www-path) year))
                (maybe-make-directory (build-path (www-path) year month))
@@ -328,10 +331,18 @@
 
 (define (our-encode s)
   ;; Extremely conservative.
-  (list->string (for/list ([c (in-string s)])
-                  (cond [(or (char-alphabetic? c)
-                             (char-numeric? c)) c]
-                        [else #\-]))))
+  (~>
+   (list->string (for/list ([c (in-string s)])
+                   (cond [(or (char-alphabetic? c)
+                              (char-numeric? c)) c]
+                         [else #\-])))
+   (re* #px"-{2,}" "-")                 ;nuke any 2+ hyphens
+   (re #px"-$" "")))                    ;no hyphen at end
+
+(define (re* s rx new)
+  (regexp-replace* rx s new))
+(define (re s rx new)
+  (regexp-replace rx s new))
 
 ;; Less typing, but also returns its value so good for sticking in ~>
 (define (pp v)
@@ -444,13 +455,16 @@ EOF
 (define (write-non-post-page path type v)
   (define-values (base name must-be-dir?) (split-path path))
   (cond
-   [(and (eq? type 'file)
+   [(and #f ;; DISABLED FOR DEBUGGING
+         (eq? type 'file)
+         (regexp-match? #px"\\.(?:md|markdown)$" path)
          (not (member (path->string name) '("footer.md")))
-         ;; Ignore post files
          (not (regexp-match? post-file-px (path->string name))))
+    (eprintf "Reading non-post ~a\n" path)
     (define xs (with-input-from-file path read-markdown))
-    (define dest-path (~> (build-path (www-path) name)
-                          (path-replace-suffix ".html")))
+    (define dest-path (build-path (www-path)
+                                  (~> (path-replace-suffix path ".html")
+                                      abs->rel/www)))
     (define title (~> path (path-replace-suffix "") basename path->string))
     (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
     (~> xs
@@ -491,15 +505,15 @@ EOF
      (str "Posts tagged '" tag "'")
      tag
      (our-encode tag)
-     (build-path (www-path) "tags" (str (our-encode tag) ".html")))
+     (build-path (www/tags-path) (str (our-encode tag) ".html")))
     (write-atom-feed
      xs-this-tag
      (str "Posts tagged '" tag "'")
-     (build-path (www-path) "feeds" (str (our-encode tag) ".xml"))))
+     (build-path (www/feeds-path) (str (our-encode tag) ".xml"))))
   ;; Write the index page for all posts
   (write-index xs "All Posts" #f "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
-  (write-atom-feed xs "All Posts" (build-path (www-path) "feeds" "all.xml"))
+  (write-atom-feed xs "All Posts" (build-path (www/feeds-path) "all.xml"))
   ;; Generate non-post pages.
   (build-non-post-pages))
 
