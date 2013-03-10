@@ -576,29 +576,22 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ main
-  (define clean? #f)
-  (define build? #f)
-  (define preview? #f)
-  (command-line
-   #:once-each
-   [("-c" "--clean")
-    "Delete generated files."
-    (set! clean? #t)]
-   [("-m" "--make" "-b" "--build")
-    "Generate files."
-    (set! build? #t)]
-   [("-p" "--preview")
-    "Run a local server and starting your browser."
-    (set! preview? #t)]
-   [("-n" "--new") title
-    ("Create a file for a new post based on today's"
-    "date and your supplied <title>.")
-    (new-post title)])
-  (when clean? (clean))
-  (when build? (build))
-  (when preview? (preview)))
-
-
+  (parameterize ([top (current-directory)])
+    (command-line
+     #:once-each
+     [("-c" "--clean")
+      "Delete generated files."
+      (clean)]
+     [("-m" "--make" "-b" "--build")
+      "Generate files."
+      (build)]
+     [("-p" "--preview")
+      "Run a local server and starting your browser."
+      (preview)]
+     [("-n" "--new") title
+      ("Create a file for a new post based on today's"
+       "date and your supplied <title>.")
+      (new-post title)])))
 #|
 
 TODO:
