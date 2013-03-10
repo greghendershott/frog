@@ -55,9 +55,6 @@
                  (build-path (www-path) year month
                              (str (~> title string-downcase our-encode)
                                   ".html")))
-               ;; Create the diretories if they don't yet exist
-               (maybe-make-directory (build-path (www-path) year))
-               (maybe-make-directory (build-path (www-path) year month))
                ;; And return our result
                (cons (post title
                            dest-path
@@ -88,7 +85,7 @@
       (bodies->page #:title title
                     #:uri uri)
       xexpr->string
-      (display-to-file dest-path #:exists 'replace)))
+      (display-to-file* dest-path #:exists 'replace)))
 
 (define (post-xexpr title date tags body older newer)
   `((h1 ,title)
@@ -327,7 +324,9 @@
                     #:uri (abs->rel/www file))
       xexpr->string
       (string-prepend "<!DOCTYPE html>\n")
-      (display-to-file file #:exists 'replace)))
+      (display-to-file* file #:exists 'replace)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (our-encode s)
   ;; Extremely conservative.
@@ -336,8 +335,8 @@
                    (cond [(or (char-alphabetic? c)
                               (char-numeric? c)) c]
                          [else #\-])))
-   (re* #px"-{2,}" "-")                 ;nuke any 2+ hyphens
-   (re #px"-$" "")))                    ;no hyphen at end
+   (re* #px"-{2,}" "-") ;only one hyphen in a row
+   (re #px"-$" "")))    ;no hyphen at end
 
 (define (re* s rx new)
   (regexp-replace* rx s new))
@@ -348,6 +347,15 @@
 (define (pp v)
   (pretty-print v)
   v)
+
+(define (display-to-file* v path #:exists exists #:mode [mode 'binary])
+  (make-directories-if-needed path)
+  (display-to-file v path #:exists exists #:mode mode))
+
+(define (make-directories-if-needed path)
+  (with-handlers ([exn:fail? (const (void))])
+    (define-values (base name dir?)(split-path path))
+    (make-directory* base)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -366,7 +374,7 @@
       ,@(map post->feed-entry-xexpr xs)))
   (~> x
       xexpr->string
-      (display-to-file file #:exists 'replace)))
+      (display-to-file* file #:exists 'replace)))
 
 (define (post->feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri date tags blurb more? body) x)
@@ -413,11 +421,11 @@ EOF
     (define pathname (build-path (src/posts-path) filename))
     (when (file-exists? pathname)
       (raise-user-error 'new-post "~a already exists." pathname))
-    (display-to-file (format new-post-template
-                             title
-                             (date->string d #t)) ;do includde time
-                     pathname
-                     #:exists 'error)
+    (display-to-file* (format new-post-template
+                              title
+                              (date->string d #t)) ;do includde time
+                      pathname
+                      #:exists 'error)
     (displayln pathname)
     ;; (define editor (getenv "EDITOR"))
     ;; (when editor
@@ -455,29 +463,31 @@ EOF
 (define (write-non-post-page path type v)
   (define-values (base name must-be-dir?) (split-path path))
   (cond
-   [(and #f ;; DISABLED FOR DEBUGGING
-         (eq? type 'file)
+   [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown)$" path)
          (not (member (path->string name) '("footer.md")))
          (not (regexp-match? post-file-px (path->string name))))
     (eprintf "Reading non-post ~a\n" path)
     (define xs (with-input-from-file path read-markdown))
-    (define dest-path (build-path (www-path)
-                                  (~> (path-replace-suffix path ".html")
-                                      abs->rel/www)))
-    (define title (~> path (path-replace-suffix "") basename path->string))
+    (define dest-path
+      (build-path (www-path)
+                  (apply build-path
+                         (~> path
+                             (path-replace-suffix ".html")
+                             abs->rel/www
+                             explode-path
+                             cddr)))) ;lop off the "/" and "_src" elts
+    (define title (~> path (path-replace-suffix "") file-name-from-path
+                      path->string))
+    (define uri (abs->rel/www dest-path))
     (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
-                      #:uri (str "/" (path-replace-suffix name ".html")))
+                      #:uri uri)
         xexpr->string
-        (display-to-file dest-path #:exists 'replace))
+        (display-to-file* dest-path #:exists 'replace))
     v]
    [else v]))
-
-(define (basename p)
-  (define-values (base name must-be-dir?) (split-path p))
-  name)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
