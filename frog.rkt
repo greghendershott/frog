@@ -606,13 +606,7 @@ TODO:
 - Index pages: Paingate, limiting to N posts per page, with
   Older/Newer nav.
 
-- Non-post pages (e.g. About, whatever) authored in
-  Markdown. (Currently can plop any old HTML in WWW, but, (a) it won't
-  use the master page of bodies->page and (b) it won't be auto-linked.
-
 - Top navbar. Including non-post pages; see previous item.
-
-- Share buttons (at least mailto:, Twitter and Google+).
 
 - sitemap.txt
 
@@ -628,5 +622,11 @@ DONE:
 - DRAFT tag to exclude from generation.
 
 - Feeds for every tag.
+- Non-post pages (e.g. About, whatever) authored in
+  Markdown. (Currently can plop any old HTML in WWW, but, (a) it won't
+  use the master page of bodies->page and (b) it won't be auto-linked.
+
+- Share buttons (at least mailto:, Twitter and Google+).
+
 
 |#
