@@ -6,8 +6,10 @@
          racket/date
          (only-in srfi/1 break))
 
+
+(define-runtime-path example "example") ;; just for dev
+
 ;; top is the project directory (e.g. the main dir in Git)
-(define-runtime-path example "example")
 (define top (make-parameter example))
 
 ;; sources
@@ -449,6 +451,8 @@ EOF
              (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
              (rm path)]
+            [(equal? (build-path base) (build-path (www-path) "feeds/"))
+             (rm path)]
             [else (match (path->string path)
                     [(pregexp "\\d{4}/\\d{2}/.+?\\.html$")
                      (rm path)]
@@ -467,7 +471,7 @@ EOF
          (regexp-match? #px"\\.(?:md|markdown)$" path)
          (not (member (path->string name) '("footer.md")))
          (not (regexp-match? post-file-px (path->string name))))
-    (eprintf "Reading non-post ~a\n" path)
+    (eprintf "Reading non-post ~a\n" (abs->rel/top path))
     (define xs (with-input-from-file path read-markdown))
     (define dest-path
       (build-path (www-path)
@@ -494,6 +498,8 @@ EOF
 (define (build)
   (define (post<=? a b)
     (string<=? (post-date a) (post-date b)))
+
+  (set! all-tags (make-hash))
 
   ;; Read the posts and get (listof post?) with which to do more work.
   ;; Sort the list by date, newest first.
@@ -615,11 +621,11 @@ DONE:
 - DRAFT tag to exclude from generation.
 
 - Feeds for every tag.
+
 - Non-post pages (e.g. About, whatever) authored in
   Markdown. (Currently can plop any old HTML in WWW, but, (a) it won't
   use the master page of bodies->page and (b) it won't be auto-linked.
 
 - Share buttons (at least mailto:, Twitter and Google+).
-
 
 |#
