@@ -11,7 +11,7 @@
 (define top (make-parameter example))
 
 ;; sources
-(define (src-path) (build-path (top) "src"))
+(define (src-path) (build-path (top) "_src"))
 (define (src/posts-path) (build-path (src-path) "posts"))
 
 ;; destinations, from root of the generated web site on down
