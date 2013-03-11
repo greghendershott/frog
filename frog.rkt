@@ -91,8 +91,7 @@
 
 (define (post-xexpr title uri date tags body older newer)
   `((h1 ,title)
-    (p ,date)
-    ,(tags->xexpr tags)
+    ,(date+tags->xexpr date tags)
     ,@(filter (negate more?) body)
     (p 'nbsp)
     ,(social uri)
@@ -129,12 +128,11 @@
 (define (tag->xexpr s [extra ""])
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s ,extra))
 
-(define (tags->xexpr xs)
-  (cond [(empty? xs) '()]
-        [else
-         `(p "Tags: "
-             ,@(add-between (map tag->xexpr xs)
-                            ", "))]))
+(define (date+tags->xexpr date tags)
+  `(p ,(substring date 0 10) ;; just YYYY-MM-DD
+      " :: "
+      ,@(add-between (map tag->xexpr tags)
+                     ", ")))
 
 (define (tag-string->tags s)
   (regexp-split #px",\\s*" s))
@@ -319,8 +317,7 @@
         (match-define (post title dest-path uri date tags blurb more? body) x)
         `(div ([class "index-post"])
               (h1 (a ([href ,uri]) ,title))
-              (p ,date)
-              ,(tags->xexpr tags)
+              ,(date+tags->xexpr date tags)
               ,@blurb
               ,@(cond [more? `((a ([href ,uri])
                                   (em "Continue reading ...")))]
