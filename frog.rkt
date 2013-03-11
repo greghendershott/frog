@@ -140,7 +140,7 @@
 
 (define (meta-data xs)
   (match (first xs)
-    [(list 'pre (list 'code s))
+    [`(pre ,s)
      (match s
        [(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
                  (list _ title date tags))
