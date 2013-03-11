@@ -22,6 +22,22 @@
 (define (www/tags-path) (build-path (www-path) "tags"))
 (define (www/feeds-path) (build-path (www-path) "feeds"))
 
+(define (abs->rel/www path)
+  (let ([path (path->string path)]
+        [root (path->string (www-path))])
+    (match path
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
+      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+
+(define (abs->rel/top path)
+  (let ([path (path->string path)]
+        [root (path->string (top))])
+    (match path
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
+      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
 (define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-(.+?)\\.(?:md|markdown)$")
@@ -147,20 +163,6 @@
   (match x
     [(list p "<!-- more -->") #t]
     [else #f]))
-
-(define (abs->rel/www path)
-  (let ([path (path->string path)]
-        [root (path->string (www-path))])
-    (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
-      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
-
-(define (abs->rel/top path)
-  (let ([path (path->string path)]
-        [root (path->string (top))])
-    (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
-      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
