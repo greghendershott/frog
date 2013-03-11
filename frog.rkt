@@ -330,13 +330,12 @@
 
 (define (write-index xs title tag feed file) ;; (listof post?) -> any
   (~> (cons
-       `(p ,@(cond [tag `("Posts tagged "
-                          (span ([class "label label-info"]) ,tag))]
-                   [else `(,title)]))
+       `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
+                    [else `(,title)]))
        (for/list ([x (in-list xs)])
         (match-define (post title dest-path uri date tags blurb more? body) x)
         `(div ([class "index-post"])
-              (h1 (a ([href ,uri]) ,title))
+              (h2 (a ([href ,uri]) ,title))
               ,(date+tags->xexpr date tags)
               ,@blurb
               ,@(cond [more? `((a ([href ,uri])
