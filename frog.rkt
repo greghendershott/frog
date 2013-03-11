@@ -421,15 +421,16 @@
                [else `((pre ,text))])]
         [else `((pre ,text))]))
 
+(define (pygments.css)
+  (path->string (build-path (www-path) "css" "pygments.css")))
+
 (define (make-pygments.css style)
   (when (pygments-pathname)
-    (define pygments.css
-      (path->string (build-path (www-path) "css" "pygments.css")))
     (define cmd (str #:sep " "
                      (pygments-pathname)
                      "-f html"
                      "-S " style
-                     "> " pygments.css))
+                     "> " (pygments.css)))
     (eprintf "Generating css/pygments.css\n")
     (system cmd)
     (void)))
@@ -623,7 +624,11 @@ EOF
     #:exists 'replace
     (thunk (for ([x (in-list (map full-uri (append (map post-uri xs) npps)))])
              (displayln x))))
-  (make-pygments.css (pygments-style)))
+  ;; Generate pygments.css automatically ONLY if it doesn't already
+  ;; exist
+  (unless (file-exists? (pygments.css))
+    (make-pygments.css "default"))
+  (void))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -693,9 +698,9 @@ EOF
       ("Create a file for a new post based on today's"
        "date and your supplied <title>.")
       (new-post title)]
-     [("--pygments-style") name
-      "Pygments style name"
-      (pygments-style name)])))
+     [("--pygments-css") style-name
+      "Generate ./css/pygments.css using style-name (ex: 'default')"
+      (make-pygments.css style-name)])))
 
 #|
 
