@@ -191,7 +191,7 @@
   (let* ([s (cond [(path? v) (file->string v)]
                   [(string? v) v]
                   [else (raise-type-error 'script/js/inc "path? or ?str" v)])]
-         [js (apply format (list* s vs))])
+         [js (apply format s vs)])
     `(script ([type "text/javascript"])
              ,js)))
 
