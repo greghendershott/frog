@@ -3,6 +3,7 @@
 (require racket/runtime-path
          markdown
          xml
+         (prefix-in h: html)
          racket/date
          (only-in srfi/1 break))
 
@@ -92,7 +93,7 @@
 (define (post-xexpr title uri date tags body older newer)
   `((h1 ,title)
     ,(date+tags->xexpr date tags)
-    ,@(filter (negate more?) body)
+    ,@(filter (negate more?) (syntax-highlight-body body))
     (p 'nbsp)
     ,(social uri)
     (p 'nbsp)
@@ -123,7 +124,8 @@
      (match s
        [(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
                  (list _ title date tags))
-        (values title date (tag-string->tags tags) (rest xs))])]))
+        (values title date (tag-string->tags tags) (rest xs))]
+       [else (raise-user-error 'meta-data "Missing meta-data")])]))
 
 (define (tag->xexpr s [extra ""])
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s ,extra))
@@ -209,33 +211,29 @@
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
-               (meta ([name "description"][content ,title]))
-               (meta ([name "author"][content ,(current-author)]))
+               ,(meta "description" title)
+               ,(meta "author" (current-author))
                (link ([rel "canonical"][href ,(full-uri uri)]))
                (link ([href "favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
                (link ([href ,(bs-css)][rel "stylesheet"][media "screen"]))
-               (link ([href "/css/custom.css"][rel "stylesheet"][type "text/css"]))
+               ,(link/css "/css/custom.css")
+               ,(link/css "/css/pygments.css")
                ;; Atom feed
                (link ([href ,(str "/feeds/" feed ".xml")]
                       [type "application/atom+xml"]
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
                ;; JS
-               (script ([type "text/javascript"]
-                        [src "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"]))
-               (script ([type "text/javascript"]
-                        [src ,(bs-js)]))
-               (script ([type "text/javascript"])
-                       ,(file->string tweet-button.js))
-               (script ([type "text/javascript"]
-                        [src "https://apis.google.com/js/plusone.js"]))
-               (script ([type "text/javascript"])
-                       ,(format (file->string google-analytics.js)
-                                (current-google-analytics-account)
-                                (current-google-analytics-domain))))
+               ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js")
+               ,(script/js (bs-js))
+               ,(script/js/inc tweet-button.js)
+               ,(script/js "https://apis.google.com/js/plusone.js")
+               ,(script/js/inc google-analytics.js
+                               (current-google-analytics-account)
+                               (current-google-analytics-domain)))
 
          (body (div ([class "navbar navbar-fixed-top"])
                     (div ([class "navbar-inner"])
@@ -269,20 +267,7 @@
                      ,@(with-input-from-file (build-path (src-path) "footer.md")
                          read-markdown))
 
-                    ;; Bootstrap JS (optional)
-                    ;; (script ([src "js/jquery.js"]))
-                    ;; (script ([src "js/bootstrap-transition.js"]))
-                    ;; (script ([src "js/bootstrap-alert.js"]))
-                    ;; (script ([src "js/bootstrap-modal.js"]))
-                    ;; (script ([src "js/bootstrap-dropdown.js"]))
-                    ;; (script ([src "js/bootstrap-scrollspy.js"]))
-                    ;; (script ([src "js/bootstrap-tab.js"]))
-                    ;; (script ([src "js/bootstrap-tooltip.js"]))
-                    ;; (script ([src "js/bootstrap-popover.js"]))
-                    ;; (script ([src "js/bootstrap-button.js"]))
-                    ;; (script ([src "js/bootstrap-collapse.js"]))
-                    ;; (script ([src "js/bootstrap-carousel.js"]))
-                    ;; (script ([src "js/bootstrap-typeahead.js"]))
+                    ,(script/js/inc "SyntaxHighlighter.all()")
 
                     ))))
 
@@ -303,6 +288,33 @@
 
 (define (full-uri uri)
   (str (current-scheme/host) uri))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Helpers to reduce redundancy in xexprs
+
+(define (meta k v)
+  `(meta ([name ,k]
+          [content ,v])))
+
+(define (link/css href)
+  `(link ([href ,href]
+          [rel "stylesheet"]
+          [type "text/css"])))
+
+;; Link to JS
+(define (script/js src)
+  `(script ([src ,src]
+            [type "text/javascript"])))
+
+;; Include local JS, with format -- can be "templated" JS with
+;; formatters like ~a. Use case: Plug in some account number or name.
+(define (script/js/inc v . vs)
+  (let* ([s (cond [(path? v) (file->string v)]
+                  [(string? v) v]
+                  [else (raise-type-error 'script/js/inc "path? or ?str" v)])]
+         [js (apply format (list* s vs))])
+    `(script ([type "text/javascript"])
+             ,js)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -463,8 +475,8 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (build-non-post-pages)
-  (void (fold-files write-non-post-page #f (src-path) #f)))
+(define (build-non-post-pages) ;; -> (listof string?)
+  (fold-files write-non-post-page '() (src-path) #f))
 
 (define (write-non-post-page path type v)
   (define-values (base name must-be-dir?) (split-path path))
@@ -492,7 +504,7 @@ EOF
                       #:uri uri)
         xexpr->string
         (display-to-file* dest-path #:exists 'replace))
-    v]
+    (cons uri v)]
    [else v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -518,23 +530,30 @@ EOF
     (define xs-this-tag (filter (lambda (x)
                                   (member tag (post-tags x)))
                                 xs))
-    (write-index
-     xs-this-tag
-     (str "Posts tagged '" tag "'")
-     tag
-     (our-encode tag)
-     (build-path (www/tags-path) (str (our-encode tag) ".html")))
-    (write-atom-feed
-     xs-this-tag
-     (str "Posts tagged '" tag "'")
-     (build-path (www/feeds-path) (str (our-encode tag) ".xml"))))
+    (write-index xs-this-tag
+                 (str "Posts tagged '" tag "'")
+                 tag
+                 (our-encode tag)
+                 (build-path (www/tags-path) (str (our-encode tag) ".html")))
+    (write-atom-feed xs-this-tag
+                     (str "Posts tagged '" tag "'")
+                     (build-path (www/feeds-path) (str (our-encode tag)
+                                                       ".xml"))))
   ;; Write the index page for all posts
   (write-index xs "All Posts" #f "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed xs "All Posts" (build-path (www/feeds-path) "all.xml"))
   ;; Generate non-post pages.
-  (build-non-post-pages))
-
+  (define npps (build-non-post-pages))
+  ;; Write sitemap
+  ;; One gotcha: What about other "sub-sites", for example GitHub project
+  ;; pages?  How to include them in sitemap.txt?
+  (eprintf "Generating sitemap\n")
+  (with-output-to-file (build-path (www-path) "sitemap.txt")
+    #:exists 'replace
+    (thunk (for ([x (in-list (map full-uri (append (map post-uri xs) npps)))])
+             (displayln x))))
+  (make-pygments.css (pygments-style)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -568,6 +587,10 @@ EOF
 (define current-google-analytics-account (make-parameter "UA-29709446-1"))
 (define current-google-analytics-domain (make-parameter "greghendershott.com"))
 
+(define pygments-pathname
+  (make-parameter (expand-user-path "~/src/python/pygments-main/pygmentize")))
+(define pygments-style (make-parameter "default"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Can uncomment these during development -- but don't commit that way!
@@ -599,7 +622,11 @@ EOF
      [("-n" "--new") title
       ("Create a file for a new post based on today's"
        "date and your supplied <title>.")
-      (new-post title)])))
+      (new-post title)]
+     [("--pygments-style") name
+      "Pygments style name"
+      (pygments-style name)])))
+
 #|
 
 TODO:
@@ -631,3 +658,50 @@ DONE:
 - Share buttons (at least mailto:, Twitter and Google+).
 
 |#
+
+(define (syntax-highlight-body xs)
+  (append* (for/list ([x xs])
+             (match x
+               [`(pre ([class ,brush]) ,text)
+                (match brush
+                  [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
+                   (pygmentize text lang)]
+                  [else `((pre ,text))])]
+               [else (list x)]))))
+
+(define (pygmentize text lang)
+  (cond [(pygments-pathname)
+         (define tmp-in (make-temporary-file))
+         (define tmp-out (make-temporary-file))
+         (display-to-file text tmp-in #:exists 'replace)
+         (define cmd (str #:sep " "
+                          (pygments-pathname)
+                          "-f html"
+                          "-O linenos=1"
+                          "-l" lang
+                          "<" tmp-in
+                          "> "tmp-out))
+         (system cmd)
+         (define (elements->element xs)
+           (make-element #f #f '*root '() xs))
+         (with-input-from-file tmp-out
+           (thunk
+            (parameterize ([permissive-xexprs #t])
+              (~> (h:read-html-as-xml)
+                  elements->element
+                  xml->xexpr
+                  cddr))))]
+        [else `((pre ,text))]))
+
+(define (make-pygments.css style)
+  (when (pygments-pathname)
+    (define pygments.css
+      (path->string (build-path (www-path) "css" "pygments.css")))
+    (define cmd (str #:sep " "
+                     (pygments-pathname)
+                     "-f html"
+                     "-S " style
+                     "> " pygments.css))
+    (eprintf "Generating css/pygments.css\n")
+    (system cmd)
+    (void)))
