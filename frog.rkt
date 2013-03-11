@@ -104,6 +104,10 @@
       (bodies->page #:title title
                     #:uri uri)
       xexpr->string
+      (list "<!DOCTYPE html>")
+      reverse
+      string-join
+      string->bytes/utf-8
       (display-to-file* dest-path #:exists 'replace)))
 
 (define (post-xexpr title uri date tags body older newer)
@@ -321,8 +325,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-index xs title tag feed file) ;; (listof post?) -> any
-  (define (string-prepend s prepend)
-    (string-append prepend s))
   (~> (cons
        `(p ,@(cond [tag `("Posts tagged "
                           (span ([class "label label-info"]) ,tag))]
@@ -341,7 +343,10 @@
                     #:feed feed
                     #:uri (abs->rel/www file))
       xexpr->string
-      (string-prepend "<!DOCTYPE html>\n")
+      (list "<!DOCTYPE html>\n")
+      reverse
+      string-join
+      string->bytes/utf-8
       (display-to-file* file #:exists 'replace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -377,22 +382,76 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-atom-feed xs title file)
-  (define x
-    `(feed
-      ([xmlns "http://www.w3.org/2005/Atom"]
-       [xml:lang "en"])
-      (title ([type "text"]) ,(str (current-title) ": " title))
-      ;; (link ([href ,(gplus-self-uri g)]
-      ;;        [rel "self"]))
-      ;; (link ([href ,(gplus-self-uri g)]))
-      ;; (id () ,(gplus-id g))
-      ;; (etag () ,(gplus-etag g))
-      ;; (updated () ,(gplus-updated g))
-      ,@(map post->feed-entry-xexpr xs)))
-  (~> x
-      xexpr->string
-      (display-to-file* file #:exists 'replace)))
+(define (syntax-highlight-body xs)
+  (append* (for/list ([x xs])
+             (match x
+               [`(pre ([class ,brush]) ,text)
+                (match brush
+                  [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
+                   (pygmentize text lang)]
+                  [else `((pre ,text))])]
+               [else (list x)]))))
+
+(define (pygmentize text lang)
+  (cond [(pygments-pathname)
+         (define tmp-in (make-temporary-file))
+         (define tmp-out (make-temporary-file))
+         (display-to-file text tmp-in #:exists 'replace)
+         (define cmd (str #:sep " "
+                          (pygments-pathname)
+                          "-f html"
+                          "-O linenos=1"
+                          "-l" lang
+                          "<" tmp-in
+                          "> "tmp-out))
+         (system cmd)
+         (define (elements->element xs)
+           (make-element #f #f '*root '() xs))
+         (with-input-from-file tmp-out
+           (thunk
+            (parameterize ([permissive-xexprs #t])
+              (~> (h:read-html-as-xml)
+                  elements->element
+                  xml->xexpr
+                  cddr))))]
+        [else `((pre ,text))]))
+
+(define (make-pygments.css style)
+  (when (pygments-pathname)
+    (define pygments.css
+      (path->string (build-path (www-path) "css" "pygments.css")))
+    (define cmd (str #:sep " "
+                     (pygments-pathname)
+                     "-f html"
+                     "-S " style
+                     "> " pygments.css))
+    (eprintf "Generating css/pygments.css\n")
+    (system cmd)
+    (void)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (write-atom-feed xs title of-uri-path file)
+  (eprintf "Generating ~a\n" (abs->rel/top file))
+  (define updated (post-date (first xs)))
+  (~>
+   `(feed
+     ([xmlns "http://www.w3.org/2005/Atom"]
+      [xml:lang "en"])
+     (title ([type "text"]) ,(str (current-title) ": " title))
+     (link ([rel "self"]
+            [href ,(str (current-scheme/host) (abs->rel/www file))]))
+     (link ([href ,(str (current-scheme/host) of-uri-path)]))
+     ;; (id () ???)
+     ;; (etag () ???)
+     (updated () ,updated)
+     ,@(map post->feed-entry-xexpr xs))
+   xexpr->string
+   (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+   reverse
+   string-join
+   string->bytes/utf-8
+   (display-to-file* file #:exists 'replace)))
 
 (define (post->feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri date tags blurb more? body) x)
@@ -532,19 +591,23 @@ EOF
     (define xs-this-tag (filter (lambda (x)
                                   (member tag (post-tags x)))
                                 xs))
+    (define tag-index-path
+      (build-path (www/tags-path) (str (our-encode tag) ".html")))
     (write-index xs-this-tag
                  (str "Posts tagged '" tag "'")
                  tag
                  (our-encode tag)
-                 (build-path (www/tags-path) (str (our-encode tag) ".html")))
+                 tag-index-path)
     (write-atom-feed xs-this-tag
                      (str "Posts tagged '" tag "'")
+                     (abs->rel/www tag-index-path)
                      (build-path (www/feeds-path) (str (our-encode tag)
                                                        ".xml"))))
   ;; Write the index page for all posts
   (write-index xs "All Posts" #f "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
-  (write-atom-feed xs "All Posts" (build-path (www/feeds-path) "all.xml"))
+  (write-atom-feed xs "All Posts" "/index.html"
+                   (build-path (www/feeds-path) "all.xml"))
   ;; Generate non-post pages.
   (define npps (build-non-post-pages))
   ;; Write sitemap
@@ -660,50 +723,3 @@ DONE:
 - Share buttons (at least mailto:, Twitter and Google+).
 
 |#
-
-(define (syntax-highlight-body xs)
-  (append* (for/list ([x xs])
-             (match x
-               [`(pre ([class ,brush]) ,text)
-                (match brush
-                  [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-                   (pygmentize text lang)]
-                  [else `((pre ,text))])]
-               [else (list x)]))))
-
-(define (pygmentize text lang)
-  (cond [(pygments-pathname)
-         (define tmp-in (make-temporary-file))
-         (define tmp-out (make-temporary-file))
-         (display-to-file text tmp-in #:exists 'replace)
-         (define cmd (str #:sep " "
-                          (pygments-pathname)
-                          "-f html"
-                          "-O linenos=1"
-                          "-l" lang
-                          "<" tmp-in
-                          "> "tmp-out))
-         (system cmd)
-         (define (elements->element xs)
-           (make-element #f #f '*root '() xs))
-         (with-input-from-file tmp-out
-           (thunk
-            (parameterize ([permissive-xexprs #t])
-              (~> (h:read-html-as-xml)
-                  elements->element
-                  xml->xexpr
-                  cddr))))]
-        [else `((pre ,text))]))
-
-(define (make-pygments.css style)
-  (when (pygments-pathname)
-    (define pygments.css
-      (path->string (build-path (www-path) "css" "pygments.css")))
-    (define cmd (str #:sep " "
-                     (pygments-pathname)
-                     "-f html"
-                     "-S " style
-                     "> " pygments.css))
-    (eprintf "Generating css/pygments.css\n")
-    (system cmd)
-    (void)))
