@@ -273,40 +273,52 @@
                                (current-google-analytics-account)
                                (current-google-analytics-domain)))
 
-         (body (div ([class "navbar navbar-fixed-top"])
-                    (div ([class "navbar-inner"])
-                         (div ([class ,(bs-container)])
-                              (ul ([class "nav"])
-                                  (li ([style "width: 60px;"])
-                                      (img ([style "width: 42px; height:33px;"]
-                                            [src "/img/gh-head-bw.jpg"])))
-                                  (li (a ([href "/index.html"][class "brand"])
-                                         ,(current-title)))
-                                  ,(nav-li "/index.html" "Home" uri)
-                                  ;; Perhaps fill this from a Navbar.md file?
-                                  ,(nav-li "/About.html" "About" uri) ))))
+         (body
+          (div ([class "navbar"])
+               (div ([class "navbar-inner"])
+                    (div ([class ,(bs-container)])
+                         (ul ([class "nav"])
+                             (li ([style "width: 60px;"])
+                                 (img ([style "width: 42px; height:33px;"]
+                                       [src "/img/gh-head-bw.jpg"])))
+                             (li (a ([href "/index.html"][class "brand"])
+                                    ,(current-title)))
+                             ,(nav-li "/index.html" "Home" uri)
+                             ;; Perhaps fill this from a Navbar.md file?
+                             ,(nav-li "/About.html" "About" uri) ))))
+          (div ([class ,(bs-container)])
+               (div ([class ,(bs-row)])
+                    ;; Span2: Docs sidebar
+                    (div ([class "span2 bs-docs-sidebar"])
+                         ,(toc-xexpr))
+                    ;; Span8: Main content
+                    (div ([class "span8"])
+                         ;; Caller's content
+                         ,@xs)
+                    ;; Span2: Tags list
+                    (div ([class "span2"])
+                         ,(tag-cloud-xexpr)))
+               (hr)
+               (footer
+                ,@(with-input-from-file
+                      (build-path (src-path) "footer.md")
+                    read-markdown)))
 
-               (div ([class ,(bs-container)])
+          ;; (script/js "/js/jquery.js")
+          ;; (script/js "/js/bootstrap-transition.js")
+          ;; (script/js "/js/bootstrap-alert.js")
+          ;; (script/js "/js/bootstrap-modal.js")
+          ;; (script/js "/js/bootstrap-dropdown.js")
+          ;; (script/js "/js/bootstrap-scrollspy.js")
+          ;; (script/js "/js/bootstrap-tab.js")
+          ;; (script/js "/js/bootstrap-tooltip.js")
+          ;; (script/js "/js/bootstrap-popover.js")
+          ;; (script/js "/js/bootstrap-button.js")
+          ;; (script/js "/js/bootstrap-collapse.js")
+          ;; (script/js "/js/bootstrap-carousel.js")
+          ;; (script/js "/js/bootstrap-typeahead.js")
 
-                    (div ([class ,(bs-row)])
-                         ;; Span2: Docs sidebar
-                         (div ([class "span2 bs-docs-sidebar"])
-                              ,(toc-xexpr))
-                         ;; Span8: Main content
-                         (div ([class "span8"])
-                              ;; Caller's content
-                              ,@xs)
-                         ;; Span2: Tags list
-                         (div ([class "span2"])
-                              ,(tag-cloud-xexpr)))
-
-                    (hr)
-                    (footer
-                     ,@(with-input-from-file
-                           (build-path (src-path) "footer.md")
-                         read-markdown))
-
-                    ))))
+          )))
 
 (define (nav-li href text uri)
   `(li ,(cond [(string-ci=? href uri) `([class "active"])]
