@@ -169,6 +169,33 @@
     [else #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Helpers to reduce redundancy in xexprs
+
+(define (meta k v)
+  `(meta ([name ,k]
+          [content ,v])))
+
+(define (link/css href)
+  `(link ([href ,href]
+          [rel "stylesheet"]
+          [type "text/css"])))
+
+;; Link to JS
+(define (script/js src)
+  `(script ([src ,src]
+            [type "text/javascript"])))
+
+;; Include local JS, with format -- can be "templated" JS with
+;; formatters like ~a. Use case: Plug in some account number or name.
+(define (script/js/inc v . vs)
+  (let* ([s (cond [(path? v) (file->string v)]
+                  [(string? v) v]
+                  [else (raise-type-error 'script/js/inc "path? or ?str" v)])]
+         [js (apply format (list* s vs))])
+    `(script ([type "text/javascript"])
+             ,js)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; bodies->page
 ;;
@@ -179,19 +206,24 @@
 
 (define-runtime-path tweet-button.js "tweet-button.js")
 
-(define responsive? (make-parameter #f)) ;; Why isn't this working ???
+(define responsive? (make-parameter #f)) ;; Responsive not working ???
 (define minified? (make-parameter #t))
-(define (bs-js)
-  (if (minified?) "/js/bootstrap.js" "/js/bootstrap.min.js"))
-(define (bs-css)
-  (cond [(minified?)
-         (cond [(responsive?) "/css/bootstrap-responsive.min.css"]
-               [else "/css/bootstrap.min.css"])]
-        [else
-         (cond [(responsive?) "/css/bootstrap-responsive.css"]
-               [else "/css/bootstrap.css"])]))
+
+(define (bootstrap-js)
+  (script/js (cond [(minified?) "/js/bootstrap.min.js"]
+                   [else "/js/bootstrap.js"])))
+
+(define (bootstrap-css)
+  (link/css (cond [(minified?)
+                   (cond [(responsive?) "/css/bootstrap-responsive.min.css"]
+                         [else "/css/bootstrap.min.css"])]
+                  [else
+                   (cond [(responsive?) "/css/bootstrap-responsive.css"]
+                         [else "/css/bootstrap.css"])])))
+
 (define (bs-container)
   (if (responsive?) "container-fluid" "container"))
+
 (define (bs-row)
   (if (responsive?) "row-fluid" "row"))
 
@@ -224,7 +256,7 @@
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
-               (link ([href ,(bs-css)][rel "stylesheet"][media "screen"]))
+               ,(bootstrap-css)
                ,(link/css "/css/custom.css")
                ,(link/css "/css/pygments.css")
                ;; Atom feed
@@ -234,7 +266,7 @@
                       [title ,(str (current-title) ": " feed)]))
                ;; JS
                ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js")
-               ,(script/js (bs-js))
+               ,(bootstrap-js)
                ,(script/js/inc tweet-button.js)
                ,(script/js "https://apis.google.com/js/plusone.js")
                ,(script/js/inc google-analytics.js
@@ -270,10 +302,9 @@
 
                     (hr)
                     (footer
-                     ,@(with-input-from-file (build-path (src-path) "footer.md")
+                     ,@(with-input-from-file
+                           (build-path (src-path) "footer.md")
                          read-markdown))
-
-                    ,(script/js/inc "SyntaxHighlighter.all()")
 
                     ))))
 
@@ -294,33 +325,6 @@
 
 (define (full-uri uri)
   (str (current-scheme/host) uri))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helpers to reduce redundancy in xexprs
-
-(define (meta k v)
-  `(meta ([name ,k]
-          [content ,v])))
-
-(define (link/css href)
-  `(link ([href ,href]
-          [rel "stylesheet"]
-          [type "text/css"])))
-
-;; Link to JS
-(define (script/js src)
-  `(script ([src ,src]
-            [type "text/javascript"])))
-
-;; Include local JS, with format -- can be "templated" JS with
-;; formatters like ~a. Use case: Plug in some account number or name.
-(define (script/js/inc v . vs)
-  (let* ([s (cond [(path? v) (file->string v)]
-                  [(string? v) v]
-                  [else (raise-type-error 'script/js/inc "path? or ?str" v)])]
-         [js (apply format (list* s vs))])
-    `(script ([type "text/javascript"])
-             ,js)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -703,8 +707,6 @@ TODO:
 
 - Top navbar. Including non-post pages; see previous item.
 
-- sitemap.txt
-
 - Get the responsive stuff working.
 
 
@@ -723,5 +725,7 @@ DONE:
   use the master page of bodies->page and (b) it won't be auto-linked.
 
 - Share buttons (at least mailto:, Twitter and Google+).
+
+- sitemap.txt
 
 |#
