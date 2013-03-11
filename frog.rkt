@@ -404,16 +404,18 @@
                           "-l" lang
                           "<" tmp-in
                           "> "tmp-out))
-         (system cmd)
-         (define (elements->element xs)
-           (make-element #f #f '*root '() xs))
-         (with-input-from-file tmp-out
-           (thunk
-            (parameterize ([permissive-xexprs #t])
-              (~> (h:read-html-as-xml)
-                  elements->element
-                  xml->xexpr
-                  cddr))))]
+         (define code (system/exit-code cmd))
+         (cond [(zero? code)
+                (define (elements->element xs)
+                  (make-element #f #f '*root '() xs))
+                (with-input-from-file tmp-out
+                  (thunk
+                   (parameterize ([permissive-xexprs #t])
+                     (~> (h:read-html-as-xml)
+                         elements->element
+                         xml->xexpr
+                         cddr))))]
+               [else `((pre ,text))])]
         [else `((pre ,text))]))
 
 (define (make-pygments.css style)
