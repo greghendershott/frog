@@ -7,7 +7,7 @@
          (only-in srfi/1 break))
 
 
-(define-runtime-path example "example") ;; just for dev
+(define-runtime-path example "example/") ;; just for dev
 
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter example))
@@ -83,17 +83,20 @@
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri date tags blurb more? body) p)
   (eprintf "Generating post ~a\n" (abs->rel/top dest-path))
-  (~> (post-xexpr title date tags body older newer)
+  (~> (post-xexpr title uri date tags body older newer)
       (bodies->page #:title title
                     #:uri uri)
       xexpr->string
       (display-to-file* dest-path #:exists 'replace)))
 
-(define (post-xexpr title date tags body older newer)
+(define (post-xexpr title uri date tags body older newer)
   `((h1 ,title)
     (p ,date)
     ,(tags->xexpr tags)
     ,@(filter (negate more?) body)
+    (p 'nbsp)
+    ,(social uri)
+    (p 'nbsp)
     ,(older/newer-nav older newer)))
 
 (define (older/newer-nav older newer)
@@ -149,13 +152,15 @@
   (let ([path (path->string path)]
         [root (path->string (www-path))])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x])))
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
+      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 (define (abs->rel/top path)
   (let ([path (path->string path)]
         [root (path->string (top))])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "/(.+$)") (list _ x)) x])))
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
+      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -191,9 +196,8 @@
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
-       (cond [(empty? contents) ""]
-             [else `(div (hr)
-                         (p "On this page:"
+       (cond [(empty? contents) `(p 'nbsp)]
+             [else `(div (p "On this page:"
                             (ol ([class "nav nav-list bs-docs-sidenav"])
                                 ,@contents)))])]))
   (define (tag-cloud-xexpr)
@@ -203,14 +207,13 @@
     `(p "Tags:"
         (ul ,@(for/list ([(k v) (in-dict alist)])
                 `(li ,(tag->xexpr k (format " (~a)" v)))))))
-  (define full-uri (str (current-scheme/host) uri))
 
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
                (meta ([name "description"][content ,title]))
                (meta ([name "author"][content ,(current-author)]))
-               (link ([rel "canonical"][href ,full-uri]))
+               (link ([rel "canonical"][href ,(full-uri uri)]))
                (link ([href "favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
@@ -252,27 +255,16 @@
                (div ([class ,(bs-container)])
 
                     (div ([class ,(bs-row)])
-                         ;; Docs sidebar
+                         ;; Span2: Docs sidebar
                          (div ([class "span2 bs-docs-sidebar"])
-                              ,(tag-cloud-xexpr)
                               ,(toc-xexpr))
-                         ;; Main content div
+                         ;; Span8: Main content
                          (div ([class "span8"])
                               ;; Caller's content
-                              ,@xs
-                              ;; Share/social
-                              (hr)
-                              (p
-                               (a ([href "https://twitter.com/share"]
-                                   [class "twitter-share-button"]
-                                   [data-url ,full-uri]
-                                   [data-dnt "true"])
-                                  "Tweet")
-                               (g:plusone ([size "medium"]
-                                           [href ,full-uri]))))
-                         ;; Fill out space on right to equal 12 cols
+                              ,@xs)
+                         ;; Span2: Tags list
                          (div ([class "span2"])
-                              'nbsp))
+                              ,(tag-cloud-xexpr)))
 
                     (hr)
                     (footer
@@ -300,6 +292,19 @@
   `(li ,(cond [(string-ci=? href uri) `([class "active"])]
               [else `()])
        (a ([href ,href]) ,text)))
+
+(define (social uri)
+  `(p
+    (a ([href "https://twitter.com/share"]
+        [class "twitter-share-button"]
+        [data-url ,(full-uri uri)]
+        [data-dnt "true"])
+       "Tweet")
+    (g:plusone ([size "medium"]
+                [href ,(full-uri uri)]))))
+
+(define (full-uri uri)
+  (str (current-scheme/host) uri))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -480,7 +485,7 @@ EOF
                              (path-replace-suffix ".html")
                              abs->rel/www
                              explode-path
-                             cddr)))) ;lop off the "/" and "_src" elts
+                             cddr)))) ;lop off the "/" and "_src" parts
     (define title (~> path (path-replace-suffix "") file-name-from-path
                       path->string))
     (define uri (abs->rel/www dest-path))
