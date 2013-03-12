@@ -844,7 +844,7 @@ EOF
         "Generate files."
         (build)]
        [("-p" "--preview")
-        "Run a local server and starting your browser."
+        "Run a local server and start your browser."
         (preview)]
        [("-n" "--new") title
         ("Create a file for a new post based on today's"
