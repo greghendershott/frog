@@ -507,7 +507,8 @@
                                   (string-append s (xexpr->markdown e)))]
     [`(,tag ,elts ...) (xexpr->markdown `(,tag () ,@elts))]
     [(? string? s) s]
-    [(var v) (printf "Skipping ~v\n" v)]))
+    [(? symbol? s) (str "&" s ";")]
+    [(var v) ""]))
 
 (module+ test
   (require rackunit)
@@ -523,7 +524,9 @@
                 "I am some _emphasized_ text")
   (check-equal? (xexpr->markdown '(p ([class "foo"])
                                      "I am some " (em "emphasized") " text"))
-                "I am some _emphasized_ text"))
+                "I am some _emphasized_ text")
+  (check-equal? (xexpr->markdown '(p "M" 'amp "Ms" 'mdash "gotta love 'em"))
+                "M&amp;Ms&mdash;gotta love 'em"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
