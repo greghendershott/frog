@@ -42,9 +42,10 @@ project/
       ...
   css/
     bootstrap.css
-    bootstrap-responsive.css
     bootstrap.min.css
+    bootstrap-responsive.css
     bootstrap-responsive.min.css
+    pygments.css # control syntax highlighting
   js/
     bootstrap.js
     bootstrap.min.js
@@ -303,9 +304,10 @@ Some things on the "roadmap" (provided anyone wants them):
 - Paginate the index pages (show only N posts at a time, with
   older/newer links).
   
-- Get the Bootstrap responsive mode working. It was working for my
+- Get the Bootstrap responsive mode working, then add this as a
+  `.frogrc` item instead of harcoding to off. (It was working for my
   previous hand-coded site, but for some reason it's not working for
-  Frog.
+  Frog.)
   
 - Let the user supply a navbar.md to populate the top nav
   bar. Probably as a Markdown unordered (bullet) list of links.
