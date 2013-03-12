@@ -74,7 +74,7 @@ easily. This will also fill in the required meta-data section. The
 markdown file starts with a code block (indented 4 spaces) that must
 contain these three lines:
 
-```
+```markdown
     Title: A blog post
     Date: 2012-01-01T00:00:00
     Tags: foo, bar, tag with spaces, baz
