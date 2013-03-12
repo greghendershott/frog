@@ -269,7 +269,7 @@
                ,(meta "description" description)
                ,(meta "author" (current-author))
                (link ([rel "canonical"][href ,(full-uri uri-path)]))
-               (link ([href "favicon.ico"][rel "shortcut icon"]))
+               (link ([href "/favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
@@ -294,7 +294,7 @@
                          (ul ([class "nav"])
                              (li ([style "width: 60px;"])
                                  (img ([style "width: 42px; height:33px;"]
-                                       [src "/img/gh-head-bw.jpg"])))
+                                       [src "/img/navbar-logo.jpg"])))
                              (li (a ([href "/index.html"][class "brand"])
                                     ,(current-title)))
                              ,(nav-li "/index.html" "Home" uri-path)
