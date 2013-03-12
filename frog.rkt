@@ -114,6 +114,7 @@
   (eprintf "Generating post ~a\n" (abs->rel/top dest-path))
   (~> (post-xexpr title uri-path date tags body older newer)
       (bodies->page #:title title
+                    #:description (xexprs->description blurb)
                     #:uri-path uri-path)
       xexpr->string
       (list "<!DOCTYPE html>")
@@ -241,10 +242,12 @@
   (if (responsive?) "row-fluid" "row"))
 
 ;; And now our Feature Presentation:
-(define (bodies->page xs
-                      #:title title
-                      #:uri-path uri-path
-                      #:feed [feed "all"]) ;; ... -> xexpr?
+(define (bodies->page xs                        ;listof xexpr?
+                      #:title title             ;string?
+                      #:description description ;string?
+                      #:uri-path uri-path       ;string?
+                      #:feed [feed "all"])      ;string?
+  ;; -> xexpr?
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
@@ -263,7 +266,7 @@
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
-               ,(meta "description" title)
+               ,(meta "description" description)
                ,(meta "author" (current-author))
                (link ([rel "canonical"][href ,(full-uri uri-path)]))
                (link ([href "favicon.ico"][rel "shortcut icon"]))
@@ -373,6 +376,7 @@
                       [else '()]))))
       (add-between `(hr))
       (bodies->page #:title title
+                    #:description title
                     #:feed feed
                     #:uri-path (abs->rel/www file))
       xexpr->string
@@ -464,6 +468,62 @@
     (eprintf "Generating css/pygments.css\n")
     (system cmd)
     (void)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (xexprs->description xs [num 3])
+  (str (apply str #:sep " " (for/list ([i (in-range num)]
+                                       [x (in-list xs)])
+                              (xexpr->markdown x)))
+       " ..."))
+
+(module+ test
+  (require rackunit)
+  (check-equal?
+   (xexprs->description '((h1 ([class "foo"]) "A heading")
+                          (p "A " (em "paragraph") " of some stuff.")
+                          (p "A " (em "paragraph") " of some stuff.")
+                          (p "A " (em "paragraph") " of some stuff.")
+                          (p "A " (em "paragraph") " of some stuff."))
+                        3)
+   "A heading: A _paragraph_ of some stuff. A _paragraph_ of some stuff. ...")
+  (check-equal?
+   (xexprs->description '((h1 ([class "foo"]) "A heading")
+                          (p "A " (em "paragraph") " of some stuff.")
+                          (img ([src "blah"]))
+                          (p "A " (em "paragraph") " of some stuff.")
+                          (p "A " (em "paragraph") " of some stuff."))
+                        3)
+   "A heading: A _paragraph_ of some stuff.  ..."))
+
+(define (xexpr->markdown x)
+  (match x
+    [`(em ,_ ... ,s) (str "_" s "_")]
+    [`(strong ,_ ... ,s) (str "**" s "**")]
+    [`(h1 ,_ ... ,s) (str s ":")]
+    [`(h2 ,_ ... ,s) (str s ":")]
+    [`(h3 ,_ ... ,s) (str s ":")]
+    [`(,tag (,_ ...) ,elts ...) (for/fold ([s ""]) ([e (in-list elts)])
+                                  (string-append s (xexpr->markdown e)))]
+    [`(,tag ,elts ...) (xexpr->markdown `(,tag () ,@elts))]
+    [(? string? s) s]
+    [(var v) (printf "Skipping ~v\n" v)]))
+
+(module+ test
+  (require rackunit)
+  (check-equal? (xexpr->markdown '(em "foobar"))
+                "_foobar_")
+  (check-equal? (xexpr->markdown '(em ([class "foo"]) "foobar"))
+                "_foobar_")
+  (check-equal? (xexpr->markdown '(strong "foobar"))
+                "**foobar**")
+  (check-equal? (xexpr->markdown '(strong ([class "foo"]) "foobar"))
+                "**foobar**")
+  (check-equal? (xexpr->markdown '(p "I am some " (em "emphasized") " text"))
+                "I am some _emphasized_ text")
+  (check-equal? (xexpr->markdown '(p ([class "foo"])
+                                     "I am some " (em "emphasized") " text"))
+                "I am some _emphasized_ text"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -597,6 +657,7 @@ EOF
     (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
+                      #:description (xexprs->description xs)
                       #:uri-path uri-path)
         xexpr->string
         (display-to-file* dest-path #:exists 'replace))
