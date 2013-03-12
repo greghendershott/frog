@@ -23,6 +23,8 @@
 (define (www/tags-path) (build-path (www-path) "tags"))
 (define (www/feeds-path) (build-path (www-path) "feeds"))
 
+;; Convert from absolute local path to what the URI path should be.
+;; Ex: ~/project/css would become /css
 (define (abs->rel/www path)
   (let ([path (path->string path)]
         [root (path->string (www-path))])
@@ -30,6 +32,11 @@
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
       [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
+;; Convert from absolute local path to one relative to project top dir.
+;; Ex: ~/project/css would become css
+;; (Once upon a time (top) and (www-path) weren't necessarily the same.
+;; Now they always are, and the only difference from abs->rel/www is the
+;; lack of the leading slash. Could rewrite this.)
 (define (abs->rel/top path)
   (let ([path (path->string path)]
         [root (path->string (top))])
@@ -64,7 +71,7 @@
               body       ;(listof xexpr?) - the full post
               ))
 
-;; Given a uri-path, prepend the schem & host to make a full URI.
+;; Given a uri-path, prepend the scheme & host to make a full URI.
 (define (full-uri uri-path)
   (str (current-scheme/host) uri-path))
 
@@ -810,10 +817,10 @@ EOF
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
                                [pygments-pathname #f])
-                              ;; (clean)
-                              (build)
-                              (preview)
-                              )))
+      ;; (clean)
+      (build)
+      (preview)
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -848,6 +855,10 @@ EOF
 #|
 
 TODO:
+
+- Convert all the eprintf sites to something with a verbosity level
+  for each. Also, perhaps it should go to stdout since we emit nothing
+  else to stdout?
 
 - Index pages: Paginate, limiting to N posts per page, with
   Older/Newer nav.
