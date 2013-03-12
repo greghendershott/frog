@@ -799,7 +799,7 @@ EOF
 
 TODO:
 
-- Index pages: Paingate, limiting to N posts per page, with
+- Index pages: Paginate, limiting to N posts per page, with
   Older/Newer nav.
 
 - Top navbar. Including non-post pages; see previous item.
@@ -824,5 +824,7 @@ DONE:
 - Share buttons (at least mailto:, Twitter and Google+).
 
 - sitemap.txt
+
+- Use Racket's web-server for preview
 
 |#
