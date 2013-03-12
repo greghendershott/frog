@@ -6,15 +6,13 @@
          (prefix-in h: html)
          racket/date
          (only-in srfi/1 break)
-         ;; Remaider are just for the preview feature
+         ;; Remainder are just for the preview feature:
          web-server/servlet-env
          web-server/http
          web-server/dispatchers/dispatch)
 
-(define-runtime-path example "example/") ;; just for dev
-
 ;; top is the project directory (e.g. the main dir in Git)
-(define top (make-parameter example))
+(define top (make-parameter #f))
 
 ;; sources
 (define (src-path) (build-path (top) "_src"))
@@ -42,44 +40,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parameters loaded from configuration file
 
-(define .frogrc ".frogrc")
-(define config #f)
-
-(define (get-config name default)
-  (define pathname (build-path (top) .frogrc))
-  (unless (file-exists? pathname)
-    (raise-user-error '|Configuration file| "Missing ~a" pathname))
-  (unless config
-    (set! config (file->string (build-path (top) .frogrc))))
-  (match config
-    [(pregexp (str "(?:^|\n)"
-                   (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
-                   "(?:$|\n)")
-              (list _ v)) v]
-    [else (cond [(procedure? default) (default name)]
-                [else default])]))
-
-(define (raise-config-required-error name)
-  (raise-user-error '|Configuration file|
-                    "Missing required item ~s"
-                    name))
-
-(require (for-syntax racket/syntax))
-(define-syntax (define-config-parameter stx)
-  (syntax-case stx ()
-    [(_ name default)
-     (identifier? #'name)
-     (with-syntax ([id (format-id stx "current-~a" #'name)]
-                   [key (symbol->string (syntax-e #'name))])
-       #'(define id (make-parameter (get-config key default))))]))
-
-(define-config-parameter scheme/host raise-config-required-error)
-(define-config-parameter title "Untitled Site")
-(define-config-parameter author "The Unknown Author")
-(define-config-parameter google-analytics-account #f)
-(define-config-parameter google-analytics-domain #f)
-(define-config-parameter disqus-shortname #f)
-(define-config-parameter pygments-pathname #f)
+(define current-scheme/host (make-parameter #f))
+(define current-title (make-parameter #f))
+(define current-author (make-parameter #f))
+(define current-google-analytics-account (make-parameter #f))
+(define current-google-analytics-domain (make-parameter #f))
+(define current-disqus-shortname (make-parameter #f))
+(define current-pygments-pathname (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -482,6 +449,7 @@
 
 (define (pygmentize text lang)
   (cond [(current-pygments-pathname)
+         (eprintf "System call to pygmentize...\n")
          (define tmp-in (make-temporary-file))
          (define tmp-out (make-temporary-file))
          (display-to-file text tmp-in #:exists 'replace)
@@ -767,7 +735,7 @@ EOF
   ;; Write sitemap
   ;; One gotcha: What about other "sub-sites", for example GitHub project
   ;; pages?  How to include them in sitemap.txt?
-  (eprintf "Generating sitemap\n")
+  (eprintf "Generating sitemap.txt\n")
   (with-output-to-file (build-path (www-path) "sitemap.txt")
     #:exists 'replace
     (thunk (for ([x (in-list (map full-uri
@@ -790,40 +758,92 @@ EOF
                  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Loading config file into parameters
 
-;;; Can uncomment these during development -- but don't commit that way!
+(define .frogrc ".frogrc")
 
-#|
+(define (get-config name default)
+  (define pathname (build-path (top) .frogrc))
+  (unless (file-exists? pathname)
+    (raise-user-error '|Configuration file| "Missing ~a" pathname))
+  (eprintf "Reading ~a\n" pathname)
+  (let ([v (match (file->string pathname)
+             [(pregexp (str "(?:^|\n)"
+                            (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
+                            "(?:$|\n)")
+                       (list _ v)) v]
+             [else (cond [(procedure? default) (default name)]
+                         [else default])])])
+    (eprintf "Configuration ~s = ~s\n" name v)
+    v))
 
-(begin
-  (clean)
-  (build)
-  (preview))
+(define (raise-config-required-error name)
+  (raise-user-error '|Configuration file|
+                    "Missing required item ~s"
+                    name))
 
-|#
+(require (for-syntax racket/syntax))
+(define-syntax (parameterize-from-config stx)
+  (syntax-case stx ()
+    [(_ ([name default] ...)
+        body ...)
+     (map identifier? (syntax->list #'(name ...)))
+     (with-syntax ([(id ...) (map (lambda (x)
+                                    (format-id stx "current-~a" x))
+                                  (syntax->list #'(name ...)))]
+                   [(key ...) (map (lambda (x)
+                                     (symbol->string (syntax-e x)))
+                                   (syntax->list #'(name ...)))])
+       #'(parameterize ([id (get-config key default)] ...)
+           body ...))]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; For interactive development
+(define-runtime-path example "example/") ;; just for dev
+(define (build/preview)
+  (parameterize ([top example])
+    (parameterize-from-config ([scheme/host raise-config-required-error]
+                               [title "Untitled Site"]
+                               [author "The Unknown Author"]
+                               [google-analytics-account #f]
+                               [google-analytics-domain #f]
+                               [disqus-shortname #f]
+                               [pygments-pathname #f])
+                              ;; (clean)
+                              (build)
+                              (preview)
+                              )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ main
   (parameterize ([top (current-directory)])
-    (command-line
-     #:once-each
-     [("-c" "--clean")
-      "Delete generated files."
-      (clean)]
-     [("-m" "--make" "-b" "--build")
-      "Generate files."
-      (build)]
-     [("-p" "--preview")
-      "Run a local server and starting your browser."
-      (preview)]
-     [("-n" "--new") title
-      ("Create a file for a new post based on today's"
-       "date and your supplied <title>.")
-      (new-post title)]
-     [("--pygments-css") style-name
-      "Generate ./css/pygments.css using style-name (ex: 'default')"
-      (make-pygments.css style-name)])))
+    (parameterize-from-config ([scheme/host raise-config-required-error]
+                               [title "Untitled Site"]
+                               [author "The Unknown Author"]
+                               [google-analytics-account #f]
+                               [google-analytics-domain #f]
+                               [disqus-shortname #f]
+                               [pygments-pathname #f])
+      (command-line
+       #:once-each
+       [("-c" "--clean")
+        "Delete generated files."
+        (clean)]
+       [("-m" "--make" "-b" "--build")
+        "Generate files."
+        (build)]
+       [("-p" "--preview")
+        "Run a local server and starting your browser."
+        (preview)]
+       [("-n" "--new") title
+        ("Create a file for a new post based on today's"
+         "date and your supplied <title>.")
+        (new-post title)]
+       [("--pygments-css") style-name
+        "Generate ./css/pygments.css using style-name (ex: 'default')"
+        (make-pygments.css style-name)]))))
 
 #|
 
