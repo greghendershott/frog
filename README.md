@@ -6,17 +6,17 @@
 
 ## Overview
 
-Frog is a static web site generator written in [Racket][]. You generate
-files. To deploy, you push them to a GitHub Pages repo, or copy them
-to Amazon S3, or whatever.
+Frog is a static web site generator written in [Racket][].
 
-You write content in [Markdown][].
+You write content in [Markdown][]. You generate files. To deploy, you
+push them to a GitHub Pages repo, or copy them to Amazon S3, or
+whatever.
 
 Posts get a variety of automatic blog features.
 
 You can also create non-post pages.
 
-The genreated site presumes you're using [Bootstrap][] for CSS.
+The generated site presumes you're using [Bootstrap][] for CSS.
 
 Yes, it's very much like Octopress and countless others. But it
 doesn't require any Ruby gemmage. The only non-Racket part is
@@ -123,7 +123,7 @@ then the appropriate tracking code is automatically inserted.
 
 ### The `DRAFT` tag
 
-The tag `DRAFT` (all upppercase) causes the post _not_ to be generated.
+The tag `DRAFT` (all uppercase) causes the post _not_ to be generated.
 
 This way, you can commit the source `.md` file to your repo, and push,
 but there will be no corresponding `.html` generated and pushed.  (The
@@ -305,11 +305,11 @@ Some things on the "roadmap" (provided anyone wants them):
   older/newer links).
   
 - Get the Bootstrap responsive mode working, then add this as a
-  `.frogrc` item instead of harcoding to off. (It was working for my
+  `.frogrc` item instead of hardcoding to off. (It was working for my
   previous hand-coded site, but for some reason it's not working for
   Frog.)
   
-- Let the user supply a navbar.md to populate the top nav
+- Let the user supply a navbar.md to populate the top pnav
   bar. Probably as a Markdown unordered (bullet) list of links.
 
 
