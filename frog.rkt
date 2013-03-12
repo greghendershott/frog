@@ -42,9 +42,21 @@
 
 (define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-(.+?)\\.(?:md|markdown)$")
 
-(struct post (title dest-path uri date tags blurb more? body))
+(struct post (title      ;string?
+              dest-path  ;path? - full pathname of local HTML file
+              uri-path   ;string? - path portion of URI, with leading /
+              date       ;string? - 8601
+              tags       ;(listof string?)
+              blurb      ;(listof xexpr?) - the post summary
+              more?      ;boolean? - is `blurb` a subset of `body`?
+              body       ;(listof xexpr?) - the full post
+              ))
 
-;; A function for fold-files
+;; Given a uri-path, prepend the schem & host to make a full URI.
+(define (full-uri uri-path)
+  (str (current-scheme/host) uri-path))
+
+;; A function for `fold-files` to gather post source files.
 (define (read-post path type v)
   (cond
     [(eq? type 'file)
@@ -98,11 +110,11 @@
     (make-directory p)))
 
 (define (write-post-page p older newer)
-  (match-define (post title dest-path uri date tags blurb more? body) p)
+  (match-define (post title dest-path uri-path date tags blurb more? body) p)
   (eprintf "Generating post ~a\n" (abs->rel/top dest-path))
-  (~> (post-xexpr title uri date tags body older newer)
+  (~> (post-xexpr title uri-path date tags body older newer)
       (bodies->page #:title title
-                    #:uri uri)
+                    #:uri-path uri-path)
       xexpr->string
       (list "<!DOCTYPE html>")
       reverse
@@ -110,12 +122,12 @@
       string->bytes/utf-8
       (display-to-file* dest-path #:exists 'replace)))
 
-(define (post-xexpr title uri date tags body older newer)
+(define (post-xexpr title uri-path date tags body older newer)
   `((h1 ,title)
     ,(date+tags->xexpr date tags)
     ,@(filter (negate more?) (syntax-highlight-body body))
     (p 'nbsp)
-    ,(social uri)
+    ,(social uri-path)
     (p 'nbsp)
     ,(older/newer-nav older newer)))
 
@@ -123,7 +135,7 @@
   `(ul ([class "pager"])
        ,(cond [newer
                `(li ([class "previous"])
-                    (a ([href ,(post-uri newer)])
+                    (a ([href ,(post-uri-path newer)])
                        'larr "Newer" 'nbsp (em ,(post-title newer))))]
               [else
                `(li ([class "previous disabled"])
@@ -131,7 +143,7 @@
                        'larr "Newer"))])
        ,(cond [older
                `(li ([class "next"])
-                    (a ([href ,(post-uri older)])
+                    (a ([href ,(post-uri-path older)])
                        (em ,(post-title older)) 'nbsp "Older" 'rarr))]
               [else
                `(li ([class "next disabled"])
@@ -199,13 +211,14 @@
 ;;
 ;; bodies->page
 ;;
-;; This is really a "master page" or "site template". It puts the body
-;; elements in a container div.
+;; Put the body elements in a master page template.
 
+;; Some static JS we "include"
 (define-runtime-path google-analytics.js "google-analytics.js")
-
 (define-runtime-path tweet-button.js "tweet-button.js")
+(define-runtime-path disqus.js "disqus.js")
 
+;; Bootstrap has some permutations: Response or not, minified or not:
 (define responsive? (make-parameter #f)) ;; Responsive not working ???
 (define minified? (make-parameter #t))
 
@@ -227,9 +240,10 @@
 (define (bs-row)
   (if (responsive?) "row-fluid" "row"))
 
+;; And now our Feature Presentation:
 (define (bodies->page xs
                       #:title title
-                      #:uri uri
+                      #:uri-path uri-path
                       #:feed [feed "all"]) ;; ... -> xexpr?
   (define (toc-xexpr)
     (match (toc xs)
@@ -251,7 +265,7 @@
                (title ,title)
                ,(meta "description" title)
                ,(meta "author" (current-author))
-               (link ([rel "canonical"][href ,(full-uri uri)]))
+               (link ([rel "canonical"][href ,(full-uri uri-path)]))
                (link ([href "favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
@@ -267,12 +281,9 @@
                ;; JS
                ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js")
                ,(bootstrap-js)
-               ,(script/js/inc tweet-button.js)
-               ,(script/js "https://apis.google.com/js/plusone.js")
                ,(script/js/inc google-analytics.js
                                (current-google-analytics-account)
                                (current-google-analytics-domain)))
-
          (body
           (div ([class "navbar"])
                (div ([class "navbar-inner"])
@@ -283,9 +294,9 @@
                                        [src "/img/gh-head-bw.jpg"])))
                              (li (a ([href "/index.html"][class "brand"])
                                     ,(current-title)))
-                             ,(nav-li "/index.html" "Home" uri)
+                             ,(nav-li "/index.html" "Home" uri-path)
                              ;; Perhaps fill this from a Navbar.md file?
-                             ,(nav-li "/About.html" "About" uri) ))))
+                             ,(nav-li "/About.html" "About" uri-path) ))))
           (div ([class ,(bs-container)])
                (div ([class ,(bs-row)])
                     ;; Span2: Docs sidebar
@@ -303,7 +314,8 @@
                 ,@(with-input-from-file
                       (build-path (src-path) "footer.md")
                     read-markdown)))
-
+          ;; ;; Boostrap JavaScript. Recommended to include at end of body
+          ;; ;; body page load speed.
           ;; (script/js "/js/jquery.js")
           ;; (script/js "/js/bootstrap-transition.js")
           ;; (script/js "/js/bootstrap-alert.js")
@@ -317,26 +329,31 @@
           ;; (script/js "/js/bootstrap-collapse.js")
           ;; (script/js "/js/bootstrap-carousel.js")
           ;; (script/js "/js/bootstrap-typeahead.js")
-
           )))
 
-(define (nav-li href text uri)
-  `(li ,(cond [(string-ci=? href uri) `([class "active"])]
+(define (nav-li href text uri-path)
+  `(li ,(cond [(string-ci=? href uri-path) `([class "active"])]
               [else `()])
        (a ([href ,href]) ,text)))
 
-(define (social uri)
+(define (social uri-path)
   `(p
+    ;; Twitter
+    ,(script/js/inc tweet-button.js)
     (a ([href "https://twitter.com/share"]
         [class "twitter-share-button"]
-        [data-url ,(full-uri uri)]
+        [data-url ,(full-uri uri-path)]
         [data-dnt "true"])
        "Tweet")
+    ,(script/js "https://apis.google.com/js/plusone.js")
+    ;; Google+
     (g:plusone ([size "medium"]
-                [href ,(full-uri uri)]))))
-
-(define (full-uri uri)
-  (str (current-scheme/host) uri))
+                [href ,(full-uri uri-path)]))
+    ;; Disqus for comments (but only if (current-disqus-shortname) not #f)
+    ,@(cond [(current-disqus-shortname)
+             `(,(script/js/inc disqus.js (current-disqus-shortname))
+               (div ([id "disqus_thread"])))]
+            [else `()])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -345,18 +362,19 @@
        `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
                     [else `(,title)]))
        (for/list ([x (in-list xs)])
-        (match-define (post title dest-path uri date tags blurb more? body) x)
+        (match-define
+         (post title dest-path uri-path date tags blurb more? body) x)
         `(div ([class "index-post"])
-              (h2 (a ([href ,uri]) ,title))
+              (h2 (a ([href ,uri-path]) ,title))
               ,(date+tags->xexpr date tags)
               ,@blurb
-              ,@(cond [more? `((a ([href ,uri])
+              ,@(cond [more? `((a ([href ,uri-path])
                                   (em "Continue reading ...")))]
                       [else '()]))))
       (add-between `(hr))
       (bodies->page #:title title
                     #:feed feed
-                    #:uri (abs->rel/www file))
+                    #:uri-path (abs->rel/www file))
       xexpr->string
       (list "<!DOCTYPE html>\n")
       reverse
@@ -458,8 +476,8 @@
       [xml:lang "en"])
      (title ([type "text"]) ,(str (current-title) ": " title))
      (link ([rel "self"]
-            [href ,(str (current-scheme/host) (abs->rel/www file))]))
-     (link ([href ,(str (current-scheme/host) of-uri-path)]))
+            [href ,(full-uri (abs->rel/www file))]))
+     (link ([href ,(full-uri of-uri-path)]))
      ;; (id () ???)
      ;; (etag () ???)
      (updated () ,updated)
@@ -472,13 +490,12 @@
    (display-to-file* file #:exists 'replace)))
 
 (define (post->feed-entry-xexpr x) ;; post? -> xexpr?
-  (match-define (post title dest-path uri date tags blurb more? body) x)
-  (define full-uri (str (current-scheme/host) uri))
+  (match-define (post title dest-path uri-path date tags blurb more? body) x)
   `(entry
     ()
     (title ([type "text"]) ,title)
     (link ([rel "alternate"]
-           [href ,full-uri]))
+           [href ,(full-uri uri-path)]))
     (id () ,title) ;; TODO: some other ID??
     (published () ,date)
     (updated () ,date)
@@ -487,7 +504,7 @@
      ,(xexpr->string
        `(html
          ,@blurb
-         ,@(cond [more? `((a ([href ,full-uri])
+         ,@(cond [more? `((a ([href ,(full-uri uri-path)])
                              "Continue reading ..."))]
                  [else '()]))))))
 
@@ -576,14 +593,14 @@ EOF
                              cddr)))) ;lop off the "/" and "_src" parts
     (define title (~> path (path-replace-suffix "") file-name-from-path
                       path->string))
-    (define uri (abs->rel/www dest-path))
+    (define uri-path (abs->rel/www dest-path))
     (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
-                      #:uri uri)
+                      #:uri-path uri-path)
         xexpr->string
         (display-to-file* dest-path #:exists 'replace))
-    (cons uri v)]
+    (cons uri-path v)]
    [else v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -634,7 +651,8 @@ EOF
   (eprintf "Generating sitemap\n")
   (with-output-to-file (build-path (www-path) "sitemap.txt")
     #:exists 'replace
-    (thunk (for ([x (in-list (map full-uri (append (map post-uri xs) npps)))])
+    (thunk (for ([x (in-list (map full-uri
+                                  (append (map post-uri-path xs) npps)))])
              (displayln x))))
   ;; Generate pygments.css automatically ONLY if it doesn't already
   ;; exist
@@ -673,6 +691,8 @@ EOF
 
 (define current-google-analytics-account (make-parameter "UA-29709446-1"))
 (define current-google-analytics-domain (make-parameter "greghendershott.com"))
+
+(define current-disqus-shortname (make-parameter "greghendershott"))
 
 (define pygments-pathname
   (make-parameter (expand-user-path "~/src/python/pygments-main/pygmentize")))
