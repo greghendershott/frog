@@ -1,0 +1,11 @@
+.DS_Store
+compiled/
+
+# Generated files under example/
+example/index.html
+example/About.html
+example/sitemap.txt
+example/subdir/
+example/feeds/
+example/tags/
+example/2*
