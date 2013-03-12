@@ -1,12 +1,15 @@
-#lang rackjure
+#lang rackjure  ;; extra dependency 1 of 2
 
-(require racket/runtime-path
-         markdown
+(require markdown ;; extra dependency 2 of 2
+         racket/runtime-path
          xml
          (prefix-in h: html)
          racket/date
-         (only-in srfi/1 break))
-
+         (only-in srfi/1 break)
+         ;; Remaider are just for the preview feature
+         web-server/servlet-env
+         web-server/http
+         web-server/dispatchers/dispatch)
 
 (define-runtime-path example "example/") ;; just for dev
 
@@ -730,23 +733,13 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require (prefix-in serve: lobe/serve-files)
-         net/sendurl)
-
 (define (preview [port 3000])
-  (printf "Start preview web server at localhost:~a\n" port)
-  (define stop
-    (parameterize ([serve:home (www-path)]
-                   [serve:port port]
-                   [serve:dotfiles? #f])
-      (serve:start)))
-  (printf "Open web browser on http://localhost:~a/index.html\n" port)
-  (send-url (format "http://localhost:~a/index.html" port))
-  (displayln "Server running. Press CTRL-C to stop it...")
-  (with-handlers ([exn? (lambda (exn)
-                          (stop)
-                          (displayln "\nServer stopped."))])
-    (sync never-evt)))
+  (serve/servlet (lambda (_) (next-dispatcher))
+                 #:servlet-path "/"
+                 #:extra-files-paths (list (www-path))
+                 #:port port
+                 #:launch-browser? #t
+                 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
