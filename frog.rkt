@@ -660,6 +660,10 @@ EOF
                       #:description (xexprs->description xs)
                       #:uri-path uri-path)
         xexpr->string
+        (list "<!DOCTYPE html>\n")
+        reverse
+        string-join
+        string->bytes/utf-8
         (display-to-file* dest-path #:exists 'replace))
     (cons uri-path v)]
    [else v]))
