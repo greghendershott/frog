@@ -1,0 +1,18 @@
+# Required: Should NOT end in trailing slash.
+scheme/host = http://www.example.com
+
+title = My Awesome Blog
+author = The Unknown Author
+
+# Optional: The UA-xxxx account number
+# google-analytics-account = UA-xxxxxxx
+
+# Optional: The domain to use. Often just example.com not
+# www.example.com
+# google-analytics-domain = example.com
+
+# Optional: Disqus comment system "short name"
+# disqus-shortname = MyShortName
+
+# Optional: Path to Pygments executable
+# pygments-pathname = ~/src/pygments-main/pygmentize

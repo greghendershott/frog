@@ -40,6 +40,48 @@
       [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Parameters loaded from configuration file
+
+(define .frogrc ".frogrc")
+(define config #f)
+
+(define (get-config name default)
+  (define pathname (build-path (top) .frogrc))
+  (unless (file-exists? pathname)
+    (raise-user-error '|Configuration file| "Missing ~a" pathname))
+  (unless config
+    (set! config (file->string (build-path (top) .frogrc))))
+  (match config
+    [(pregexp (str "(?:^|\n)"
+                   (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
+                   "(?:$|\n)")
+              (list _ v)) v]
+    [else (cond [(procedure? default) (default name)]
+                [else default])]))
+
+(define (raise-config-required-error name)
+  (raise-user-error '|Configuration file|
+                    "Missing required item ~s"
+                    name))
+
+(require (for-syntax racket/syntax))
+(define-syntax (define-config-parameter stx)
+  (syntax-case stx ()
+    [(_ name default)
+     (identifier? #'name)
+     (with-syntax ([id (format-id stx "current-~a" #'name)]
+                   [key (symbol->string (syntax-e #'name))])
+       #'(define id (make-parameter (get-config key default))))]))
+
+(define-config-parameter scheme/host raise-config-required-error)
+(define-config-parameter title "Untitled Site")
+(define-config-parameter author "The Unknown Author")
+(define-config-parameter google-analytics-account #f)
+(define-config-parameter google-analytics-domain #f)
+(define-config-parameter disqus-shortname #f)
+(define-config-parameter pygments-pathname #f)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
@@ -287,9 +329,7 @@
                ;; JS
                ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js")
                ,(bootstrap-js)
-               ,(script/js/inc google-analytics.js
-                               (current-google-analytics-account)
-                               (current-google-analytics-domain)))
+               ,@(google-analytics))
          (body
           (div ([class "navbar"])
                (div ([class "navbar-inner"])
@@ -341,6 +381,14 @@
   `(li ,(cond [(string-ci=? href uri-path) `([class "active"])]
               [else `()])
        (a ([href ,href]) ,text)))
+
+(define (google-analytics)
+  (cond [(and (current-google-analytics-account)
+              (current-google-analytics-domain))
+         `(,(script/js/inc google-analytics.js
+                           (current-google-analytics-account)
+                           (current-google-analytics-domain)))]
+        [else '()]))
 
 (define (social uri-path)
   `(p
@@ -433,12 +481,12 @@
                [else (list x)]))))
 
 (define (pygmentize text lang)
-  (cond [(pygments-pathname)
+  (cond [(current-pygments-pathname)
          (define tmp-in (make-temporary-file))
          (define tmp-out (make-temporary-file))
          (display-to-file text tmp-in #:exists 'replace)
          (define cmd (str #:sep " "
-                          (pygments-pathname)
+                          (expand-user-path (current-pygments-pathname))
                           "-f html"
                           "-O linenos=1"
                           "-l" lang
@@ -462,9 +510,9 @@
   (path->string (build-path (www-path) "css" "pygments.css")))
 
 (define (make-pygments.css style)
-  (when (pygments-pathname)
+  (when (current-pygments-pathname)
     (define cmd (str #:sep " "
-                     (pygments-pathname)
+                     (expand-user-path (current-pygments-pathname))
                      "-f html"
                      "-S " style
                      "> " (pygments.css)))
@@ -740,24 +788,6 @@ EOF
                  #:port port
                  #:launch-browser? #t
                  ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; These should probably be read from a per-project `.frogrc`?
-
-(define current-scheme/host (make-parameter "http://www.greghendershott.com"))
-
-(define current-title (make-parameter "Greg Hendershott"))
-(define current-author (make-parameter "Greg Hendershott"))
-
-(define current-google-analytics-account (make-parameter "UA-29709446-1"))
-(define current-google-analytics-domain (make-parameter "greghendershott.com"))
-
-(define current-disqus-shortname (make-parameter "greghendershott"))
-
-(define pygments-pathname
-  (make-parameter (expand-user-path "~/src/python/pygments-main/pygmentize")))
-(define pygments-style (make-parameter "default"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
