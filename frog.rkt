@@ -238,8 +238,8 @@
 (define-runtime-path tweet-button.js "tweet-button.js")
 (define-runtime-path disqus.js "disqus.js")
 
-;; Bootstrap has some permutations: Response or not, minified or not:
-(define responsive? (make-parameter #f)) ;; Responsive not working ???
+;; Bootstrap has some permutations: Responsive or not, minified or not:
+(define responsive? (make-parameter #f)) ;; Responsive not working ?!?!
 (define minified? (make-parameter #t))
 
 (define (bootstrap-js)
@@ -373,8 +373,8 @@
         [data-url ,(full-uri uri-path)]
         [data-dnt "true"])
        "Tweet")
-    ,(script/js "https://apis.google.com/js/plusone.js")
     ;; Google+
+    ,(script/js "https://apis.google.com/js/plusone.js")
     (g:plusone ([size "medium"]
                 [href ,(full-uri uri-path)]))
     ;; Disqus for comments (but only if (current-disqus-shortname) not #f)
@@ -415,13 +415,12 @@
 
 (define (our-encode s)
   ;; Extremely conservative.
-  (~>
-   (list->string (for/list ([c (in-string s)])
-                   (cond [(or (char-alphabetic? c)
-                              (char-numeric? c)) c]
-                         [else #\-])))
-   (re* #px"-{2,}" "-") ;only one hyphen in a row
-   (re #px"-$" "")))    ;no hyphen at end
+  (~> (list->string (for/list ([c (in-string s)])
+                      (cond [(or (char-alphabetic? c)
+                                 (char-numeric? c)) c]
+                            [else #\-])))
+      (re* #px"-{2,}" "-") ;only one hyphen in a row
+      (re #px"-$" "")))    ;no hyphen at end
 
 (define (re* s rx new)
   (regexp-replace* rx s new))
@@ -429,6 +428,7 @@
   (regexp-replace rx s new))
 
 ;; Less typing, but also returns its value so good for sticking in ~>
+;; for debugging
 (define (pp v)
   (pretty-print v)
   v)
@@ -680,7 +680,9 @@ EOF
                              abs->rel/www
                              explode-path
                              cddr)))) ;lop off the "/" and "_src" parts
-    (define title (~> path (path-replace-suffix "") file-name-from-path
+    (define title (~> path
+                      (path-replace-suffix "")
+                      file-name-from-path
                       path->string))
     (define uri-path (abs->rel/www dest-path))
     (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
