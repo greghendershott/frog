@@ -125,7 +125,7 @@
 (define (post-xexpr title uri-path date tags body older newer)
   `((h1 ,title)
     ,(date+tags->xexpr date tags)
-    ,@(filter (negate more?) (syntax-highlight-body body))
+    ,@(filter (negate more-xexpr?) (syntax-highlight-body body))
     (p 'nbsp)
     ,(social uri-path)
     (p 'nbsp)
@@ -172,10 +172,10 @@
   (regexp-split #px",\\s*" s))
 
 (define (above-the-fold xs)
-  (define-values (above below) (break more? xs))
+  (define-values (above below) (break more-xexpr? xs))
   (values above (not (empty? below))))
 
-(define (more? x)
+(define (more-xexpr? x)
   (match x
     [(list p "<!-- more -->") #t]
     [else #f]))
