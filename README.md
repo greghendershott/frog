@@ -10,11 +10,13 @@ Frog is a static web site generator written in [Racket][]. You generate
 files. To deploy, you push them to a GitHub Pages repo, or copy them
 to Amazon S3, or whatever.
 
-You write content in Markdown.
+You write content in [Markdown][].
 
 Posts get a variety of automatic blog features.
 
 You can also create non-post pages.
+
+The genreated site presumes you're using [Bootstrap][] for CSS.
 
 Yes, it's very much like Octopress and countless others. But it
 doesn't require any Ruby gemmage. The only non-Racket part is
@@ -39,7 +41,13 @@ project/
       2013-02-15-another-blog-post-title.md
       ...
   css/
+    bootstrap.css
+    bootstrap-responsive.css
+    bootstrap.min.css
+    bootstrap-responsive.min.css
   js/
+    bootstrap.js
+    bootstrap.min.js
   img/
     navbar-logo.jpg
   favicon.ico
@@ -51,7 +59,7 @@ project/
   feeds/
   2013/01/a-blog-post-title.md
   2013/02/another-blog-post-title.md
-...
+  ...
 ```
 
 ## Posts
@@ -103,6 +111,14 @@ listed newest first) and a `/feeds/<tag-name>.xml` Atom feed.
 If you post has any section headings (e.g. `# Heading Level 1`, `##
 Heading level 2`), then an "On this page" table-of-contents is
 automatically generated and placed in the left side bar.
+
+Twitter and Google+ buttons are placed on each post page.
+
+Optional: If your `.frogrc` has a Disqus shortname, then Disqus
+comments are automatically included.
+
+Optional: If your `.frogrc` has Google Analytics account information,
+then the appropriate tracking code is automatically inserted.
 
 ### The `DRAFT` tag
 
@@ -213,6 +229,17 @@ of languages and is used by things like GitHub, BitBucket, and so
 on. Plus, it fits the spirit of static web site generation better than
 JavaScript options like [SyntaxHighlighter][].
 
+## Dependencies and installations
+
+This depends on two other Racket projects:
+
+1. [#lang rackjure](https://github.com/greghendershott/rackjure)
+
+2. [Racket Markdown parser](https://github.com/greghendershott/markdown)
+
+Neither of these are Planet packages yet. As a result, you'll need to
+`git clone` each one, and run `raco link` on each one.
+
 ## Per-project configuration: .frogrc
 
 You need to place a `.frogrc` file in your project directory.
@@ -261,7 +288,7 @@ A typical usage would be:
 1. Create a new post with `racket frog.rkt -n "My Post Title"`. The
 name of the new file is displayed to stdout.
 
-2. Edit the file in <strike>Emacs</strike> your preferred plain text editor.
+2. Edit the file in your preferred plain text editor.
 
 3. Regenerate your site and preview it  with `racket frog.rkt
 -bp`.
@@ -271,15 +298,7 @@ your real site.
 
 ## To-Do
 
-What's left for a "1.0" (or maybe a "Beta 1"):
-
-- Some per-project data (such as the author, title, path to Pygments,
-  etc.) are currently Racket parameters. I need to add code to read
-  those from a configuration file.
-
-- I need to document the command-line interface.
-
-Some things for "1.1" (or "Beta 2"):
+Some things on the "roadmap" (provided anyone wants them):
 
 - Paginate the index pages (show only N posts at a time, with
   older/newer links).
@@ -293,5 +312,7 @@ Some things for "1.1" (or "Beta 2"):
 
 
 [Racket]: (www.racket-lang.org)
+[Markdown]: (http://daringfireball.net/projects/markdown/syntax)
+[Bootstrap]: (http://twitter.github.com/bootstrap/index.html)
 [Pygments]: (http://pygments.org/)
 [SyntaxHighlighter]: (http://alexgorbatchev.com/SyntaxHighlighter/)
