@@ -2,7 +2,7 @@
 
 > Note: This has been tested on Mac OS/X; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
-> yet been tested on Windows--it's likey that the path handling
+> yet been tested on Windows--it's likely that the path handling
 > isn't exactly right.
 
 ## Overview
