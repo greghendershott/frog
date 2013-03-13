@@ -318,8 +318,8 @@ Some things on the "roadmap" (provided anyone wants them):
   bar. Probably as a Markdown unordered (bullet) list of links.
 
 
-[Racket]: (www.racket-lang.org)
-[Markdown]: (http://daringfireball.net/projects/markdown/syntax)
-[Bootstrap]: (http://twitter.github.com/bootstrap/index.html)
-[Pygments]: (http://pygments.org/)
-[SyntaxHighlighter]: (http://alexgorbatchev.com/SyntaxHighlighter/)
+[Racket]: http://www.racket-lang.org
+[Markdown]: http://daringfireball.net/projects/markdown/syntax
+[Bootstrap]: http://twitter.github.com/bootstrap/index.html
+[Pygments]: http://pygments.org/
+[SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
