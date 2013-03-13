@@ -297,6 +297,11 @@ name of the new file is displayed to stdout.
 If you're using GitHub Pages, you can commit and push to deploy to
 your real site.
 
+## Tips
+
+- If you use Emacs, try markdown-mode. Markdown is _really_ simple,
+  but markdown-mode makes it even more enjoyable.
+
 ## To-Do
 
 Some things on the "roadmap" (provided anyone wants them):
