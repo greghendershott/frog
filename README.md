@@ -318,7 +318,7 @@ Some things on the "roadmap" (provided anyone wants them):
   previous hand-coded site, but for some reason it's not working for
   Frog.)
   
-- Let the user supply a navbar.md to populate the top pnav
+- Let the user supply a navbar.md to populate the top nav
   bar. Probably as a Markdown unordered (bullet) list of links.
 
 
