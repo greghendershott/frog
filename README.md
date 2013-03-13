@@ -1,8 +1,9 @@
 # frog
 
-> Note: This has been tested on Mac OS/X. It should work fine on
-> Linux.  CAVEAT: It has _not_ been tested on Windows--it's possible
-> that the path handling might not be exactly right.
+> Note: This has been tested on Mac OS/X; I'm using it for
+> [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
+> yet been tested on Windows--it's likey that the path handling
+> isn't exactly right.
 
 ## Overview
 
@@ -223,12 +224,15 @@ Yields this:
     (printf "source file: ~a\n" path)))
 ```
 
+The appearance is controlled by your `css/pygments.css` file:
+[examples](https://github.com/richleland/pygments-css).
+
 I have a soft spot for [Pygments][] because it's actually the first
 existing open source project to which I contributed. I added a lexer
 for the [Racket][] language. More importantly it has lexers for tons
-of languages and is used by things like GitHub, BitBucket, and so
-on. Plus, it fits the spirit of static web site generation better than
-JavaScript options like [SyntaxHighlighter][].
+of languages and is used by things like GitHub (via [pygments.rb][]),
+BitBucket, and so on. Plus, it fits the spirit of static web site
+generation better than JavaScript options like [SyntaxHighlighter][].
 
 ## Dependencies and installations
 
@@ -277,14 +281,14 @@ frog.rkt [ <option> ... ]
  where <option> is one of
   -c, --clean : Delete generated files.
   -m, --make, -b, --build : Generate files.
-  -p, --preview : Run a local server and starting your browser.
+  -p, --preview : Run a local server and start your browser.
   -n <title>, --new <title> : Create a file for a new post based on today's
     date and your supplied <title>.
   --pygments-css <style-name> : Generate ./css/pygments.css using style-name (ex: 'default')
   --help, -h : Show this help
 ```
 
-A typical usage would be:
+A typical workflow:
 
 1. Create a new post with `racket frog.rkt -n "My Post Title"`. The
 name of the new file is displayed to stdout.
@@ -294,7 +298,7 @@ name of the new file is displayed to stdout.
 3. Regenerate your site and preview it  with `racket frog.rkt
 -bp`.
 
-If you're using GitHub Pages, you can commit and push to deploy to
+If you're using [GitHub Pages][], you can commit and push to deploy to
 your real site.
 
 ## Tips
@@ -318,8 +322,11 @@ Some things on the "roadmap" (provided anyone wants them):
   bar. Probably as a Markdown unordered (bullet) list of links.
 
 
+[my blog]: http://www.greghendershott.com
 [Racket]: http://www.racket-lang.org
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
 [Bootstrap]: http://twitter.github.com/bootstrap/index.html
 [Pygments]: http://pygments.org/
+[pygments.rb]: https://github.com/tmm1/pygments.rb
 [SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
+[GitHub Pages]: https://help.github.com/articles/user-organization-and-project-pages
