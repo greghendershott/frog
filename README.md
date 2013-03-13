@@ -42,11 +42,11 @@ project/
       2013-02-15-another-blog-post-title.md
       ...
   css/
+    pygments.css # styles for syntax highlighting
     bootstrap.css                #\
     bootstrap.min.css            # get these files
     bootstrap-responsive.css     # from Bootstrap
     bootstrap-responsive.min.css #/
-    pygments.css     # syntax highlighting styles
   js/
     bootstrap.js                 # get these files
     bootstrap.min.js             # from Bootstrap
