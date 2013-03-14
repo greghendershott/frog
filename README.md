@@ -34,15 +34,16 @@ project/
   # Files provided by you:
   .frogrc
   _src/
-    footer.md
-    About.md
-    ...
+    footer.md   # goes on every page
+    navbar.md   # adds extra items to navbar (optional)
     posts/
       2013-01-01-a-blog-post-title.md
       2013-02-15-another-blog-post-title.md
       ...
+    # Zero or more other .md files for non-post pages
   css/
     pygments.css # styles for syntax highlighting
+    custom.css   # other styles you provide
     bootstrap.css                #\
     bootstrap.min.css            # get these files
     bootstrap-responsive.css     # from Bootstrap
@@ -150,16 +151,19 @@ Non-post pages are _not_ included in any automatically generated index
 pages or feeds.  If you want them to be linked in, you must do so
 manually.
 
-> Note: The navbar is currently hardcoded to look for `/About.html`, and
-> that's it. It's a to-do item to let you specify more items, perhaps
-> using a `_src/navbar.md` file.
-
-
 ## footer.md
 
 The special file `_src/footer.md` is converted to HTML and placed at
 the foot of all pages (both posts and non-post pages).
 
+## navbar.md
+
+The special file `_src/navbar.md` optionally adds extra items to the
+top navbar.  It should consist of a single bulleted list of links, in
+Markdown.  For example:
+
+    - [About](/About.html)
+    - [Something Else](/path/to/thing)
 
 ## sitemap.txt
 
@@ -240,6 +244,22 @@ for the [Racket][] language. More importantly it has lexers for tons
 of languages and is used by things like GitHub (via [pygments.rb][]),
 BitBucket, and so on. Plus, it fits the spirit of static web site
 generation better than JavaScript options like [SyntaxHighlighter][].
+
+### Wrapping
+
+If you use larger font sizes the code may wrap, and get out of
+alignment with the line numbers. To avoid the wrapping, add the
+following to your `css/custom.css`:
+
+```css
+/* When highlighted code blocks are too wide, they wrap. Resulting in the */
+/* line numbers column's rows not lining up with the code rows. Prevent */
+/* wrapping. */
+pre {
+    white-space: pre;
+    width: inherit;
+}
+```
 
 ## Dependencies and installations
 
