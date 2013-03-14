@@ -14,6 +14,9 @@
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))
 
+;; For interactive development
+(define-runtime-path example "example/")
+
 ;; sources
 (define (src-path) (build-path (top) "_src"))
 (define (src/posts-path) (build-path (src-path) "posts"))
@@ -293,8 +296,8 @@
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
                ,(bootstrap-css)
-               ,(link/css "/css/custom.css")
                ,(link/css "/css/pygments.css")
+               ,(link/css "/css/custom.css")
                ;; Atom feed
                (link ([href ,(str "/feeds/" feed ".xml")]
                       [type "application/atom+xml"]
@@ -305,18 +308,7 @@
                ,(bootstrap-js)
                ,@(google-analytics))
          (body
-          (div ([class "navbar"])
-               (div ([class "navbar-inner"])
-                    (div ([class ,(bs-container)])
-                         (ul ([class "nav"])
-                             (li ([style "width: 60px;"])
-                                 (img ([style "width: 42px; height:33px;"]
-                                       [src "/img/navbar-logo.jpg"])))
-                             (li (a ([href "/index.html"][class "brand"])
-                                    ,(current-title)))
-                             ,(nav-li "/index.html" "Home" uri-path)
-                             ;; Perhaps fill this from a Navbar.md file?
-                             ,(nav-li "/About.html" "About" uri-path) ))))
+          ,(navbar uri-path)
           (div ([class ,(bs-container)])
                (div ([class ,(bs-row)])
                     ;; Span2: Docs sidebar
@@ -329,32 +321,61 @@
                     ;; Span2: Tags list
                     (div ([class "span2"])
                          ,(tag-cloud-xexpr)))
-               (hr)
                (footer
+                (hr)
                 ,@(with-input-from-file
                       (build-path (src-path) "footer.md")
                     read-markdown)))
-          ;; ;; Boostrap JavaScript. Recommended to include at end of body
-          ;; ;; body page load speed.
-          ;; (script/js "/js/jquery.js")
-          ;; (script/js "/js/bootstrap-transition.js")
-          ;; (script/js "/js/bootstrap-alert.js")
-          ;; (script/js "/js/bootstrap-modal.js")
-          ;; (script/js "/js/bootstrap-dropdown.js")
-          ;; (script/js "/js/bootstrap-scrollspy.js")
-          ;; (script/js "/js/bootstrap-tab.js")
-          ;; (script/js "/js/bootstrap-tooltip.js")
-          ;; (script/js "/js/bootstrap-popover.js")
-          ;; (script/js "/js/bootstrap-button.js")
-          ;; (script/js "/js/bootstrap-collapse.js")
-          ;; (script/js "/js/bootstrap-carousel.js")
-          ;; (script/js "/js/bootstrap-typeahead.js")
           )))
+
+(define (navbar active-uri-path)
+  `(div ([class "navbar navbar-inverse"])
+        (div ([class "navbar-inner"])
+             (div ([class "container"])
+                  ,(nav-ul (read-navbar) active-uri-path)))))
+
+(define read-navbar
+  (let ([navbar-xexpr #f]) ;; read navbar.md on-demand, memoize
+    (lambda ()
+      (unless navbar-xexpr
+        (define md (build-path (src-path) "navbar.md"))
+        (set! navbar-xexpr
+              (cond [(file-exists? md)
+                     (eprintf "Reading ~a..." (abs->rel/top md))
+                     (match (with-input-from-file md read-markdown)
+                       [`((ul ,xs ...))
+                        (eprintf "found bulleted list for navbar\n")
+                        xs]
+                       [else
+                        (eprintf "bulleted list not found; ignoring.\n")
+                        '()])]
+                    [else
+                     (eprintf "~a not found; no extra navbar items\n"
+                              (abs->rel/top md))
+                     '()])))
+      navbar-xexpr)))
+
+(define (nav-ul items active-uri-path)
+  `(ul ([class "nav"])
+       (li ([style "width: 60px;"])
+           (img ([style "width: 42px; height:33px;"]
+                 [src "/img/navbar-logo.jpg"])))
+       (li (a ([href "/index.html"][class "brand"]) ,(current-title)))
+       ,(nav-li "/index.html" "Home" active-uri-path)
+       ,@(for/list ([item items])
+           (match item
+             [`(li (a ([href ,uri]) ,text))
+              (nav-li uri text active-uri-path)]
+             [`(ul ,items ...) (nav-ul items active-uri-path)]
+             [else item]))))
 
 (define (nav-li href text uri-path)
   `(li ,(cond [(string-ci=? href uri-path) `([class "active"])]
               [else `()])
        (a ([href ,href]) ,text)))
+
+;; (pretty-print (parameterize ([top example])
+;;                 (navbar "/About.html")))
 
 (define (google-analytics)
   (cond [(and (current-google-analytics-account)
@@ -809,7 +830,6 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; For interactive development
-(define-runtime-path example "example/") ;; just for dev
 (define (build/preview)
   (parameterize ([top example])
     (parameterize-from-config ([scheme/host raise-config-required-error]
