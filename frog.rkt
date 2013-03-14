@@ -344,14 +344,16 @@
           (div ([class ,(bs-container)])
                (div ([class ,(bs-row)])
                     ;; Span2: Docs sidebar
-                    (div ([class "span2 bs-docs-sidebar"])
+                    (div ([id "left-sidebar"]
+                          [class "span2 bs-docs-sidebar"])
                          ,(toc-xexpr))
                     ;; Span8: Main content
                     (div ([id "content"][class "span8"])
                          ;; Caller's content
                          ,@xs)
                     ;; Span2: Tags list
-                    (div ([class "span2"])
+                    (div ([id "right-sidebar"]
+                          [class "span2"])
                          ,(tag-cloud-xexpr)))
                (footer
                 (hr)
