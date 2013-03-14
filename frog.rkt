@@ -315,7 +315,7 @@
          (ul ,@(for/list ([(k v) (in-dict alist)])
                  `(li ,(tag->xexpr k (format " (~a)" v))))))
       (p (a ([href ,feed-uri])
-            (img ([src "img/feed.png"])) 'nbsp "Atom feed"))))
+            (img ([src "/img/feed.png"])) 'nbsp "Atom feed"))))
 
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
