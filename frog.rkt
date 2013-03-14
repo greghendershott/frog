@@ -296,6 +296,9 @@
                       #:uri-path uri-path       ;string?
                       #:feed [feed "all"])      ;string?
   ;; -> xexpr?
+
+  (define feed-uri (str "/feeds/" feed ".xml"))
+
   (define (toc-xexpr)
     (match (toc xs)
       [`(div ([class "toc"]) (ol ,contents ...))
@@ -307,9 +310,12 @@
     (define alist (~> (for/list ([(k v) (in-hash all-tags)])
                         (cons k v))
                       (sort string-ci<=? #:key car)))
-    `(p "Tags:"
-        (ul ,@(for/list ([(k v) (in-dict alist)])
-                `(li ,(tag->xexpr k (format " (~a)" v)))))))
+    `(div
+      (p "Tags:"
+         (ul ,@(for/list ([(k v) (in-dict alist)])
+                 `(li ,(tag->xexpr k (format " (~a)" v))))))
+      (p (a ([href ,feed-uri])
+            (img ([src "img/feed.png"])) 'nbsp "Atom feed"))))
 
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
@@ -325,7 +331,7 @@
                ,(link/css "/css/pygments.css")
                ,(link/css "/css/custom.css")
                ;; Atom feed
-               (link ([href ,(str "/feeds/" feed ".xml")]
+               (link ([href ,feed-uri]
                       [type "application/atom+xml"]
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
