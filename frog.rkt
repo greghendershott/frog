@@ -53,6 +53,8 @@
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
+(define current-index-full? (make-parameter #f)) ;index pages: full posts?
+(define current-feed-full? (make-parameter #f))  ;feeds: full posts?
 (define current-google-analytics-account (make-parameter #f))
 (define current-google-analytics-domain (make-parameter #f))
 (define current-disqus-shortname (make-parameter #f))
@@ -67,11 +69,13 @@
 (struct post (title      ;string?
               dest-path  ;path? - full pathname of local HTML file
               uri-path   ;string? - path portion of URI, with leading /
-              date       ;string? - 8601
+              date       ;string? - 8601 datetime format
               tags       ;(listof string?)
               blurb      ;(listof xexpr?) - the post summary
-              more?      ;boolean? - is `blurb` a subset of `body`?
-              body       ;(listof xexpr?) - the full post
+              more?      ;boolean? - is `body` more than just `blurb`?
+              body       ;(listof xexpr?) - the full post xexprs, with
+                         ;any <!-- more --> line removed, but NOT
+                         ;syntax highlighted
               ))
 
 ;; Given a uri-path, prepend the scheme & host to make a full URI.
@@ -116,7 +120,7 @@
                            tags
                            blurb
                            more?
-                           body)
+                           (filter (negate more-xexpr?) body))
                      v)])]
        [else
         (eprintf (str "Skipping ~a\n"
@@ -148,7 +152,7 @@
 (define (post-xexpr title uri-path date tags body older newer)
   `((h1 ,title)
     ,(date+tags->xexpr date tags)
-    ,@(filter (negate more-xexpr?) (syntax-highlight-body body))
+    ,@(syntax-highlight body)
     (p 'nbsp)
     ,(social uri-path)
     (p 'nbsp)
@@ -407,6 +411,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-index xs title tag feed file) ;; (listof post?) -> any
+  (eprintf "Generating ~a\n" (abs->rel/top file))
   (~> (cons
        `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
                     [else `(,title)]))
@@ -416,10 +421,11 @@
         `(div ([class "index-post"])
               (h2 (a ([href ,uri-path]) ,title))
               ,(date+tags->xexpr date tags)
-              ,@blurb
-              ,@(cond [more? `((a ([href ,uri-path])
+              ,@(cond [(current-index-full?) (syntax-highlight body)]
+                      [more? `(,@(syntax-highlight blurb)
+                               (a ([href ,uri-path])
                                   (em "Continue reading ...")))]
-                      [else '()]))))
+                      [else (syntax-highlight blurb)]))))
       (add-between `(hr))
       (bodies->page #:title title
                     #:description title
@@ -465,7 +471,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (syntax-highlight-body xs)
+(define (syntax-highlight xs)
   (append* (for/list ([x xs])
              (match x
                [`(pre ([class ,brush]) ,text)
@@ -477,7 +483,7 @@
 
 (define (pygmentize text lang)
   (cond [(current-pygments-pathname)
-         (eprintf "System call to pygmentize...\n")
+         (eprintf "  (system call to pygmentize)\n")
          (define tmp-in (make-temporary-file))
          (define tmp-out (make-temporary-file))
          (display-to-file text tmp-in #:exists 'replace)
@@ -613,10 +619,11 @@
      ([type "html"])
      ,(xexpr->string
        `(html
-         ,@blurb
-         ,@(cond [more? `((a ([href ,(full-uri uri-path)])
-                             "Continue reading ..."))]
-                 [else '()]))))))
+         ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
+                 [more? `(,@blurb
+                          (a ([href ,uri-path])
+                             (em "Continue reading ...")))]
+                 [else blurb]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -635,7 +642,7 @@ EOF
 (define (new-post title)
   (parameterize ([date-display-format 'iso-8601])
     (define d (current-date))
-    (define filename (str (~> (str (date->string d #f) ;don't inc time
+    (define filename (str (~> (str (date->string d #f) ;omit time
                                    "-"
                                    (~> title string-downcase))
                               our-encode)
@@ -835,6 +842,8 @@ EOF
     (parameterize-from-config ([scheme/host raise-config-required-error]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [index-full? #f]
+                               [feed-full? #f]
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
@@ -851,6 +860,8 @@ EOF
     (parameterize-from-config ([scheme/host raise-config-required-error]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [index-full? #f]
+                               [feed-full? #f]
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]

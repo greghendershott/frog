@@ -4,6 +4,14 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Comment this out to have index pages' items contain only the "blurb"
+# before the <!-- more --> marked (if any) in a post.
+index-full? = true
+
+# Comment this out to have Atom feed items contain only the "blurb"
+# before the <!-- more --> marked (if any) in a post.
+feed-full? = true
+
 # Optional: The UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
 

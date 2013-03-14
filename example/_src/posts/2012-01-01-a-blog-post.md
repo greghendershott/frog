@@ -4,8 +4,9 @@
 
 Here is an example blog post.
 
-Everything after this is "after the break". On index pages and Atom
-feeds, it will become "Continue reading...".
+Everything after this paragraph "after the break". On index pages and
+Atom feeds, it will become "Continue reading...", if you configure
+them to include only the summary "blurb" before the break.
 
 <!-- more -->
 
