@@ -301,18 +301,24 @@ author = The Unknown Author
 
 ## Command line
 
-Run `racket /path/to/frog.rkt -h` to see the options.
+Run `racket /path/to/frog.rkt -h` to see the options:
 
 ```
 frog.rkt [ <option> ... ]
  where <option> is one of
-  -c, --clean : Delete generated files.
-  -m, --make, -b, --build : Generate files.
-  -p, --preview : Run a local server and start your browser.
   -n <title>, --new <title> : Create a file for a new post based on today's
     date and your supplied <title>.
+  -m, --make, -b, --build : Generate files.
+  -p, --preview : Run a local server and start your browser.
+  -c, --clean : Delete generated files.
   --pygments-css <style-name> : Generate ./css/pygments.css using style-name (ex: 'default')
+/ -v, --verbose : Verbose. Put first.
+\ -V, --very-verbose : Very verbose. Put first.
   --help, -h : Show this help
+  -- : Do not treat any remaining argument as a switch (at this level)
+ /|\ Brackets indicate mutually exclusive options.
+ Multiple single-letter switches can be combined after one `-'; for
+  example: `-h-' is the same as `-h --'
 ```
 
 A typical workflow:

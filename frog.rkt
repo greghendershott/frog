@@ -6,6 +6,7 @@
          (prefix-in h: html)
          racket/date
          (only-in srfi/1 break)
+         (for-syntax racket/syntax)
          ;; Remainder are just for the preview feature:
          web-server/servlet-env
          web-server/http
@@ -50,6 +51,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parameters loaded from configuration file
 
+(define current-verbosity (make-parameter 0))
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
@@ -59,6 +61,26 @@
 (define current-google-analytics-domain (make-parameter #f))
 (define current-disqus-shortname (make-parameter #f))
 (define current-pygments-pathname (make-parameter #f))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; verbosity
+
+(define (prn level fmt . vs)
+  (when (>= (current-verbosity) level)
+    (apply printf fmt vs)
+    (newline)))
+
+(define-syntax (make-prn stx)
+  (syntax-case stx ()
+    [(_ level)
+     ;;(number? (syntax-e #'level))
+     (with-syntax ([id (format-id stx "prn~a" (syntax-e #'level))])
+       #'(define (id fmt . vs)
+           (apply prn level fmt vs)))]))
+
+(make-prn 0)
+(make-prn 1)
+(make-prn 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -93,12 +115,12 @@
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
-               (eprintf (str "Skipping ~a\n"
-                             "         because it has the tag, 'DRAFT'\n")
-                        (abs->rel/top path))
+               (prn0 (str "Skipping ~a\n"
+                          "         because it has the tag, 'DRAFT'")
+                     (abs->rel/top path))
                v]
               [else
-               (eprintf "Reading ~a\n" (abs->rel/top path))
+               (prn1 "Reading ~a" (abs->rel/top path))
                ;; Add these tags to the set
                (for ([x tags])
                  (unless (equal? x "")
@@ -123,21 +145,21 @@
                            (filter (negate more-xexpr?) body))
                      v)])]
        [else
-        (eprintf (str "Skipping ~a\n"
-                      "         Not named ~a\n")
-                 (abs->rel/top path)
-                 post-file-px)
+        (prn2 (str "Skipping ~a\n"
+                   "         Not named ~a")
+              (abs->rel/top path)
+              post-file-px)
         v])]
     [else v]))
 
 (define (maybe-make-directory p)
   (unless (directory-exists? p)
-    (eprintf "Creating directory ~a\n" (abs->rel/top p))
+    (prn0 "Creating directory ~a" (abs->rel/top p))
     (make-directory p)))
 
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri-path date tags blurb more? body) p)
-  (eprintf "Generating post ~a\n" (abs->rel/top dest-path))
+  (prn1 "Generating post ~a" (abs->rel/top dest-path))
   (~> (post-xexpr title uri-path date tags body older newer)
       (bodies->page #:title title
                     #:description (xexprs->description blurb)
@@ -342,20 +364,19 @@
   (let ([navbar-xexpr #f]) ;; read navbar.md on-demand, memoize
     (lambda ()
       (unless navbar-xexpr
-        (define md (build-path (src-path) "navbar.md"))
+        (define /md (build-path (src-path) "navbar.md"))
         (set! navbar-xexpr
-              (cond [(file-exists? md)
-                     (eprintf "Reading ~a..." (abs->rel/top md))
-                     (match (with-input-from-file md read-markdown)
+              (cond [(file-exists? /md)
+                     (define md (abs->rel/top /md))
+                     (match (with-input-from-file /md read-markdown)
                        [`((ul ,xs ...))
-                        (eprintf "found bulleted list for navbar\n")
+                        (prn1 "Read bulleted list for navbar from ~a" md)
                         xs]
                        [else
-                        (eprintf "bulleted list not found; ignoring.\n")
+                        (prn0 "Bulleted list not found; ignoring ~a" md)
                         '()])]
                     [else
-                     (eprintf "~a not found; no extra navbar items\n"
-                              (abs->rel/top md))
+                     (prn1 "~a not found; no extra navbar items" /md)
                      '()])))
       navbar-xexpr)))
 
@@ -411,7 +432,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-index xs title tag feed file) ;; (listof post?) -> any
-  (eprintf "Generating ~a\n" (abs->rel/top file))
+  (prn1 "Generating ~a" (abs->rel/top file))
   (~> (cons
        `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
                     [else `(,title)]))
@@ -483,7 +504,7 @@
 
 (define (pygmentize text lang)
   (cond [(current-pygments-pathname)
-         (eprintf "  (system call to pygmentize)\n")
+         (prn2 "  system call to pygmentize")
          (define tmp-in (make-temporary-file))
          (define tmp-out (make-temporary-file))
          (display-to-file text tmp-in #:exists 'replace)
@@ -518,7 +539,7 @@
                      "-f html"
                      "-S " style
                      "> " (pygments.css)))
-    (eprintf "Generating css/pygments.css\n")
+    (prn0 "Generating css/pygments.css")
     (system cmd)
     (void)))
 
@@ -584,7 +605,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-atom-feed xs title of-uri-path file)
-  (eprintf "Generating ~a\n" (abs->rel/top file))
+  (prn1 "Generating ~a" (abs->rel/top file))
   (define updated (post-date (first xs)))
   (~>
    `(feed
@@ -670,7 +691,7 @@ EOF
   (define (maybe-delete path type v)
     (define (rm p)
       (delete-file p)
-      (eprintf "Deleted ~a\n" (abs->rel/top p)))
+      (prn0 "Deleted ~a" (abs->rel/top p)))
     (cond
      [(eq? type 'file)
       (define-values (base name must-be-dir?) (split-path path))
@@ -698,7 +719,7 @@ EOF
          (regexp-match? #px"\\.(?:md|markdown)$" path)
          (not (member (path->string name) '("footer.md" "navbar.md")))
          (not (regexp-match? post-file-px (path->string name))))
-    (eprintf "Reading non-post ~a\n" (abs->rel/top path))
+    (prn1 "Reading non-post ~a" (abs->rel/top path))
     (define xs (with-input-from-file path read-markdown))
     (define dest-path
       (build-path (www-path)
@@ -713,7 +734,7 @@ EOF
                       file-name-from-path
                       path->string))
     (define uri-path (abs->rel/www dest-path))
-    (eprintf "Generating non-post ~a\n" (abs->rel/top dest-path))
+    (prn1 "Generating non-post ~a" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
                       #:description (xexprs->description xs)
@@ -772,7 +793,7 @@ EOF
   ;; Write sitemap
   ;; One gotcha: What about other "sub-sites", for example GitHub project
   ;; pages?  How to include them in sitemap.txt?
-  (eprintf "Generating sitemap.txt\n")
+  (prn1 "Generating sitemap.txt")
   (with-output-to-file (build-path (www-path) "sitemap.txt")
     #:exists 'replace
     (thunk (for ([x (in-list (map full-uri
@@ -782,6 +803,7 @@ EOF
   ;; exist
   (unless (file-exists? (pygments.css))
     (make-pygments.css "default"))
+  (prn0 "Done generating files")
   (void))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -803,7 +825,6 @@ EOF
   (define pathname (build-path (top) .frogrc))
   (unless (file-exists? pathname)
     (raise-user-error '|Configuration file| "Missing ~a" pathname))
-  (eprintf "Reading ~a\n" pathname)
   (let ([v (match (file->string pathname)
              [(pregexp (str "(?:^|\n)"
                             (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
@@ -811,7 +832,7 @@ EOF
                        (list _ v)) v]
              [else (cond [(procedure? default) (default name)]
                          [else default])])])
-    (eprintf "Configuration ~s = ~s\n" name v)
+    (prn1 ".frogc: ~s = ~s" name v)
     v))
 
 (define (raise-config-required-error name)
@@ -838,7 +859,8 @@ EOF
 
 ;; For interactive development
 (define (build/preview)
-  (parameterize ([top example])
+  (parameterize ([top example]
+                 [current-verbosity 99])
     (parameterize-from-config ([scheme/host raise-config-required-error]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
@@ -868,19 +890,26 @@ EOF
                                [pygments-pathname #f])
       (command-line
        #:once-each
-       [("-c" "--clean")
-        "Delete generated files."
-        (clean)]
+       [("-n" "--new") title
+        ("Create a file for a new post based on today's"
+         "date and your supplied <title>.")
+        (new-post title)]
        [("-m" "--make" "-b" "--build")
         "Generate files."
         (build)]
        [("-p" "--preview")
         "Run a local server and start your browser."
         (preview)]
-       [("-n" "--new") title
-        ("Create a file for a new post based on today's"
-         "date and your supplied <title>.")
-        (new-post title)]
+       [("-c" "--clean")
+        "Delete generated files."
+        (clean)]
        [("--pygments-css") style-name
         "Generate ./css/pygments.css using style-name (ex: 'default')"
-        (make-pygments.css style-name)]))))
+        (make-pygments.css style-name)]
+       #:once-any
+       [("-v" "--verbose") "Verbose. Put first."
+        (current-verbosity 1)
+        (prn1 "Verbose mode")]
+       [("-V" "--very-verbose") "Very verbose. Put first."
+        (current-verbosity 2)
+        (prn2 "Very verbose mode")]))))
