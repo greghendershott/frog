@@ -689,7 +689,7 @@ EOF
   (cond
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown)$" path)
-         (not (member (path->string name) '("footer.md")))
+         (not (member (path->string name) '("footer.md" "navbar.md")))
          (not (regexp-match? post-file-px (path->string name))))
     (eprintf "Reading non-post ~a\n" (abs->rel/top path))
     (define xs (with-input-from-file path read-markdown))
