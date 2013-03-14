@@ -323,7 +323,7 @@
                     (div ([class "span2 bs-docs-sidebar"])
                          ,(toc-xexpr))
                     ;; Span8: Main content
-                    (div ([class "span8"])
+                    (div ([id "content"][class "span8"])
                          ;; Caller's content
                          ,@xs)
                     ;; Span2: Tags list
