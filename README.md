@@ -285,11 +285,18 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
-# Optional: The UA-xxxx account number
+# Comment this out to have index pages' items contain only the "blurb"
+# before the <!-- more --> mark (if any) in a post.
+# index-full? = true
+
+# Comment this out to have Atom feed items contain only the "blurb"
+# before the <!-- more --> mark (if any) in a post.
+feed-full? = true
+
+# Optional: The Google Analytics UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
 
-# Optional: The domain to use. Often just example.com not
-# www.example.com
+# Optional: The Google Analytics domain to use.
 # google-analytics-domain = example.com
 
 # Optional: Disqus comment system "short name"
