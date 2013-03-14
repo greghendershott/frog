@@ -335,18 +335,8 @@ your real site.
 
 ## To-Do
 
-Some things on the "roadmap" (provided anyone wants them):
+See [open issues labeled `enhancement`][enhancements].
 
-- Paginate the index pages (show only N posts at a time, with
-  older/newer links).
-  
-- Get the Bootstrap responsive mode working, then add this as a
-  `.frogrc` item instead of hardcoding to off. (It was working for my
-  previous hand-coded site, but for some reason it's not working for
-  Frog.)
-  
-- Let the user supply a navbar.md to populate the top nav
-  bar. Probably as a Markdown unordered (bullet) list of links.
 
 
 [my blog]: http://www.greghendershott.com
@@ -357,3 +347,4 @@ Some things on the "roadmap" (provided anyone wants them):
 [pygments.rb]: https://github.com/tmm1/pygments.rb
 [SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
 [GitHub Pages]: https://help.github.com/articles/user-organization-and-project-pages
+[enhancements]: https://github.com/greghendershott/frog/issues?labels=enhancement&page=1&state=open
