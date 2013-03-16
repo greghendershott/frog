@@ -759,45 +759,43 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build)
-  (define (post<=? a b)
-    (string<=? (post-date a) (post-date b)))
-
-  (set! all-tags (make-hash))
-
   ;; Read the posts and get (listof post?) with which to do more work.
   ;; Sort the list by date, newest first.
-  (define xs (~> (fold-files read-post '() (src/posts-path) #f)
-                 (sort (negate post<=?))))
-  ;; Make lists for older and newer items. Just shift each list and
-  ;; add #f to one end.
-  (define older (append (drop xs 1) (list #f)))
-  (define newer (cons #f (take xs (sub1 (length xs)))))
+  (define (post<=? a b)
+    (string<=? (post-date a) (post-date b)))
+  (set! all-tags (make-hash))
+  (define posts (~> (fold-files read-post '() (src/posts-path) #f)
+                    (sort (negate post<=?))))
+  ;; Make lists for older and newer items. Just shift each direction
+  ;; and add #f to one end.
+  (define older (append (drop posts 1) (list #f)))
+  (define newer (cons #f (take posts (sub1 (length posts)))))
   ;; Write the post pages
-  (for-each write-post-page xs older newer)
+  (for-each write-post-page posts older newer)
   ;; For each tag, write an index page and Atom feed
+  (define (post-has-tag? tag post)
+    (member tag (post-tags post)))
   (for ([(tag _) (in-hash all-tags)])
-    (define xs-this-tag (filter (lambda (x)
-                                  (member tag (post-tags x)))
-                                xs))
+    (define posts-this-tag (filter (curry post-has-tag? tag) posts))
     (define tag-index-path
       (build-path (www/tags-path) (str (our-encode tag) ".html")))
-    (write-index xs-this-tag
+    (write-index posts-this-tag
                  (str "Posts tagged '" tag "'")
                  tag
                  (our-encode tag)
                  tag-index-path)
-    (write-atom-feed xs-this-tag
+    (write-atom-feed posts-this-tag
                      (str "Posts tagged '" tag "'")
                      (abs->rel/www tag-index-path)
                      (build-path (www/feeds-path) (str (our-encode tag)
                                                        ".xml"))))
   ;; Write the index page for all posts
-  (write-index xs "All Posts" #f "all" (build-path (www-path) "index.html"))
+  (write-index posts "All Posts" #f "all" (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
-  (write-atom-feed xs "All Posts" "/index.html"
+  (write-atom-feed posts "All Posts" "/index.html"
                    (build-path (www/feeds-path) "all.xml"))
   ;; Generate non-post pages.
-  (define npps (build-non-post-pages))
+  (define pages (build-non-post-pages))
   ;; Write sitemap
   ;; One gotcha: What about other "sub-sites", for example GitHub project
   ;; pages?  How to include them in sitemap.txt?
@@ -805,7 +803,7 @@ EOF
   (with-output-to-file (build-path (www-path) "sitemap.txt")
     #:exists 'replace
     (thunk (for ([x (in-list (map full-uri
-                                  (append (map post-uri-path xs) npps)))])
+                                  (append (map post-uri-path posts) pages)))])
              (displayln x))))
   ;; Generate pygments.css automatically ONLY if it doesn't already
   ;; exist
