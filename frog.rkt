@@ -163,7 +163,8 @@
   (~> (post-xexpr title uri-path date tags body older newer)
       (bodies->page #:title title
                     #:description (xexprs->description blurb)
-                    #:uri-path uri-path)
+                    #:uri-path uri-path
+                    #:keywords tags)
       xexpr->string
       (list "<!DOCTYPE html>")
       reverse
@@ -290,11 +291,12 @@
   (if (responsive?) "row-fluid" "row"))
 
 ;; And now our Feature Presentation:
-(define (bodies->page xs                        ;listof xexpr?
-                      #:title title             ;string?
-                      #:description description ;string?
-                      #:uri-path uri-path       ;string?
-                      #:feed [feed "all"])      ;string?
+(define (bodies->page xs                         ;listof xexpr?
+                      #:title title              ;string?
+                      #:description description  ;string?
+                      #:uri-path uri-path        ;string?
+                      #:feed [feed "all"]        ;string?
+                      #:keywords [keywords '()]) ;listof string?
   ;; -> xexpr?
 
   (define feed-uri (str "/feeds/" feed ".xml"))
@@ -322,6 +324,7 @@
                (title ,title)
                ,(meta "description" description)
                ,(meta "author" (current-author))
+               ,(meta "keywords" (string-join keywords ","))
                (link ([rel "canonical"][href ,(full-uri uri-path)]))
                (link ([href "/favicon.ico"][rel "shortcut icon"]))
                (meta ([name "viewport"]
@@ -439,7 +442,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-index xs title tag feed file) ;; (listof post?) -> any
+(define (write-index xs    ;(listof post?) -> any
+                     title ;string?
+                     tag   ;or/c #f string?
+                     feed  ;string?
+                     file) ;path?
   (prn1 "Generating ~a" (abs->rel/top file))
   (~> (cons
        `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
@@ -459,7 +466,9 @@
       (bodies->page #:title title
                     #:description title
                     #:feed feed
-                    #:uri-path (abs->rel/www file))
+                    #:uri-path (abs->rel/www file)
+                    #:keywords (cond [tag (list tag)]
+                                     [else (hash-keys all-tags)]))
       xexpr->string
       (list "<!DOCTYPE html>\n")
       reverse
