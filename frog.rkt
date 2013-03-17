@@ -295,11 +295,12 @@
                       #:title title              ;string?
                       #:description description  ;string?
                       #:uri-path uri-path        ;string?
-                      #:feed [feed "all"]        ;string?
+                      #:feed [feed "All"]        ;string?
                       #:keywords [keywords '()]) ;listof string?
   ;; -> xexpr?
 
-  (define feed-uri (str "/feeds/" feed ".xml"))
+  (define atom-feed-uri (str "/feeds/" feed ".atom.xml"))
+  (define rss-feed-uri (str "/feeds/" feed ".rss.xml"))
 
   (define (toc-xexpr)
     (match (toc xs)
@@ -308,7 +309,7 @@
              [else `(div (p "On this page:"
                             (ol ([class "nav nav-list bs-docs-sidenav"])
                                 ,@contents)))])]))
-  (define (tag-cloud-xexpr)
+  (define (tags/feeds-xexpr)
     (define alist (~> (for/list ([(k v) (in-hash all-tags)])
                         (cons k v))
                       (sort string-ci<=? #:key car)))
@@ -316,8 +317,10 @@
       (p "Tags:"
          (ul ,@(for/list ([(k v) (in-dict alist)])
                  `(li ,(tag->xexpr k (format " (~a)" v))))))
-      (p (a ([href ,feed-uri])
-            (img ([src "/img/feed.png"])) 'nbsp "Atom feed: " ,feed))))
+      (p (img ([src "/img/feed.png"])) " "
+         ,feed " "
+         (a ([href ,atom-feed-uri]) "Atom") "/"
+         (a ([href ,rss-feed-uri]) "RSS"))))
 
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
@@ -334,8 +337,13 @@
                ,(link/css "/css/pygments.css")
                ,(link/css "/css/custom.css")
                ;; Atom feed
-               (link ([href ,feed-uri]
+               (link ([href ,atom-feed-uri]
                       [type "application/atom+xml"]
+                      [rel "alternate"]
+                      [title ,(str (current-title) ": " feed)]))
+               ;; RSS feed
+               (link ([href ,rss-feed-uri]
+                      [type "application/rss+xml"]
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
                ;; JS
@@ -357,7 +365,7 @@
                     ;; Span2: Tags list
                     (div ([id "right-sidebar"]
                           [class "span2"])
-                         ,(tag-cloud-xexpr)))
+                         ,(tags/feeds-xexpr)))
                (footer
                 (hr)
                 ,@(with-input-from-file
@@ -635,7 +643,7 @@
      ;; (id () ???)
      ;; (etag () ???)
      (updated () ,updated)
-     ,@(map post->feed-entry-xexpr xs))
+     ,@(map post->atom-feed-entry-xexpr xs))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -643,7 +651,7 @@
    string->bytes/utf-8
    (display-to-file* file #:exists 'replace)))
 
-(define (post->feed-entry-xexpr x) ;; post? -> xexpr?
+(define (post->atom-feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri-path date tags blurb more? body) x)
   `(entry
     ()
@@ -654,6 +662,45 @@
     (published () ,date)
     (updated () ,date)
     (content
+     ([type "html"])
+     ,(xexpr->string
+       `(html
+         ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
+                 [more? `(,@blurb
+                          (a ([href ,uri-path])
+                             (em "Continue reading ...")))]
+                 [else blurb]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (write-rss-feed xs title of-uri-path file)
+  (prn1 "Generating ~a" (abs->rel/top file))
+  (define updated (post-date (first xs)))
+  (~>
+   `(rss
+     ([version "2.0"])
+     (title ([type "text"]) ,(str (current-title) ": " title))
+     (link ([href ,(full-uri of-uri-path)]))
+     (lastBuildDate () ,updated)
+     (pubDate ,updated)
+     (ttl 1800)
+     ,@(map post->rss-feed-entry-xexpr xs))
+   xexpr->string
+   (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+   reverse
+   string-join
+   string->bytes/utf-8
+   (display-to-file* file #:exists 'replace)))
+
+(define (post->rss-feed-entry-xexpr x) ;; post? -> xexpr?
+  (match-define (post title dest-path uri-path date tags blurb more? body) x)
+  `(item
+    ()
+    (title ([type "text"]) ,title)
+    (link ,(full-uri uri-path))
+    (guid () ,(str date "/" title)) ;; TODO: some other ID??
+    (pubDate () ,date)
+    (description
      ([type "html"])
      ,(xexpr->string
        `(html
@@ -781,7 +828,7 @@ EOF
   (define newer (cons #f (take posts (sub1 (length posts)))))
   ;; Write the post pages
   (for-each write-post-page posts older newer)
-  ;; For each tag, write an index page and Atom feed
+  ;; For each tag, write an index page, Atom feed, RSS feed
   (define (post-has-tag? tag post)
     (member tag (post-tags post)))
   (for ([(tag _) (in-hash all-tags)])
@@ -797,12 +844,21 @@ EOF
                      (str "Posts tagged '" tag "'")
                      (abs->rel/www tag-index-path)
                      (build-path (www/feeds-path) (str (our-encode tag)
-                                                       ".xml"))))
+                                                       "atom.xml")))
+    (write-rss-feed posts-this-tag
+                    (str "Posts tagged '" tag "'")
+                    (abs->rel/www tag-index-path)
+                    (build-path (www/feeds-path) (str (our-encode tag)
+                                                      "rss.xml"))))
   ;; Write the index page for all posts
-  (write-index posts "All Posts" #f "all" (build-path (www-path) "index.html"))
+  (write-index posts "All Posts" #f "All Posts"
+               (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed posts "All Posts" "/index.html"
-                   (build-path (www/feeds-path) "all.xml"))
+                   (build-path (www/feeds-path) "all.atom.xml"))
+  ;; Write RSS feed for all posts
+  (write-rss-feed posts "All Posts" "/index.html"
+                   (build-path (www/feeds-path) "all.rss.xml"))
   ;; Generate non-post pages.
   (define pages (build-non-post-pages))
   ;; Write sitemap
