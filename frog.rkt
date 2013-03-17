@@ -295,7 +295,7 @@
                       #:title title              ;string?
                       #:description description  ;string?
                       #:uri-path uri-path        ;string?
-                      #:feed [feed "All"]        ;string?
+                      #:feed [feed "all"]        ;string?
                       #:keywords [keywords '()]) ;listof string?
   ;; -> xexpr?
 
@@ -844,14 +844,14 @@ EOF
                      (str "Posts tagged '" tag "'")
                      (abs->rel/www tag-index-path)
                      (build-path (www/feeds-path) (str (our-encode tag)
-                                                       "atom.xml")))
+                                                       ".atom.xml")))
     (write-rss-feed posts-this-tag
                     (str "Posts tagged '" tag "'")
                     (abs->rel/www tag-index-path)
                     (build-path (www/feeds-path) (str (our-encode tag)
-                                                      "rss.xml"))))
+                                                      ".rss.xml"))))
   ;; Write the index page for all posts
-  (write-index posts "All Posts" #f "All Posts"
+  (write-index posts "All Posts" #f "all"
                (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed posts "All Posts" "/index.html"
