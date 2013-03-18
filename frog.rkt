@@ -595,6 +595,7 @@
                         3)
    "A heading: A _paragraph_ of some stuff.  ..."))
 
+;; Not full markdown, just a "lite" variation.
 (define (xexpr->markdown x)
   (match x
     [`(em ,_ ... ,s) (str "_" s "_")]
@@ -602,12 +603,11 @@
     [`(h1 ,_ ... ,s) (str s ":")]
     [`(h2 ,_ ... ,s) (str s ":")]
     [`(h3 ,_ ... ,s) (str s ":")]
-    [`(,tag (,_ ...) ,elts ...) (for/fold ([s ""]) ([e (in-list elts)])
-                                  (string-append s (xexpr->markdown e)))]
-    [`(,tag ,elts ...) (xexpr->markdown `(,tag () ,@elts))]
+    [`(,tag ([,_ ,_] ...) ... ,es ...) (for/fold ([s ""]) ([e (in-list es)])
+                                         (str s (xexpr->markdown e)))]
     [(? string? s) s]
     [(? symbol? s) (str "&" s ";")]
-    [(var v) ""]))
+    [else ""])) ;; ignore others
 
 (module+ test
   (require rackunit)
