@@ -1,9 +1,8 @@
 # frog
 
-> Note: This has been tested on Mac OS/X; I'm using it for
-> [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
-> yet been tested on Windows--it's likely that the path handling
-> isn't exactly right.
+<a href="http://www.flickr.com/photos/doug88888/4717363945/" title="Happy Green frog by @Doug88888, on Flickr"><img src="http://farm5.staticflickr.com/4070/4717363945_b73afd78a9.jpg" width="300" height="300" alt="Happy Green frog"></a>
+
+<sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)<em><sub>
 
 ## Overview
 
@@ -24,6 +23,11 @@ doesn't require any Ruby gemmage. The only non-Racket part is
 optionally using [Pygments][] to do syntax highlighting.
 
 Frog? Frozen blog.
+
+> Note: This has been tested on Mac OS/X; I'm using it for
+> [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
+> yet been tested on Windows--it's likely that the path handling
+> isn't exactly right.
 
 ## Layout
 
