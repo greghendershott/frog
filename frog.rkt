@@ -73,17 +73,16 @@
     (apply printf fmt vs)
     (newline)))
 
-(define-syntax (make-prn stx)
+(define-syntax (define-prn stx)
   (syntax-case stx ()
     [(_ level)
-     ;;(number? (syntax-e #'level))
      (with-syntax ([id (format-id stx "prn~a" (syntax-e #'level))])
        #'(define (id fmt . vs)
            (apply prn level fmt vs)))]))
 
-(make-prn 0)
-(make-prn 1)
-(make-prn 2)
+(define-prn 0)
+(define-prn 1)
+(define-prn 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
