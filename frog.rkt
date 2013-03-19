@@ -4,6 +4,7 @@
          racket/runtime-path
          xml
          (prefix-in h: html)
+         net/uri-codec
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
@@ -647,7 +648,7 @@
      (link ([rel "self"]
             [href ,(full-uri (abs->rel/www file))]))
      (link ([href ,(full-uri of-uri-path)]))
-     ;; (id () ???)
+     (id () ,(str date "/" title)) ;; TODO: some other ID??
      ;; (etag () ???)
      (updated () ,updated)
      ,@(map post->atom-feed-entry-xexpr xs))
@@ -660,11 +661,12 @@
 
 (define (post->atom-feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri-path date tags blurb more? body) x)
+  (define item-uri (full-uri/decorated uri-path "Atom"))
   `(entry
     ()
     (title ([type "text"]) ,title)
     (link ([rel "alternate"]
-           [href ,(full-uri uri-path)]))
+           [href ,item-uri]))
     (id () ,title) ;; TODO: some other ID??
     (published () ,date)
     (updated () ,date)
@@ -672,9 +674,10 @@
      ([type "html"])
      ,(xexpr->string
        `(html
+         ,(feed-image-bug-xexpr uri-path "Atom")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
                  [more? `(,@blurb
-                          (a ([href ,uri-path])
+                          (a ([href ,item-uri])
                              (em "Continue reading ...")))]
                  [else blurb]))))))
 
@@ -701,21 +704,60 @@
 
 (define (post->rss-feed-entry-xexpr x) ;; post? -> xexpr?
   (match-define (post title dest-path uri-path date tags blurb more? body) x)
+  (define item-uri (full-uri/decorated uri-path "RSS"))
   `(item
     ()
     (title ([type "text"]) ,title)
-    (link ,(full-uri uri-path))
+    (link ,item-uri)
     (guid () ,(str date "/" title)) ;; TODO: some other ID??
     (pubDate () ,date)
     (description
      ([type "html"])
      ,(xexpr->string
        `(html
+         ,(feed-image-bug-xexpr uri-path "RSS")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
                  [more? `(,@blurb
-                          (a ([href ,uri-path])
+                          (a ([href ,item-uri])
                              (em "Continue reading ...")))]
                  [else blurb]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Fucking Google
+
+;; If you want readership stats, but you can no longer use
+;; FeedBurner.com (because Google shut down it and Google Reader):
+;; Then another way to get feed stats is to decorate the links with
+;; utm_xxx query parameters used by Google Analytics. (If Google shuts
+;; down GA, too, naturally we'll come up with something else for that,
+;; too.)
+(define (full-uri/decorated uri-path source)
+  (str (full-uri uri-path) "?" (decoration uri-path source)))
+
+;; full-uri/decorated handles the case of someone starting with the
+;; feed and clicking through to the original web page. If you want to
+;; count people reading it in a feed reader but _not_ clicking through
+;; -- especially if you have the feed set to full posts not just
+;; above-the-fold blurbs -- then we need to do an image bug. It is
+;; also decorated with Google Analytics query params.
+(define (feed-image-bug-xexpr uri-path source)
+  `(img ([src ,(str "/img/1x1.gif" "?" (decoration uri-path source))]
+         [height "1"]
+         [width "1"])))
+
+(define (decoration uri-path source)
+  (str "utm_source=" source "&"
+       "utm_medium=" source "&"
+       "utm_campaign=" (uri-encode uri-path)))
+
+(module+ test
+  (parameterize ([current-scheme/host "http://www.example.com"])
+   (check-equal? (full-uri/decorated "/path/to/thing" "RSS")
+                  "http://www.example.com/path/to/thing?utm_source=RSS&utm_medium=RSS")
+    (check-equal? (feed-image-bug-xexpr "/path/to/thing" "RSS")
+                  '(img ([src "/img/1x1.gif?utm_source=RSS&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
+                         [height "1"]
+                         [width "1"])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
