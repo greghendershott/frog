@@ -62,6 +62,8 @@
 (define current-google-analytics-domain (make-parameter #f))
 (define current-disqus-shortname (make-parameter #f))
 (define current-pygments-pathname (make-parameter #f))
+(define current-decorate-feed-uris? (make-parameter #t))
+(define current-feed-image-bugs? (make-parameter #t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -732,7 +734,9 @@
 ;; down GA, too, naturally we'll come up with something else for that,
 ;; too.)
 (define (full-uri/decorated uri-path source)
-  (str (full-uri uri-path) "?" (decoration uri-path source)))
+  (str (full-uri uri-path)
+       (cond [(current-decorate-feed-uris?) "?" (decoration uri-path source)]
+             [else ""])))
 
 ;; full-uri/decorated handles the case of someone starting with the
 ;; feed and clicking through to the original web page. If you want to
@@ -741,9 +745,11 @@
 ;; above-the-fold blurbs -- then we need to do an image bug. It is
 ;; also decorated with Google Analytics query params.
 (define (feed-image-bug-xexpr uri-path source)
-  `(img ([src ,(str "/img/1x1.gif" "?" (decoration uri-path source))]
-         [height "1"]
-         [width "1"])))
+  (cond [(current-feed-image-bugs?)
+         `(img ([src ,(str "/img/1x1.gif" "?" (decoration uri-path source))]
+                [height "1"]
+                [width "1"]))]
+        [else ""]))
 
 (define (decoration uri-path source)
   (str "utm_source=" source "&"
@@ -949,11 +955,17 @@ EOF
              [(pregexp (str "(?:^|\n)"
                             (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
                             "(?:$|\n)")
-                       (list _ v)) v]
+                       (list _ v)) (maybe-bool v)]
              [else (cond [(procedure? default) (default name)]
                          [else default])])])
     (prn1 ".frogc: ~s = ~s" name v)
     v))
+
+(define (maybe-bool v)
+  (match v
+    [(or "true" "#t") #t]
+    [(or "false" "#f") #f]
+    [else v]))
 
 (define (raise-config-required-error name)
   (raise-user-error '|Configuration file|
@@ -989,7 +1001,9 @@ EOF
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
-                               [pygments-pathname #f])
+                               [pygments-pathname #f]
+                               [decorate-feed-uris? #t]
+                               [feed-image-bugs? #t])
       ;; (clean)
       (build)
       (preview)
@@ -1007,7 +1021,9 @@ EOF
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
-                               [pygments-pathname #f])
+                               [pygments-pathname #f]
+                               [decorate-feed-uris? #t]
+                               [feed-image-bugs? #t])
       (command-line
        #:once-each
        [("-n" "--new") title

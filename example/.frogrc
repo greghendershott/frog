@@ -4,13 +4,21 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
-# Comment this out to have index pages' items contain only the "blurb"
-# before the <!-- more --> mark (if any) in a post.
+# Should index page items contain full posts -- more than just the
+# portion above "the jump" <!-- more --> marker (if any)?
 index-full? = true
 
-# Comment this out to have Atom feed items contain only the "blurb"
-# before the <!-- more --> mark (if any) in a post.
+# Should feed items contain full posts -- more than just the portion
+# above "the jump" <!-- more --> marker (if any)?
 feed-full? = true
+
+# Decorate feed URIs with Google Analytics query parameters like
+# utm_source ?
+decorate-feed-uris? = true
+
+# Insert in each feed item an image bug whose URI is decorated with
+# Google Analytics query parameters like utm_source ?
+feed-image-bugs? = true
 
 # Optional: The Google Analytics UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
