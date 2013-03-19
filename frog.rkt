@@ -958,7 +958,7 @@ EOF
                        (list _ v)) (maybe-bool v)]
              [else (cond [(procedure? default) (default name)]
                          [else default])])])
-    (prn1 ".frogc: ~s = ~s" name v)
+    (prn0 ".frogc: ~s = ~s" name v)
     v))
 
 (define (maybe-bool v)
