@@ -638,9 +638,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-atom-feed xs title of-uri-path file)
+(define (write-atom-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (post-date (first xs)))
+  (define updated (str (post-date (first xs)) "Z")) ;; lie: not nec. UTC
   (~>
    `(feed
      ([xmlns "http://www.w3.org/2005/Atom"]
@@ -649,10 +649,13 @@
      (link ([rel "self"]
             [href ,(full-uri (abs->rel/www file))]))
      (link ([href ,(full-uri of-uri-path)]))
-     (id () ,(str date "/" title)) ;; TODO: some other ID??
+     (id () ,(str "urn:"
+                 (our-encode (current-scheme/host))
+                 ":"
+                 (our-encode of-uri-path)))
      ;; (etag () ???)
      (updated () ,updated)
-     ,@(map post->atom-feed-entry-xexpr xs))
+     ,@(map (curry post->atom-feed-entry-xexpr tag) xs))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -660,22 +663,26 @@
    string->bytes/utf-8
    (display-to-file* file #:exists 'replace)))
 
-(define (post->atom-feed-entry-xexpr x) ;; post? -> xexpr?
+(define (post->atom-feed-entry-xexpr tag x)
   (match-define (post title dest-path uri-path date tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path "Atom"))
+  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "Atom"))
   `(entry
     ()
     (title ([type "text"]) ,title)
     (link ([rel "alternate"]
            [href ,item-uri]))
-    (id () ,title) ;; TODO: some other ID??
-    (published () ,date)
-    (updated () ,date)
+    (id () ,(str "urn:"
+                 (our-encode (current-scheme/host))
+                 ":"
+                 (our-encode uri-path)))
+    (published () ,(str date "Z")) ;; lie: not necessarily UTC
+    (updated () ,(str date "Z"))   ;; lie: not necessarily UTC
+    (author (name ,(current-author)))
     (content
      ([type "html"])
      ,(xexpr->string
        `(html
-         ,(feed-image-bug-xexpr uri-path "Atom")
+         ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
                  [more? `(,@blurb
                           (a ([href ,item-uri])
@@ -684,18 +691,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-rss-feed xs title of-uri-path file)
+(define (write-rss-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (post-date (first xs)))
+  (define updated (~> xs first post-date rfc-8601->822))
   (~>
    `(rss
-     ([version "2.0"])
-     (title ([type "text"]) ,(str (current-title) ": " title))
-     (link ([href ,(full-uri of-uri-path)]))
-     (lastBuildDate () ,updated)
-     (pubDate ,updated)
-     (ttl 1800)
-     ,@(map post->rss-feed-entry-xexpr xs))
+     ([version "2.0"]
+      [xmlns:atom "http://www.w3.org/2005/Atom"])
+     (channel
+      (title ,(str (current-title) ": " title))
+      (description ,(str (current-title) ": " title))
+      (link ,(full-uri of-uri-path))
+      (atom:link ([href ,(full-uri (abs->rel/www file))]
+                  [rel "self"]
+                  [type "application/rss+xml"]))
+      (lastBuildDate () ,updated)
+      (pubDate ,updated)
+      (ttl "1800")
+      ,@(map (curry post->rss-feed-entry-xexpr tag) xs)))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -703,25 +716,57 @@
    string->bytes/utf-8
    (display-to-file* file #:exists 'replace)))
 
-(define (post->rss-feed-entry-xexpr x) ;; post? -> xexpr?
+(define (post->rss-feed-entry-xexpr tag x)
   (match-define (post title dest-path uri-path date tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path "RSS"))
+  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "RSS"))
   `(item
     ()
-    (title ([type "text"]) ,title)
+    (title ,title)
     (link ,item-uri)
-    (guid () ,(str date "/" title)) ;; TODO: some other ID??
-    (pubDate () ,date)
+    (guid () ,(str "urn:"
+                   (our-encode (current-scheme/host))
+                   ":"
+                   (our-encode uri-path)))
+    (pubDate () ,(~> date rfc-8601->822))
     (description
-     ([type "html"])
      ,(xexpr->string
        `(html
-         ,(feed-image-bug-xexpr uri-path "RSS")
+         ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
                  [more? `(,@blurb
                           (a ([href ,item-uri])
                              (em "Continue reading ...")))]
                  [else blurb]))))))
+
+(define (rfc-8601->822 s)
+  (match s
+    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})"
+              (list _ year month day hour minute second))
+     (define MONTHS
+       #("Jan" "Feb" "Mar" "Apr" "May" "Jun"
+         "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
+     (define DAYS
+       #("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"))
+     (define tz-name (date*-time-zone-name (current-date)))
+     (define d (date* (string->number second)
+                      (string->number minute)
+                      (string->number hour)
+                      (string->number day)
+                      (string->number month)
+                      (string->number year)
+                      0 0 #f 0 0
+                      tz-name
+                      ))
+     (define weekday (~> d
+                         date->seconds
+                         seconds->date
+                         date-week-day
+                         DAYS))
+     (str weekday ", "
+          day " " (MONTHS (sub1 (string->number month))) " " year " "
+          hour ":" minute ":" second " " tz-name)]))
+
+;;(rfc-8601->822 "2013-03-01T13:03:34")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fucking Google
@@ -732,9 +777,11 @@
 ;; utm_xxx query parameters used by Google Analytics. (If Google shuts
 ;; down GA, too, naturally we'll come up with something else for that,
 ;; too.)
-(define (full-uri/decorated uri-path source)
+(define (full-uri/decorated uri-path #:source source #:medium medium)
   (str (full-uri uri-path)
-       (cond [(current-decorate-feed-uris?) "?" (decoration uri-path source)]
+       (cond [(current-decorate-feed-uris?)
+              (str "?" "utm_source=" (our-encode source)
+                   "&" "utm_medium=" (our-encode medium))]
              [else ""])))
 
 ;; full-uri/decorated handles the case of someone starting with the
@@ -743,26 +790,27 @@
 ;; -- especially if you have the feed set to full posts not just
 ;; above-the-fold blurbs -- then we need to do an image bug. It is
 ;; also decorated with Google Analytics query params.
-(define (feed-image-bug-xexpr uri-path source)
+(define (feed-image-bug-xexpr uri-path #:source source #:medium medium)
   (cond [(current-feed-image-bugs?)
-         `(img ([src ,(str "/img/1x1.gif" "?" (decoration uri-path source))]
-                [height "1"]
-                [width "1"]))]
-        [else ""]))
-
-(define (decoration uri-path source)
-  (str "utm_source=" source "&"
-       "utm_medium=" source "&"
-       "utm_campaign=" (uri-encode uri-path)))
+         `((img ([src ,(str (current-scheme/host)
+                            "/img/1x1.gif"
+                            "?" "utm_source=" (our-encode source)
+                            "&" "utm_medium=" (our-encode medium)
+                            "&" "utm_campaign=" (uri-encode uri-path))]
+                 [height "1"]
+                 [width "1"])))]
+        [else '()]))
 
 (module+ test
   (parameterize ([current-scheme/host "http://www.example.com"])
-   (check-equal? (full-uri/decorated "/path/to/thing" "RSS")
-                  "http://www.example.com/path/to/thing?utm_source=RSS&utm_medium=RSS")
-    (check-equal? (feed-image-bug-xexpr "/path/to/thing" "RSS")
-                  '(img ([src "/img/1x1.gif?utm_source=RSS&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
-                         [height "1"]
-                         [width "1"])))))
+   (check-equal?
+    (full-uri/decorated "/path/to/thing" #:source "all" #:medium "RSS")
+    "http://www.example.com/path/to/thing?utm_source=all&utm_medium=RSS")
+   (check-equal?
+    (feed-image-bug-xexpr "/path/to/thing" #:source "all" #:medium "RSS")
+    '(img ([src "/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
+           [height "1"]
+           [width "1"])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -896,11 +944,13 @@ EOF
                  tag-index-path)
     (write-atom-feed posts-this-tag
                      (str "Posts tagged '" tag "'")
+                     tag
                      (abs->rel/www tag-index-path)
                      (build-path (www/feeds-path) (str (our-encode tag)
                                                        ".atom.xml")))
     (write-rss-feed posts-this-tag
                     (str "Posts tagged '" tag "'")
+                    tag
                     (abs->rel/www tag-index-path)
                     (build-path (www/feeds-path) (str (our-encode tag)
                                                       ".rss.xml"))))
@@ -908,10 +958,10 @@ EOF
   (write-index posts "All Posts" #f "all"
                (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
-  (write-atom-feed posts "All Posts" "/index.html"
+  (write-atom-feed posts "All Posts" "all" "/index.html"
                    (build-path (www/feeds-path) "all.atom.xml"))
   ;; Write RSS feed for all posts
-  (write-rss-feed posts "All Posts" "/index.html"
+  (write-rss-feed posts "All Posts" "all" "/index.html"
                    (build-path (www/feeds-path) "all.rss.xml"))
   ;; Generate non-post pages.
   (define pages (build-non-post-pages))
