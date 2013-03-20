@@ -4,6 +4,12 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Older/newer buttons' text. One of:
+# - "age" (just "Older or "Newer")
+# - "title" (just the blog post title)
+# - "both" (both)
+older/newer-buttons = both
+
 # Should index page items contain full posts -- more than just the
 # portion above "the jump" <!-- more --> marker (if any)?
 index-full? = true

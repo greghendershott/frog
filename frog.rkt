@@ -64,6 +64,7 @@
 (define current-pygments-pathname (make-parameter #f))
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #t))
+(define current-older/newer-buttons (make-parameter "both"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -184,23 +185,30 @@
     ,(older/newer-nav older newer)))
 
 (define (older/newer-nav older newer)
-  `(ul ([class "pager"])
-       ,(cond [newer
-               `(li ([class "previous"])
-                    (a ([href ,(post-uri-path newer)])
-                       'larr "Newer" 'nbsp (em ,(post-title newer))))]
-              [else
-               `(li ([class "previous disabled"])
-                    (a ([href "#"])
-                       'larr "Newer"))])
-       ,(cond [older
-               `(li ([class "next"])
-                    (a ([href ,(post-uri-path older)])
-                       (em ,(post-title older)) 'nbsp "Older" 'rarr))]
-              [else
-               `(li ([class "next disabled"])
-                    (a ([href "#"])
-                       "Older" 'rarr))])))
+  `(ul
+    ([class "pager"])
+    ,(cond [newer
+            `(li ([class "previous"])
+                 (a ([href ,(post-uri-path newer)])
+                    ,@(match (current-older/newer-buttons)
+                        ["both"  `(larr "Newer" nbsp (em ,(post-title newer)))]
+                        ["age"   `(larr "Newer")]
+                        ["title" `(larr (em ,(post-title newer)))])))]
+           [else
+            `(li ([class "previous disabled"])
+                 (a ([href "#"])
+                    'larr "Newer"))])
+    ,(cond [older
+            `(li ([class "next"])
+                 (a ([href ,(post-uri-path older)])
+                    ,@(match (current-older/newer-buttons)
+                        ["both"  `((em ,(post-title older)) nbsp "Older" rarr)]
+                        ["age"   `("Older" rarr)]
+                        ["title" `((em ,(post-title older)) rarr)])))]
+           [else
+            `(li ([class "next disabled"])
+                 (a ([href "#"])
+                    "Older" 'rarr))])))
 
 (define (meta-data xs)
   (match (first xs)
@@ -1052,7 +1060,8 @@ EOF
                                [disqus-shortname #f]
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #t])
+                               [feed-image-bugs? #t]
+                               [older/newer-buttons "both"])
       ;; (clean)
       (build)
       (preview)
@@ -1072,7 +1081,8 @@ EOF
                                [disqus-shortname #f]
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #t])
+                               [feed-image-bugs? #t]
+                               [older/newer-buttons "both"])
       (command-line
        #:once-each
        [("-n" "--new") title
