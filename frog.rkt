@@ -903,7 +903,7 @@ EOF
          (not (member (path->string name) '("footer.md" "navbar.md")))
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
-    (define xs (with-input-from-file path read-markdown))
+    (define xs (syntax-highlight (with-input-from-file path read-markdown)))
     (define dest-path
       (build-path (www-path)
                   (apply build-path
