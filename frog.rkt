@@ -428,9 +428,6 @@
               [else `()])
        (a ([href ,href]) ,text)))
 
-;; (pretty-print (parameterize ([top example])
-;;                 (navbar "/About.html")))
-
 (define (google-analytics)
   (cond [(and (current-google-analytics-account)
               (current-google-analytics-domain))
