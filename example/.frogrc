@@ -18,6 +18,12 @@ index-full? = true
 # above "the jump" <!-- more --> marker (if any)?
 feed-full? = true
 
+# How many items to include on index pages?
+max-index-items = 20
+
+# How many items to include in feeds?
+max-feed-items = 20
+
 # Decorate feed URIs with Google Analytics query parameters like
 # utm_source ?
 decorate-feed-uris? = true

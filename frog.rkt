@@ -58,6 +58,8 @@
 (define current-author (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
+(define current-max-index-items (make-parameter 999))
+(define current-max-feed-items (make-parameter 999))
 (define current-google-analytics-account (make-parameter #f))
 (define current-google-analytics-domain (make-parameter #f))
 (define current-disqus-shortname (make-parameter #f))
@@ -457,6 +459,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Like `take`, but OK if list has fewer than members
+(define (take<= xs n)
+  (for/list ([x (in-list xs)]
+             [_ (in-range n)])
+    x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (write-index xs    ;(listof post?) -> any
                      title ;string?
                      tag   ;or/c #f string?
@@ -466,7 +476,7 @@
   (~> (cons
        `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
                     [else `(,title)]))
-       (for/list ([x (in-list xs)])
+       (for/list ([x (in-list (take<= xs (current-max-index-items)))])
         (match-define
          (post title dest-path uri-path date tags blurb more? body) x)
         `(div ([class "index-post"])
@@ -660,7 +670,8 @@
                  (our-encode of-uri-path)))
      ;; (etag () ???)
      (updated () ,updated)
-     ,@(map (curry post->atom-feed-entry-xexpr tag) xs))
+     ,@(map (curry post->atom-feed-entry-xexpr tag)
+            (take<= xs (current-max-feed-items))))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -713,7 +724,8 @@
       (lastBuildDate () ,updated)
       (pubDate ,updated)
       (ttl "1800")
-      ,@(map (curry post->rss-feed-entry-xexpr tag) xs)))
+      ,@(map (curry post->rss-feed-entry-xexpr tag)
+             (take<= xs (current-max-feed-items)))))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
