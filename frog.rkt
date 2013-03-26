@@ -170,7 +170,7 @@
                     #:description (xexprs->description blurb)
                     #:uri-path uri-path
                     #:keywords tags)
-      xexpr->string
+      xexpr->string/pretty
       (list "<!DOCTYPE html>")
       reverse
       string-join
@@ -494,8 +494,8 @@
                     #:uri-path (abs->rel/www file)
                     #:keywords (cond [tag (list tag)]
                                      [else (hash-keys all-tags)]))
-      xexpr->string
-      (list "<!DOCTYPE html>\n")
+      xexpr->string/pretty
+      (list "<!DOCTYPE html>")
       reverse
       string-join
       string->bytes/utf-8
@@ -672,7 +672,7 @@
      (updated () ,updated)
      ,@(map (curry post->atom-feed-entry-xexpr tag)
             (take<= xs (current-max-feed-items))))
-   xexpr->string
+   xexpr->string/pretty
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
    string-join
@@ -696,7 +696,7 @@
     (author (name ,(current-author)))
     (content
      ([type "html"])
-     ,(xexpr->string
+     ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
@@ -726,7 +726,7 @@
       (ttl "1800")
       ,@(map (curry post->rss-feed-entry-xexpr tag)
              (take<= xs (current-max-feed-items)))))
-   xexpr->string
+   xexpr->string/pretty
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
    string-join
@@ -746,7 +746,7 @@
                    (our-encode uri-path)))
     (pubDate () ,(~> date rfc-8601->822))
     (description
-     ,(xexpr->string
+     ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
          ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
@@ -828,6 +828,11 @@
     '(img ([src "/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
            [height "1"]
            [width "1"])))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (xexpr->string/pretty x)
+  (with-output-to-string (thunk (display-xexpr x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -922,8 +927,8 @@ EOF
         (bodies->page #:title title
                       #:description (xexprs->description xs)
                       #:uri-path uri-path)
-        xexpr->string
-        (list "<!DOCTYPE html>\n")
+        xexpr->string/pretty
+        (list "<!DOCTYPE html>")
         reverse
         string-join
         string->bytes/utf-8
