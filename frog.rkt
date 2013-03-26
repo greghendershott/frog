@@ -621,17 +621,26 @@
 
 ;; Not full markdown, just a "lite" variation.
 (define (xexpr->markdown x)
-  (match x
-    [`(em ,_ ... ,s) (str "_" s "_")]
-    [`(strong ,_ ... ,s) (str "**" s "**")]
-    [`(h1 ,_ ... ,s) (str s ":")]
-    [`(h2 ,_ ... ,s) (str s ":")]
-    [`(h3 ,_ ... ,s) (str s ":")]
-    [`(,tag ([,_ ,_] ...) ... ,es ...) (for/fold ([s ""]) ([e (in-list es)])
-                                         (str s (xexpr->markdown e)))]
-    [(? string? s) s]
-    [(? symbol? s) (str "&" s ";")]
-    [else ""])) ;; ignore others
+  (define (do x)
+    (match x
+      [`(em ,_ ... ,s) (str "_" s "_")]
+      [`(strong ,_ ... ,s) (str "**" s "**")]
+      [`(h1 ,_ ... ,s) (str s ":")]
+      [`(h2 ,_ ... ,s) (str s ":")]
+      [`(h3 ,_ ... ,s) (str s ":")]
+      [`(,tag ([,_ ,_] ...) ... ,es ...) (str
+                                          (for/fold ([s ""]) ([e (in-list es)])
+                                            (str s  (do e)))
+                                          (match tag
+                                            [(or 'p 'li 'blockquote) " "]
+                                            [else ""]))]
+      [(? string? s) s]
+      ['ndash "--"]
+      ['mdash "--"]
+      [(? symbol? s) (str "&" s ";")]
+      [else ""])) ;; ignore others
+  ;; Kill trailing space
+  (match (do x) [(pregexp "^(.*?)\\s*$" (list _ x)) x]))
 
 (module+ test
   (require rackunit)
@@ -649,7 +658,10 @@
                                      "I am some " (em "emphasized") " text"))
                 "I am some _emphasized_ text")
   (check-equal? (xexpr->markdown '(p "M" 'amp "Ms" 'mdash "gotta love 'em"))
-                "M&amp;Ms&mdash;gotta love 'em"))
+                "M&amp;Ms--gotta love 'em")
+  (check-equal? (xexpr->markdown '(span (p "Hi.") (p "Hi.")))
+                "Hi. Hi.")
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
