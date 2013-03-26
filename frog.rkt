@@ -825,9 +825,9 @@
     "http://www.example.com/path/to/thing?utm_source=all&utm_medium=RSS")
    (check-equal?
     (feed-image-bug-xexpr "/path/to/thing" #:source "all" #:medium "RSS")
-    '(img ([src "/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
+    '((img ([src "http://www.example.com/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
            [height "1"]
-           [width "1"])))))
+           [width "1"]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
