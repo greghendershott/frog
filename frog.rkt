@@ -221,8 +221,8 @@
         (values title date (tag-string->tags tags) (rest xs))]
        [else (raise-user-error 'meta-data "Missing meta-data")])]))
 
-(define (tag->xexpr s [extra ""])
-  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s ,extra))
+(define (tag->xexpr s)
+  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
 
 (define (date+tags->xexpr date tags)
   `(p ,(substring date 0 10) ;; just YYYY-MM-DD
@@ -310,30 +310,6 @@
                       #:feed [feed "all"]        ;string?
                       #:keywords [keywords '()]) ;listof string?
   ;; -> xexpr?
-
-  (define atom-feed-uri (str "/feeds/" feed ".atom.xml"))
-  (define rss-feed-uri (str "/feeds/" feed ".rss.xml"))
-
-  (define (toc-xexpr)
-    (match (toc xs)
-      [`(div ([class "toc"]) (ol ,contents ...))
-       (cond [(empty? contents) `(p 'nbsp)]
-             [else `(div (p "On this page:"
-                            (ol ([class "nav nav-list bs-docs-sidenav"])
-                                ,@contents)))])]))
-  (define (tags/feeds-xexpr)
-    (define alist (~> (for/list ([(k v) (in-hash all-tags)])
-                        (cons k v))
-                      (sort string-ci<=? #:key car)))
-    `(div
-      (p "Tags:"
-         (ul ,@(for/list ([(k v) (in-dict alist)])
-                 `(li ,(tag->xexpr k (format " (~a)" v))))))
-      (p (img ([src "/img/feed.png"])) " "
-         ,feed " "
-         (a ([href ,atom-feed-uri]) "Atom") "/"
-         (a ([href ,rss-feed-uri]) "RSS"))))
-
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
@@ -349,12 +325,12 @@
                ,(link/css "/css/pygments.css")
                ,(link/css "/css/custom.css")
                ;; Atom feed
-               (link ([href ,atom-feed-uri]
+               (link ([href ,(atom-feed-uri feed)]
                       [type "application/atom+xml"]
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
                ;; RSS feed
-               (link ([href ,rss-feed-uri]
+               (link ([href ,(rss-feed-uri feed)]
                       [type "application/rss+xml"]
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
@@ -369,9 +345,11 @@
                     ;; Span2: Docs sidebar
                     (div ([id "left-sidebar"]
                           [class "span2 bs-docs-sidebar"])
-                         ,(toc-xexpr))
+                         ,(toc-xexpr xs)
+                         (p nbsp))
                     ;; Span8: Main content
-                    (div ([id "content"][class "span8"])
+                    (div ([id "content"]
+                          [class "span8"])
                          ;; Caller's content
                          ,@xs)
                     ;; Span2: Tags list
@@ -456,6 +434,32 @@
              `(,(script/js/inc disqus.js (current-disqus-shortname))
                (div ([id "disqus_thread"])))]
             [else `()])))
+
+(define (toc-xexpr xs)
+  (match (toc xs)
+    [`(div ([class "toc"]) (ol ,contents ...))
+     (cond [(empty? contents) ""]
+           [else `(div (p "On this page:"
+                          (ol ([class "nav nav-list bs-docs-sidenav"])
+                              ,@contents)))])]))
+
+(define (tags/feeds-xexpr)
+  (define alist (~> (for/list ([(k v) (in-hash all-tags)])
+                      (cons k v))
+                    (sort string-ci<=? #:key car)))
+  `(div
+    (p "Tags:"
+       (ul ,@(for/list ([(k v) (in-dict alist)])
+               `(li ,(tag->xexpr k)
+                    nbsp
+                    ,(format "(~a)" v)
+                    " "
+                    (a ([href ,(atom-feed-uri k)])
+                       (img ([src "/img/feed.png"]))))))
+    (p (a ([href "/index.html"]) "All Posts")
+       " "
+       (a ([href ,(atom-feed-uri "all")])
+          (img ([src "/img/feed.png"])))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -665,6 +669,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (atom-feed-uri tag)
+  (str "/feeds/" tag ".atom.xml"))
+
 (define (write-atom-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
   (define updated (str (post-date (first xs)) "Z")) ;; lie: not nec. UTC
@@ -718,6 +725,9 @@
                  [else blurb]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (rss-feed-uri tag)
+  (str "/feeds/" tag ".rss.xml"))
 
 (define (write-rss-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
