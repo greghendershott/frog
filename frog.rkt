@@ -65,7 +65,7 @@
 (define current-disqus-shortname (make-parameter #f))
 (define current-pygments-pathname (make-parameter #f))
 (define current-decorate-feed-uris? (make-parameter #t))
-(define current-feed-image-bugs? (make-parameter #t))
+(define current-feed-image-bugs? (make-parameter #f))
 (define current-older/newer-buttons (make-parameter "both"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1086,7 +1086,7 @@ EOF
                                [disqus-shortname #f]
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #t]
+                               [feed-image-bugs? #f]
                                [older/newer-buttons "both"])
       ;; (clean)
       (build)
@@ -1107,7 +1107,7 @@ EOF
                                [disqus-shortname #f]
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #t]
+                               [feed-image-bugs? #f]
                                [older/newer-buttons "both"])
       (command-line
        #:once-each
