@@ -852,10 +852,11 @@
 #<<EOF
     Title: ~a
     Date: ~a
-    Tags:
+    Tags: DRAFT
 
 _Replace this with your post text. Add one or more comma-separated
-tags above._
+Tags above. The special tag `DRAFT` will prevent the post from being
+published._
 
 EOF
 )
