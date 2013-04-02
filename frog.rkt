@@ -582,6 +582,17 @@
                [else `((pre ,text))])]
         [else `((pre ,text))]))
 
+;; (define xp
+;;   (parameterize ([current-pygments-pathname
+;;                   "~/src/python/pygments-main/pygmentize"])
+;;     (first
+;;      (pygmentize "<pre class=\"brush: racket\">'(#:a 10 #:b b #:c c)</pre>"
+;;                  "racket"))))
+;; (pretty-print xp)
+;; (displayln (xexpr->string xp))
+;; (display-xexpr xp) (newline)
+
+
 (define (pygments.css)
   (path->string (build-path (www-path) "css" "pygments.css")))
 
@@ -841,7 +852,8 @@
         [else '()]))
 
 (module+ test
-  (parameterize ([current-scheme/host "http://www.example.com"])
+  (parameterize ([current-scheme/host "http://www.example.com"]
+                 [current-feed-image-bugs? #t])
    (check-equal?
     (full-uri/decorated "/path/to/thing" #:source "all" #:medium "RSS")
     "http://www.example.com/path/to/thing?utm_source=all&utm_medium=RSS")
