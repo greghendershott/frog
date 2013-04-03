@@ -333,12 +333,12 @@
                (link ([href ,(atom-feed-uri feed)]
                       [type "application/atom+xml"]
                       [rel "alternate"]
-                      [title ,(str (current-title) ": " feed)]))
+                      [title ,(str "Atom: " (current-title) " / " feed)]))
                ;; RSS feed
                (link ([href ,(rss-feed-uri feed)]
                       [type "application/rss+xml"]
                       [rel "alternate"]
-                      [title ,(str (current-title) ": " feed)]))
+                      [title ,(str "RSS: " (current-title) " / " feed)]))
                ;; JS
                ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js")
                ,(bootstrap-js)
