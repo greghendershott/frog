@@ -585,17 +585,6 @@
                [else `((pre ,text))])]
         [else `((pre ,text))]))
 
-;; (define xp
-;;   (parameterize ([current-pygments-pathname
-;;                   "~/src/python/pygments-main/pygmentize"])
-;;     (first
-;;      (pygmentize "<pre class=\"brush: racket\">'(#:a 10 #:b b #:c c)</pre>"
-;;                  "racket"))))
-;; (pretty-print xp)
-;; (displayln (xexpr->string xp))
-;; (display-xexpr xp) (newline)
-
-
 (define (pygments.css)
   (path->string (build-path (www-path) "css" "pygments.css")))
 
