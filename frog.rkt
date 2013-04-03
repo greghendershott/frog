@@ -1087,27 +1087,35 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading config file into parameters
 
-(define (get-config name default)
-  (define pathname (build-path (top) ".frogrc"))
-  (unless (file-exists? pathname)
-    (raise-user-error '|Configuration file| "Missing ~a" pathname))
-  (let ([v (match (file->string pathname)
-             [(pregexp (str "(?:^|\n)"
-                            (regexp-quote name) "\\s*=\\s*" "([^#]+?)"
-                            "(?:$|\n)")
-                       (list _ v)) (maybe-bool v)]
-             [else (cond [(procedure? default) (default name)]
-                         [else default])])])
-    (prn0 ".frogc: ~s = ~s" name v)
-    v))
+(define config #f) ;; symbol? => any/c
 
-(define (maybe-bool v)
+(define (maybe-read-config)
+  (unless config
+    (define pathname (build-path (top) ".frogrc"))
+    (unless (file-exists? pathname)
+      (raise-user-error '|Configuration file| "Missing ~a" pathname))
+    (set! config (for/hasheq ([s (file->lines pathname)])
+                   (match s
+                     [(pregexp "^(.*)#?.*$" (list _ s))
+                      (match s
+                        [(pregexp "^\\s*(\\S+)\\s*=\\s*(.+)$" (list _ k v))
+                         (values (string->symbol k) (maybe-bool v))]
+                        [else (values #f #f)])]
+                     [else (values #f #f)])))))
+
+(define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
   (match v
     [(or "true" "#t") #t]
     [(or "false" "#f") #f]
     [else v]))
 
-(define (raise-config-required-error name)
+(define (get-config name default) ;; (symbol? any/c -> any/c)
+  (maybe-read-config)
+  (cond [(dict-has-key? config name) (dict-ref config name)]
+        [else (cond [(procedure? default) (default name)]
+                    [else default])]))
+
+(define (raise-config-required-error name) ;; (-> symbol?)
   (raise-user-error '|Configuration file|
                     "Missing required item ~s"
                     name))
@@ -1120,11 +1128,8 @@ EOF
      (map identifier? (syntax->list #'(name ...)))
      (with-syntax ([(id ...) (map (lambda (x)
                                     (format-id stx "current-~a" x))
-                                  (syntax->list #'(name ...)))]
-                   [(key ...) (map (lambda (x)
-                                     (symbol->string (syntax-e x)))
-                                   (syntax->list #'(name ...)))])
-       #'(parameterize ([id (get-config key default)] ...)
+                                  (syntax->list #'(name ...)))])
+       #'(parameterize ([id (get-config (quote name) default)] ...)
            body ...))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
