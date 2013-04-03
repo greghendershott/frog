@@ -32,6 +32,8 @@ methodologies, "vortals vertical," synthesize real-time
 user-contributed impactful utilize architect deploy ROI redefine
 design proactive strategic user-centric.
 
+Here's a footnote[^fn].
+
 ## Code blocks
 
 Frog optionally uses [Pygments](http://pygments.org/) if it's
@@ -91,3 +93,5 @@ Yields this:
 ```
 
 The end.
+
+[^fn]: Footnote definition.

@@ -12,7 +12,7 @@ experiences monetize utilize innovative. Action-items transition
 recontextualize sexy Cluetrain envisioneer, "vortals communities
 evolve technologies sexy methodologies." Enhance grow compelling
 iterate architect matrix plug-and-play reinvent scale, distributed
-incentivize, extend.
+incentivize, extend.[^fn]
 
 Revolutionary proactive. Target; envisioneer e-services sticky robust
 morph users methodologies, markets content supply-chains, granular
@@ -23,3 +23,5 @@ next-generation eyeballs solutions blogospheres extend. Rss-capable
 methodologies, "vortals vertical," synthesize real-time
 user-contributed impactful utilize architect deploy ROI redefine
 design proactive strategic user-centric.
+
+[^fn]: Definition.
