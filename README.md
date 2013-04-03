@@ -290,6 +290,12 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Use Bootstrap responsive CSS?
+bootstrap-responsive? = true
+
+# Use Booststrap minified CSS and JS files?
+bootstrap-minified? = true
+
 # Older/newer buttons' text. One of:
 # - "age" (just "Older or "Newer")
 # - "title" (just the blog post title)

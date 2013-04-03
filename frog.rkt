@@ -67,7 +67,8 @@
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
 (define current-older/newer-buttons (make-parameter "both"))
-(define current-responsive? (make-parameter #f))
+(define current-bootstrap-minified? (make-parameter #t))
+(define current-bootstrap-responsive? (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -281,31 +282,29 @@
 (define-runtime-path tweet-button.js "tweet-button.js")
 (define-runtime-path disqus.js "disqus.js")
 
-;; Bootstrap has some permutations: Responsive or not, minified or not:
-(define minified? (make-parameter #t))
+;; Maybe insert ".min" before the extension.
+;; e.g. "foo.js" => "foo.min.js"
+(define (maybe-mini s)
+  (if (current-bootstrap-minified?)
+      (match s
+        [(pregexp "^(.+)\\.(.+)$" (list _ base ext))
+         (str base ".min." ext)])
+      s))
 
 (define (bootstrap-js)
-  (script/js (cond [(minified?) "/js/bootstrap.min.js"]
-                   [else "/js/bootstrap.js"])))
+  (script/js (maybe-mini "/js/bootstrap.js")))
 
 (define (bootstrap-css)
-  (cond [(minified?)
-         (let ([css `(,(link/css "/css/bootstrap.min.css"))])
-           (cond [(current-responsive?) 
-                  (append css `(,(link/css "/css/bootstrap-responsive.min.css")))]
-                 [else css]))]
-        [else
-         (let ([css `(,(link/css "/css/bootstrap.css"))])
-           (cond [(current-responsive?) 
-                  (append css `(,(link/css "/css/bootstrap-responsive.css")))]
-                 [else css]))]))
-
+  (cons (link/css (maybe-mini "/css/bootstrap.css"))
+        (if (current-bootstrap-responsive?) ;; need one more CSS
+            (list (link/css (maybe-mini "/css/bootstrap-responsive.css")))
+            (list))))
 
 (define (bs-container)
-  (if (current-responsive?) "container-fluid" "container"))
+  (if (current-bootstrap-responsive?) "container-fluid" "container"))
 
 (define (bs-row)
-  (if (current-responsive?) "row-fluid" "row"))
+  (if (current-bootstrap-responsive?) "row-fluid" "row"))
 
 ;; And now our Feature Presentation:
 (define (bodies->page xs                         ;listof xexpr?
@@ -314,7 +313,6 @@
                       #:uri-path uri-path        ;string?
                       #:feed [feed "all"]        ;string?
                       #:keywords [keywords '()]) ;listof string?
-  ;; -> xexpr?
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
@@ -1158,7 +1156,8 @@ EOF
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
-                               [responsive? #f])
+                               [bootstrap-responsive? #t]
+                               [bootstrap-minified? #t])
       ;; (clean)
       (build)
       (preview)
@@ -1180,7 +1179,8 @@ EOF
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
-                               [responsive? #f])
+                               [bootstrap-responsive? #t]
+                               [bootstrap-minified? #t])
       (command-line
        #:once-each
        [("-n" "--new") title

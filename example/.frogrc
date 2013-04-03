@@ -4,6 +4,12 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Use Bootstraps responsive CSS?
+bootstrap-responsive? = true
+
+# Use Booststrap minified CSS and JS files?
+bootstrap-minified? = true
+
 # Older/newer buttons' text. One of:
 # - "age" (just "Older or "Newer")
 # - "title" (just the blog post title)
@@ -31,9 +37,6 @@ decorate-feed-uris? = true
 # Insert in each feed item an image bug whose URI is decorated with
 # Google Analytics query parameters like utm_source ?
 feed-image-bugs? = true
-
-# Switch on Bootstrap's responsive CSS
-responsive? = true
 
 # Optional: The Google Analytics UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
