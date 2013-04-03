@@ -67,6 +67,7 @@
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
 (define current-older/newer-buttons (make-parameter "both"))
+(define current-responsive? (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -281,7 +282,6 @@
 (define-runtime-path disqus.js "disqus.js")
 
 ;; Bootstrap has some permutations: Responsive or not, minified or not:
-(define responsive? (make-parameter #f)) ;; Responsive not working ?!?!
 (define minified? (make-parameter #t))
 
 (define (bootstrap-js)
@@ -289,18 +289,23 @@
                    [else "/js/bootstrap.js"])))
 
 (define (bootstrap-css)
-  (link/css (cond [(minified?)
-                   (cond [(responsive?) "/css/bootstrap-responsive.min.css"]
-                         [else "/css/bootstrap.min.css"])]
-                  [else
-                   (cond [(responsive?) "/css/bootstrap-responsive.css"]
-                         [else "/css/bootstrap.css"])])))
+  (cond [(minified?)
+         (let ([css `(,(link/css "/css/bootstrap.min.css"))])
+           (cond [(current-responsive?) 
+                  (append css `(,(link/css "/css/bootstrap-responsive.min.css")))]
+                 [else css]))]
+        [else
+         (let ([css `(,(link/css "/css/bootstrap.css"))])
+           (cond [(current-responsive?) 
+                  (append css `(,(link/css "/css/bootstrap-responsive.css")))]
+                 [else css]))]))
+
 
 (define (bs-container)
-  (if (responsive?) "container-fluid" "container"))
+  (if (current-responsive?) "container-fluid" "container"))
 
 (define (bs-row)
-  (if (responsive?) "row-fluid" "row"))
+  (if (current-responsive?) "row-fluid" "row"))
 
 ;; And now our Feature Presentation:
 (define (bodies->page xs                         ;listof xexpr?
@@ -321,7 +326,7 @@
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
-               ,(bootstrap-css)
+               ,@(bootstrap-css)
                ,(link/css "/css/pygments.css")
                ,(link/css "/css/custom.css")
                ;; Atom feed
@@ -335,7 +340,7 @@
                       [rel "alternate"]
                       [title ,(str (current-title) ": " feed)]))
                ;; JS
-               ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js")
+               ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js")
                ,(bootstrap-js)
                ,@(google-analytics))
          (body
@@ -1152,7 +1157,8 @@ EOF
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
-                               [older/newer-buttons "both"])
+                               [older/newer-buttons "both"]
+                               [responsive? #f])
       ;; (clean)
       (build)
       (preview)
@@ -1173,7 +1179,8 @@ EOF
                                [pygments-pathname #f]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
-                               [older/newer-buttons "both"])
+                               [older/newer-buttons "both"]
+                               [responsive? #f])
       (command-line
        #:once-each
        [("-n" "--new") title
