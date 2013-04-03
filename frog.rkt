@@ -1051,10 +1051,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading config file into parameters
 
-(define .frogrc ".frogrc")
-
 (define (get-config name default)
-  (define pathname (build-path (top) .frogrc))
+  (define pathname (build-path (top) ".frogrc"))
   (unless (file-exists? pathname)
     (raise-user-error '|Configuration file| "Missing ~a" pathname))
   (let ([v (match (file->string pathname)
