@@ -729,11 +729,12 @@
      ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
-         ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
-                 [more? `(,@blurb
-                          (a ([href ,item-uri])
-                             (em "Continue reading ...")))]
-                 [else blurb]))))))
+         ,@(~> (cond [(current-feed-full?) body] ;don't syntax-highlight
+                     [more? `(,@blurb
+                              (a ([href ,item-uri])
+                                 (em "Continue reading ...")))]
+                     [else blurb])
+               unlinkify-footnotes))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -782,11 +783,12 @@
      ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
-         ,@(cond [(current-feed-full?) body] ;don't syntax-highlight
-                 [more? `(,@blurb
-                          (a ([href ,item-uri])
-                             (em "Continue reading ...")))]
-                 [else blurb]))))))
+         ,@(~> (cond [(current-feed-full?) body] ;don't syntax-highlight
+                     [more? `(,@blurb
+                              (a ([href ,item-uri])
+                                 (em "Continue reading ...")))]
+                     [else blurb])
+               unlinkify-footnotes))))))
 
 (define (rfc-8601->822 s)
   (match s
@@ -816,7 +818,49 @@
           day " " (MONTHS (sub1 (string->number month))) " " year " "
           hour ":" minute ":" second " " tz-name)]))
 
-;;(rfc-8601->822 "2013-03-01T13:03:34")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (unlinkify-footnotes xs)
+  (map unlinkify-footnotes/xexpr xs))
+
+(define (unlinkify-footnotes/xexpr x)
+  (match x
+    ;; Footnote link to definition
+    [`(sup (a ([href ,href][name ,name]) ,text)) `(sup ,text)]
+    ;; Footnote definition return link
+    [`(a ([href ,href]) "↩") ""]
+    ;; All else
+    [`(,tag ([,as] ...+) ,es ...)
+     `(,tag (,as) ,@(map unlinkify-footnotes/xexpr es))]
+    [`(,tag ,es ...)
+     `(,tag ,@(map unlinkify-footnotes/xexpr es))]
+    [else x]))
+
+(module+ test
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    `(p "Blah blah" (sup (a ([href "x"][name "y"]) "1")) "."))
+   `(p "Blah blah" (sup "1") "."))
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    '(p "Blah" (em (sup (a ([href "x"][name "y"]) "1")) ".")))
+   `(p "Blah" (em (sup "1") ".")))
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    '(p (em "hi") "there"))
+   '(p (em "hi") "there"))
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    '(p ([class "foo"][style "x"]) "there"))
+   '(p ((class "foo") (style "x")) "there"))
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    '(p ([class "foo"]) "there"))
+   '(p ((class "foo")) "there"))
+  (check-equal?
+   (unlinkify-footnotes/xexpr
+    '(p () "there"))
+   '(p () "there")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fucking Google
