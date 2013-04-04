@@ -127,16 +127,17 @@ Posts are automatically included in index pages and feeds.
 
 `/index.html` is an index for all posts, listed newest first.
 
-`/feeds/all.xml` is an Atom feed for all posts.
+`/feeds/all.atom.xml` is an Atom feed, and `/feeds/all.rss.xml` is an
+RSS feed, for _all_ posts.
 
-For each tag, there is a `tags/<tag-name>.html` index page (also
-listed newest first) and a `/feeds/<tag-name>.xml` Atom feed.
+Each tag has an index page `tags/<tag>.html`, an Atom feed
+`/feeds/<tag>.atom.xml`, and an RSS feed `/feeds/<tag>.rss.xml`.
 
-If you post has any section headings (e.g. `# Heading Level 1`, `##
-Heading level 2`), then an "On this page" table-of-contents is
+If a post has any section headings (e.g. `# Heading Level 1`, `##
+Heading level 2`), then an _"On this page"_ table of contents is
 automatically generated and placed in the left side bar.
 
-Twitter and Google+ buttons are placed on each post page.
+Twitter and Google+ sharing buttons are placed on each post page.
 
 Optional: If your `.frogrc` has a Disqus shortname, then Disqus
 comments are automatically included.
