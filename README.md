@@ -1,8 +1,16 @@
-# frog
+# Frog
 
 <a href="http://www.flickr.com/photos/doug88888/4717363945/" title="Happy Green frog by @Doug88888, on Flickr"><img src="http://farm5.staticflickr.com/4070/4717363945_b73afd78a9.jpg" width="300" height="300" alt="Happy Green frog"></a>
+=
+[<img src="https://raw.github.com/dcurtis/markdown-mark/master/png/48x30-solid.png">][Markdown]
+**+**
+[<img src="https://raw.github.com/twitter/bootstrap/master/docs/assets/ico/favicon.png">][Bootstrap]
+**->**
+[<img src="http://racket-lang.org/logo.png" width="30" height="30">][Racket]
+**+**
+[<img src="http://pygments.org/media/icon.png" width="40" height="40">][Pygments]
 
-<sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)<em><sub>
+<sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Frog image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)</em></sub>
 
 ## Overview
 
@@ -22,7 +30,7 @@ Yes, it's very much like Octopress and countless others. But it
 doesn't require any Ruby gemmage. The only non-Racket part is
 optionally using [Pygments][] to do syntax highlighting.
 
-Frog? Frozen blog.
+p.s "Frog?" Frozen blog.
 
 > Note: This has been tested on Mac OS/X; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
@@ -46,8 +54,8 @@ project/
       ...
     # Zero or more other .md files for non-post pages
   css/
-    pygments.css # styles for syntax highlighting
-    custom.css   # other styles you provide
+    pygments.css  # styles for syntax highlighting
+    custom.css    # other styles you provide
     bootstrap.css                #\
     bootstrap.min.css            # get these files
     bootstrap-responsive.css     # from Bootstrap
