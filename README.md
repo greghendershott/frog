@@ -30,7 +30,7 @@ Yes, it's very much like Octopress and countless others. But it
 doesn't require any Ruby gemmage. The only non-Racket part is
 optionally using [Pygments][] to do syntax highlighting.
 
-p.s "Frog?" Frozen blog.
+P.S. "Frog?" Frozen blog.
 
 > Note: This has been tested on Mac OS/X; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
