@@ -17,20 +17,21 @@
 Frog is a static web site generator written in [Racket][].
 
 You write content in [Markdown][]. You generate files. To deploy, you
-push them to a GitHub Pages repo, or copy them to Amazon S3, or
-whatever.
+push them to a GitHub Pages repo (or copy them to Amazon S3, or
+whatever).
 
 Posts get a variety of automatic blog features.
 
 You can also create non-post pages.
 
-The generated site presumes you're using [Bootstrap][] for CSS.
+The generated site uses [Bootstrap][], which is [responsive][],
+automatically adapting to various screen sizes.
 
 Yes, it's very much like Octopress and countless others. But it
 doesn't require any Ruby gemmage. The only non-Racket part is
 optionally using [Pygments][] to do syntax highlighting.
 
-P.S. "Frog?" Frozen blog.
+"Frog"? Frozen blog.
 
 > Note: This has been tested on Mac OS/X; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
@@ -398,6 +399,7 @@ See [open issues labeled `enhancement`][enhancements].
 [Racket]: http://www.racket-lang.org
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
 [Bootstrap]: http://twitter.github.com/bootstrap/index.html
+[responsive]: https://en.wikipedia.org/wiki/Responsive_web_design
 [Pygments]: http://pygments.org/
 [pygments.rb]: https://github.com/tmm1/pygments.rb
 [SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
