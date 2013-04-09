@@ -92,7 +92,7 @@ You create new posts in `_src/posts`. They should be named
 `YYYY-MM-DD-TITLE.md` and need to have some meta-data in the first few
 lines.
 
-You can do `racket frog.rkt -n "My Title"` to create such a file
+You can do `raco frog -n "My Title"` to create such a file
 easily. This will also fill in the required meta-data section. The
 markdown file starts with a code block (indented 4 spaces) that must
 contain these three lines:
@@ -278,14 +278,18 @@ pre {
 
 ## Dependencies and installations
 
-This depends on two other Racket projects:
+Frog depends on two other Racket projects:
 
 1. [#lang rackjure](https://github.com/greghendershott/rackjure)
 
 2. [Racket Markdown parser](https://github.com/greghendershott/markdown)
 
-Neither of these are Planet packages yet. As a result, you'll need to
-`git clone` each one, and run `raco link` on each one.
+Both are packages you can install using `raco pkg` from Racket 5.3.2
+or later. To install them, as well as Frog:
+
+    $ raco pkg install rackjure
+    $ raco pkg install markdown
+    $ raco pkg install frog
 
 ## Per-project configuration: .frogrc
 
@@ -352,7 +356,7 @@ responsive? = true
 
 ## Command line
 
-Run `racket /path/to/frog.rkt -h` to see the options:
+Run `raco frog -h` to see the options:
 
 ```
 frog.rkt [ <option> ... ]
