@@ -17,7 +17,7 @@
 (define top (make-parameter #f))
 
 ;; For interactive development
-(define-runtime-path example "example/")
+(define-runtime-path example "../example/")
 
 ;; sources
 (define (src-path) (build-path (top) "_src"))
@@ -1091,17 +1091,21 @@ EOF
 
 (define (maybe-read-config)
   (unless config
-    (define pathname (build-path (top) ".frogrc"))
-    (unless (file-exists? pathname)
-      (raise-user-error '|Configuration file| "Missing ~a" pathname))
-    (set! config (for/hasheq ([s (file->lines pathname)])
+    (define p (build-path (top) ".frogrc"))
+    (set! config
+          (cond [(file-exists? p)
+                 (prn0 "Using configuration ~a" p)
+                 (for/hasheq ([s (file->lines p)])
                    (match s
                      [(pregexp "^(.*)#?.*$" (list _ s))
                       (match s
                         [(pregexp "^\\s*(\\S+)\\s*=\\s*(.+)$" (list _ k v))
                          (values (string->symbol k) (maybe-bool v))]
                         [else (values #f #f)])]
-                     [else (values #f #f)])))))
+                     [else (values #f #f)]))]
+                [else
+                 (prn0 "Configuration ~a not found; using defaults." p)
+                 (make-hasheq)]))))
 
 (define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
   (match v
@@ -1112,13 +1116,7 @@ EOF
 (define (get-config name default) ;; (symbol? any/c -> any/c)
   (maybe-read-config)
   (cond [(dict-has-key? config name) (dict-ref config name)]
-        [else (cond [(procedure? default) (default name)]
-                    [else default])]))
-
-(define (raise-config-required-error name) ;; (-> symbol?)
-  (raise-user-error '|Configuration file|
-                    "Missing required item ~s"
-                    name))
+        [else default]))
 
 (require (for-syntax racket/syntax))
 (define-syntax (parameterize-from-config stx)
@@ -1138,7 +1136,7 @@ EOF
 (define (build/preview)
   (parameterize ([top example]
                  [current-verbosity 99])
-    (parameterize-from-config ([scheme/host raise-config-required-error]
+    (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [index-full? #f]
@@ -1161,7 +1159,7 @@ EOF
 
 (module+ main
   (parameterize ([top (current-directory)])
-    (parameterize-from-config ([scheme/host raise-config-required-error]
+    (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [index-full? #f]
