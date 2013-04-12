@@ -378,16 +378,16 @@ frog.rkt [ <option> ... ]
 
 A typical workflow:
 
-1. Create a new post with `racket frog.rkt -n "My Post Title"`. The
+1. Create a new post with `raco frog -n "My Post Title"`. The
 name of the new file is displayed to stdout.
 
 2. Edit the file in your preferred plain text editor.
 
-3. Regenerate your site and preview it  with `racket frog.rkt
--bp`.
+3. Regenerate your site and preview it  with `raco frog -bp`.
 
-If you're using [GitHub Pages][], you can commit and push to deploy to
-your real site.
+4. Deploy. If you're using [GitHub Pages][], you can commit and push
+to deploy to your real site. If you're using some other method, you
+can copy or rsync the files to your static file server.
 
 ## Tips
 
