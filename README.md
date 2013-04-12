@@ -352,6 +352,9 @@ responsive? = true
 
 # Optional: Path to Pygments executable
 # pygments-pathname = ~/src/pygments-main/pygmentize
+
+# Optional: Twitter name for follow button. (Do NOT include @ prefix.)
+# twitter-name = xxx
 ```
 
 ## Command line

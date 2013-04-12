@@ -69,6 +69,7 @@
 (define current-older/newer-buttons (make-parameter "both"))
 (define current-bootstrap-minified? (make-parameter #t))
 (define current-bootstrap-responsive? (make-parameter #f))
+(define current-twitter-name (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -184,7 +185,7 @@
     ,(date+tags->xexpr date tags)
     ,@(syntax-highlight body)
     (p 'nbsp)
-    ,(social uri-path)
+    ,(share uri-path)
     (p 'nbsp)
     ,(older/newer-nav older newer)))
 
@@ -358,7 +359,8 @@
                     ;; Span2: Tags list
                     (div ([id "right-sidebar"]
                           [class "span2"])
-                         ,(tags/feeds-xexpr)))
+                         ,@(tags/feeds)
+                         ,@(follow)))
                (footer
                 (hr)
                 ,@(with-input-from-file
@@ -419,7 +421,7 @@
                            (current-google-analytics-domain)))]
         [else '()]))
 
-(define (social uri-path)
+(define (share uri-path)
   `(p
     ;; Twitter
     ,(script/js/inc tweet-button.js)
@@ -446,12 +448,22 @@
                           (ol ([class "nav nav-list bs-docs-sidenav"])
                               ,@contents)))])]))
 
-(define (tags/feeds-xexpr)
+(define (follow)
+  (cond [(current-twitter-name)
+         `((a ([href ,(str "https://twitter.com/" (current-twitter-name))]
+               [class "twitter-follow-button"]
+               [data-show-count "false"]
+               [data-lang="en"]) ,(str "Follow " (current-twitter-name)))
+           (script "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");"))]
+        [else '()]))
+
+(define (tags/feeds)
+  ;; Sort alphabetically by tag name. Use association list (can't sort
+  ;; a hash).
   (define alist (~> (for/list ([(k v) (in-hash all-tags)])
                       (cons k v))
                     (sort string-ci<=? #:key car)))
-  `(div
-    (p "Tags:"
+  `((p "Tags:"
        (ul ,@(for/list ([(k v) (in-dict alist)])
                `(li ,(tag->xexpr k)
                     nbsp
@@ -1149,7 +1161,8 @@ EOF
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
                                [bootstrap-responsive? #t]
-                               [bootstrap-minified? #t])
+                               [bootstrap-minified? #t]
+                               [twitter-name #f])
       ;; (clean)
       (build)
       (preview)
@@ -1172,7 +1185,8 @@ EOF
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
                                [bootstrap-responsive? #t]
-                               [bootstrap-minified? #t])
+                               [bootstrap-minified? #t]
+                               [twitter-name #f])
       (command-line
        #:once-each
        [("-n" "--new") title
