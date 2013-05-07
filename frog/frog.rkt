@@ -750,15 +750,11 @@
   (define updated (~> xs first post-date rfc-8601->822))
   (~>
    `(rss
-     ([version "2.0"]
-      [xmlns:atom "http://www.w3.org/2005/Atom"])
+     ([version "2.0"])
      (channel
       (title ,(str (current-title) ": " title))
       (description ,(str (current-title) ": " title))
       (link ,(full-uri of-uri-path))
-      (atom:link ([href ,(full-uri (abs->rel/www file))]
-                  [rel "self"]
-                  [type "application/rss+xml"]))
       (lastBuildDate () ,updated)
       (pubDate ,updated)
       (ttl "1800")
