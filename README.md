@@ -27,9 +27,12 @@ You can also create non-post pages.
 The generated site uses [Bootstrap][], which is [responsive][],
 automatically adapting to various screen sizes.
 
-Yes, it's very much like Octopress and countless others. But it
-doesn't require any Ruby gemmage. The only non-Racket part is
-optionally using [Pygments][] to do syntax highlighting.
+Yes, it's very much like Octopress and others. But Frog doesn't
+require installing Ruby. Installing Racket is typically waaaay
+simpler and faster.
+
+The only non-Racket part is optionally using [Pygments][] to do syntax
+highlighting.
 
 "Frog"? Frozen blog.
 
@@ -276,7 +279,7 @@ pre {
 }
 ```
 
-## Dependencies and installations
+## Dependencies and installs
 
 Frog depends on two other Racket projects:
 
@@ -356,7 +359,6 @@ responsive? = true
 # Optional: Twitter name for follow button. (Do NOT include @ prefix.)
 # twitter-name = xxx
 ```
-
 ## Command line
 
 Run `raco frog -h` to see the options:
