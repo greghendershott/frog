@@ -38,6 +38,10 @@ decorate-feed-uris? = true
 # Google Analytics query parameters like utm_source ?
 feed-image-bugs? = true
 
+# Optional: The URI for the favicon. Defaults to "/favicon.ico".
+# Change if you need e.g. /favicon.png or http://elsewhere/favicon.ico.
+# favicon = /favicon.ico
+
 # Optional: The Google Analytics UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
 

@@ -70,6 +70,7 @@
 (define current-bootstrap-minified? (make-parameter #t))
 (define current-bootstrap-responsive? (make-parameter #f))
 (define current-twitter-name (make-parameter #f))
+(define current-favicon (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; verbosity
@@ -321,7 +322,7 @@
                ,(meta "author" (current-author))
                ,(meta "keywords" (string-join keywords ","))
                (link ([rel "canonical"][href ,(full-uri uri-path)]))
-               (link ([href "/favicon.ico"][rel "shortcut icon"]))
+               (link ([href ,(current-favicon)][rel "shortcut icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
@@ -1158,7 +1159,8 @@ EOF
                                [older/newer-buttons "both"]
                                [bootstrap-responsive? #t]
                                [bootstrap-minified? #t]
-                               [twitter-name #f])
+                               [twitter-name #f]
+                               [favicon "/favicon.ico"])
       ;; (clean)
       (build)
       (preview)
@@ -1182,7 +1184,8 @@ EOF
                                [older/newer-buttons "both"]
                                [bootstrap-responsive? #t]
                                [bootstrap-minified? #t]
-                               [twitter-name #f])
+                               [twitter-name #f]
+                               [favicon "/favicon.ico"])
       (command-line
        #:once-each
        [("-n" "--new") title
