@@ -281,8 +281,8 @@ project/
       ...
     # Zero or more other .md files for non-post pages
   css/
-    pygments.css  # styles for syntax highlighting
-    custom.css    # other styles you provide; may be empty
+    pygments.css  # used to style code elements from Pygments
+    custom.css    # other styles you provide; must exist but may be empty
     bootstrap.css                #\
     bootstrap.min.css            # get these files
     bootstrap-responsive.css     # from Bootstrap
@@ -312,6 +312,16 @@ project/
       ...
   ...
 ```
+
+Tips:
+
+For examples of files you can use and rename to `pygments.css`, see
+<https://github.com/richleland/pygments-css>.
+
+The official Bootstrap files are at
+<http://twitter.github.io/bootstrap/>. For alternative "themes", see
+<http://http://bootswatch.com/>.
+
 
 ### Per-project configuration: .frogrc
 
@@ -398,14 +408,15 @@ frog.rkt [ <option> ... ]
   example: `-h-' is the same as `-h --'
 ```
 
-A typical workflow:
+## Typical workflow
 
 1. Create a new post with `raco frog -n "My Post Title"`. The
 name of the new file is displayed to stdout.
 
-2. Edit the file in your preferred plain text editor.
+2. Edit the Markdown file in your preferred plain text editor.
 
-3. Regenerate your site and preview it  with `raco frog -bp`.
+3. Regenerate your site and preview it with `raco frog -bp`. (You might
+repeat steps 2 and 3 a few times until you're satisfied.)
 
 4. Deploy. If you're using [GitHub Pages][], you can commit and push
 to deploy to your real site. If you're using some other method, you
