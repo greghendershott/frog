@@ -360,9 +360,6 @@ decorate-feed-uris? = true
 # Google Analytics query parameters like utm_source ?
 feed-image-bugs? = true
 
-# Switch on Bootstrap's responsive CSS
-responsive? = true
-
 # Optional: The Google Analytics UA-xxxx account number
 # google-analytics-account = UA-xxxxxxx
 
