@@ -122,12 +122,12 @@ Non-post pages are _not_ included in any automatically generated index
 pages or feeds.  If you want them to be linked in, you must do so
 manually.
 
-## footer.md
+## _src/footer.md
 
 The special file `_src/footer.md` is converted to HTML and placed at
 the foot of all pages (both posts and non-post pages).
 
-## navbar.md
+## _src/navbar.md (optional)
 
 The special file `_src/navbar.md` optionally adds extra items to the
 top navbar.  It should consist of a single bulleted list of links, in
@@ -135,6 +135,14 @@ Markdown.  For example:
 
     - [About](/About.html)
     - [Something Else](/path/to/thing)
+
+## _src/homehead.md (optional)
+
+The special file `_src/homehead.md` replaces the text "All Posts" on
+the home page with whatever you prefer.
+
+Note that this is used _only_ for your blog's home page. This doesn't
+appear on tag index pages like "All posts tagged _Some Tag_".
 
 ## sitemap.txt
 

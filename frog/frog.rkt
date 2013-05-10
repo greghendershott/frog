@@ -314,7 +314,8 @@
                       #:description description  ;string?
                       #:uri-path uri-path        ;string?
                       #:feed [feed "all"]        ;string?
-                      #:keywords [keywords '()]) ;listof string?
+                      #:keywords [keywords '()]  ;listof string?
+                      #:toc-sidebar? [toc? #f])
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
@@ -350,7 +351,8 @@
                     ;; Span2: Docs sidebar
                     (div ([id "left-sidebar"]
                           [class "span2 bs-docs-sidebar"])
-                         ,(toc-xexpr xs)
+                         ,(cond [toc? (toc-xexpr xs)]
+                                [else ""])
                          (p nbsp))
                     ;; Span8: Main content
                     (div ([id "content"]
@@ -493,27 +495,31 @@
                      feed  ;string?
                      file) ;path?
   (prn1 "Generating ~a" (abs->rel/top file))
-  (~> (cons
-       `(h1 ,@(cond [tag `("Posts tagged " (em ,tag))]
-                    [else `(,title)]))
-       (for/list ([x (in-list (take<= xs (current-max-index-items)))])
-        (match-define
-         (post title dest-path uri-path date tags blurb more? body) x)
-        `(div ([class "index-post"])
-              (h2 (a ([href ,uri-path]) ,title))
-              ,(date+tags->xexpr date tags)
-              ,@(cond [(current-index-full?) (syntax-highlight body)]
-                      [more? `(,@(syntax-highlight blurb)
-                               (a ([href ,uri-path])
-                                  (em "Continue reading ...")))]
-                      [else (syntax-highlight blurb)]))))
-      (add-between `(hr))
+  (define homehead.md (build-path (src-path) "homehead.md"))
+  (~> (append
+       (cond [tag `((h1 "Posts tagged " (em ,tag)))]
+             [(file-exists? homehead.md)
+              (with-input-from-file homehead.md read-markdown)]
+             [else `((h1 ,title))])
+       (~> (for/list ([x (in-list (take<= xs (current-max-index-items)))])
+             (match-define
+              (post title dest-path uri-path date tags blurb more? body) x)
+             `(div ([class "index-post"])
+                   (h2 (a ([href ,uri-path]) ,title))
+                   ,(date+tags->xexpr date tags)
+                   ,@(cond [(current-index-full?) (syntax-highlight body)]
+                           [more? `(,@(syntax-highlight blurb)
+                                    (a ([href ,uri-path])
+                                       (em "Continue reading ...")))]
+                           [else (syntax-highlight blurb)])))
+           (add-between `(hr))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
                     #:uri-path (abs->rel/www file)
                     #:keywords (cond [tag (list tag)]
-                                     [else (hash-keys all-tags)]))
+                                     [else (hash-keys all-tags)])
+                    #:toc-sidebar? tag) ;; no toc on home page
       xexpr->string/pretty
       (list "<!DOCTYPE html>")
       reverse
@@ -985,7 +991,7 @@ EOF
   (cond
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown)$" path)
-         (not (member (path->string name) '("footer.md" "navbar.md")))
+         (not (member (path->string name) '("homehead.md" "footer.md" "navbar.md")))
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
     (define xs (syntax-highlight (with-input-from-file path read-markdown)))
@@ -1057,7 +1063,7 @@ EOF
                     (build-path (www/feeds-path) (str (our-encode tag)
                                                       ".rss.xml"))))
   ;; Write the index page for all posts
-  (write-index posts "All Posts" #f "all"
+  (write-index posts (current-title) #f "all"
                (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed posts "All Posts" "all" "/index.html"
