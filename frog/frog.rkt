@@ -315,7 +315,7 @@
                       #:uri-path uri-path        ;string?
                       #:feed [feed "all"]        ;string?
                       #:keywords [keywords '()]  ;listof string?
-                      #:toc-sidebar? [toc? #f])
+                      #:toc-sidebar? [toc? #t])
   `(html ([lang "en"])
          (head (meta ([charset "utf-8"]))
                (title ,title)
