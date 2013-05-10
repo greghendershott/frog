@@ -501,18 +501,17 @@
              [(file-exists? homehead.md)
               (with-input-from-file homehead.md read-markdown)]
              [else `((h1 ,title))])
-       (~> (for/list ([x (in-list (take<= xs (current-max-index-items)))])
-             (match-define
-              (post title dest-path uri-path date tags blurb more? body) x)
-             `(div ([class "index-post"])
+       (for/list ([x (in-list (take<= xs (current-max-index-items)))])
+         (match-define
+          (post title dest-path uri-path date tags blurb more? body) x)
+         `(article ([class "index-post"])
                    (h2 (a ([href ,uri-path]) ,title))
                    ,(date+tags->xexpr date tags)
                    ,@(cond [(current-index-full?) (syntax-highlight body)]
                            [more? `(,@(syntax-highlight blurb)
                                     (a ([href ,uri-path])
                                        (em "Continue reading ...")))]
-                           [else (syntax-highlight blurb)])))
-           (add-between `(hr))))
+                           [else (syntax-highlight blurb)]))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
