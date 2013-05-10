@@ -344,6 +344,11 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Pattern for blog post permalinks
+# Optional: Default is "/{year}/{month}/{title}.html".
+# Here's an example of the Jekyl "pretty" style:
+permalink = /blog/{year}/{month}/{day}/{title}/index.html
+
 # Use Bootstrap responsive CSS?
 bootstrap-responsive? = true
 

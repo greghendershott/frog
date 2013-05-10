@@ -35,10 +35,11 @@
         [root (path->string (www-path))])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
-      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+      [else (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
 
 ;; Convert from absolute local path to one relative to project top dir.
 ;; Ex: ~/project/css would become css
+;;
 ;; (Once upon a time (top) and (www-path) weren't necessarily the same.
 ;; Now they always are, and the only difference from abs->rel/www is the
 ;; lack of the leading slash. Could rewrite this.)
@@ -50,12 +51,54 @@
       [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define/contract (permalink-path year month day title pattern)
+  (string? string? string? string? string? . -> . path?)
+  (build-path (www-path)
+              (regexp-replaces pattern
+                               `([#rx"{year}" ,year]
+                                 [#rx"{month}" ,month]
+                                 [#rx"{day}" ,day]
+                                 [#rx"{title}" ,title]
+                                 [#rx"^/" ""]))))
+
+(module+ test
+  (parameterize ([top (find-system-path 'temp-dir)])
+    (define f (curry permalink-path "2012" "05" "31" "title-of-post"))
+    (check-equal? (f "/{year}/{month}/{title}.html")
+                  (build-path (top) "2012/05/title-of-post.html"))
+    (check-equal? (f "/blog/{year}/{month}/{day}/{title}.html")
+                  (build-path (top) "blog/2012/05/31/title-of-post.html"))
+    (check-equal? (f "/blog/{year}/{month}/{day}/{title}/index.html")
+                  (build-path (top) "blog/2012/05/31/title-of-post/index.html"))))
+
+;; If the path-string ends in "/index.html", return the path without
+;; the "index.html" suffix.
+(define/contract (post-path->link pp)
+  (path? . -> . string?)
+  (~> (match (path->string pp)
+        [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
+        [s s])
+      string->path
+      abs->rel/www))
+
+(module+ test
+  (parameterize ([top (find-system-path 'temp-dir)])
+    (check-equal?
+     (post-path->link (build-path (top) "blog/2012/05/31/title-of-post.html"))
+     "/blog/2012/05/31/title-of-post.html")
+    (check-equal?
+     (post-path->link (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
+     "/blog/2012/05/31/title-of-post/")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parameters loaded from configuration file
 
 (define current-verbosity (make-parameter 0))
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
+(define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
 (define current-max-index-items (make-parameter 999))
@@ -139,14 +182,15 @@
                ;; Make the destination HTML pathname
                (define year (substring date 0 4))
                (define month (substring date 5 7))
+               (define day (substring date 8 10))
                (define dest-path
-                 (build-path (www-path) year month
-                             (str (~> title string-downcase our-encode)
-                                  ".html")))
+                 (permalink-path year month day
+                                 (~> title string-downcase our-encode)
+                                 (current-permalink)))
                ;; And return our result
                (cons (post title
                            dest-path
-                           (abs->rel/www dest-path)
+                           (post-path->link dest-path)
                            date
                            tags
                            blurb
@@ -1153,6 +1197,7 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
                                [google-analytics-account #f]
@@ -1178,6 +1223,7 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
                                [google-analytics-account #f]
