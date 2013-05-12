@@ -346,7 +346,7 @@ author = The Unknown Author
 
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
-# Here's an example of the Jekyl "pretty" style:
+# Here's an example of the Jekyll "pretty" style:
 permalink = /blog/{year}/{month}/{day}/{title}/index.html
 
 # Use Bootstrap responsive CSS?
