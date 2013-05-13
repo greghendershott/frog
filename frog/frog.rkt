@@ -1179,7 +1179,20 @@ EOF
 
 (define (get-config name default) ;; (symbol? any/c -> any/c)
   (maybe-read-config)
-  (cond [(dict-has-key? config name) (dict-ref config name)]
+  (cond [(dict-has-key? config name)
+         (define v (dict-ref config name))
+         (cond [(string? default) v]
+               [(boolean? default) v]
+               [(number? default)
+                (or (string->number v)
+                    (begin
+                      (eprintf
+                       "Expected number for ~a. Got '~a'. Using default: ~a\n"
+                       name v default)
+                      default))]
+               [else (raise-type-error 'get-config
+                                       "string, boolean, or number"
+                                       v)])]
         [else default]))
 
 (require (for-syntax racket/syntax))
@@ -1206,6 +1219,8 @@ EOF
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
+                               [max-index-items 999]
+                               [max-feed-items 999]
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
@@ -1232,6 +1247,8 @@ EOF
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
+                               [max-index-items 999]
+                               [max-feed-items 999]
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
