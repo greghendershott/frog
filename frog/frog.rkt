@@ -52,25 +52,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define/contract (permalink-path year month day title pattern)
-  (string? string? string? string? string? . -> . path?)
+(define/contract (permalink-path year month day title filename pattern)
+  (string? string? string? string? string? string? . -> . path?)
   (build-path (www-path)
               (regexp-replaces pattern
                                `([#rx"{year}" ,year]
                                  [#rx"{month}" ,month]
                                  [#rx"{day}" ,day]
                                  [#rx"{title}" ,title]
+                                 [#rx"{filename}",filename]
                                  [#rx"^/" ""]))))
 
 (module+ test
   (parameterize ([top (find-system-path 'temp-dir)])
-    (define f (curry permalink-path "2012" "05" "31" "title-of-post"))
+    (define f (curry permalink-path
+                     "2012" "05" "31" "title-of-post" "file-name"))
     (check-equal? (f "/{year}/{month}/{title}.html")
                   (build-path (top) "2012/05/title-of-post.html"))
     (check-equal? (f "/blog/{year}/{month}/{day}/{title}.html")
                   (build-path (top) "blog/2012/05/31/title-of-post.html"))
     (check-equal? (f "/blog/{year}/{month}/{day}/{title}/index.html")
-                  (build-path (top) "blog/2012/05/31/title-of-post/index.html"))))
+                  (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
+    (check-equal? (f "/blog/{year}/{month}/{day}/{filename}/index.html")
+                  (build-path (top) "blog/2012/05/31/file-name/index.html"))))
 
 ;; If the path-string ends in "/index.html", return the path without
 ;; the "index.html" suffix.
@@ -186,6 +190,8 @@
                (define dest-path
                  (permalink-path year month day
                                  (~> title string-downcase our-encode)
+                                   (match (path->string name)
+                                     [(pregexp post-file-px (list _ s)) s])
                                  (current-permalink)))
                ;; And return our result
                (cons (post title

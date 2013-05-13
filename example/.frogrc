@@ -8,6 +8,10 @@ author = The Unknown Author
 # Optional: Default is "/{year}/{month}/{title}.html".
 # Here's an example of the Jekyll "pretty" style:
 permalink = /blog/{year}/{month}/{day}/{title}/index.html
+# There is also {filename}, which is the `this-part` portion of
+# your post's YYYY-MM-DD-this-part.md file name. This is in case
+# you don't like Frog's encoding of your post title and want to
+# specify it exactly yourself, e.g. to match a previous blog URI.
 
 # Use Bootstraps responsive CSS?
 bootstrap-responsive? = true
