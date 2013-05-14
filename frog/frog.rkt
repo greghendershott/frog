@@ -267,13 +267,19 @@
                     "Older" 'rarr))])))
 
 (define (meta-data xs)
-  (match (first xs)
-    [`(pre ,s)
-     (match s
-       [(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
-                 (list _ title date tags))
-        (values title date (tag-string->tags tags) (rest xs))]
-       [else (raise-user-error 'meta-data "Missing meta-data")])]))
+  (match xs
+    [`((pre ()
+            (code ()
+                  ,(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
+                            (list _ title date tags))))
+       ,more ...)
+     (values title date (tag-string->tags tags) more)]
+    [`((pre ()
+            ,(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
+                      (list _ title date tags)))
+       ,more ...)
+     (values title date (tag-string->tags tags) more)]
+    [_ (raise-user-error 'meta-data "Missing meta-data")]))
 
 (define (tag->xexpr s)
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
