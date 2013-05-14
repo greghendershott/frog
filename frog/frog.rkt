@@ -373,7 +373,7 @@
                ,(meta "author" (current-author))
                ,(meta "keywords" (string-join keywords ","))
                (link ([rel "canonical"][href ,(full-uri uri-path)]))
-               (link ([href ,(current-favicon)][rel "shortcut icon"]))
+               (link ([href ,(current-favicon)][rel "icon"]))
                (meta ([name "viewport"]
                       [content "width=device-width, initial-scale=1.0"]))
                ;; CSS
