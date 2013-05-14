@@ -635,7 +635,7 @@
          (define cmd (str #:sep " "
                           (expand-user-path (current-pygments-pathname))
                           "-f html"
-                          "-O linenos=1"
+                          "-O linenos=1,encoding=utf-8"
                           "-l" lang
                           "<" tmp-in
                           "> "tmp-out))
