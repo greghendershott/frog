@@ -8,6 +8,10 @@ Everything after this paragraph "after the break". On index pages and
 Atom feeds, it will become "Continue reading...", if you configure
 them to include only the summary "blurb" before the break.
 
+```
+some code
+```
+
 <!-- more -->
 
 Here's some [Bullshit Ipsum](http://bullshitipsum.com/?paragraphs=2).
@@ -90,6 +94,33 @@ Yields this:
 (for ([path (in-directory)])
   (when (regexp-match? #rx"[.]rkt$" path)
     (printf "source file: ~a\n" path)))
+```
+
+Here is a lambda: λ.
+
+Here is a lambda: `λ`.
+
+And here:
+
+    (λ () #t)
+
+And here:
+
+```racket
+(λ () #t)
+```
+
+And here:
+
+```scheme
+(λ () #t)
+```
+
+Here's a simple `for` macro, written in [Racket][define-syntax-rule]:
+
+```scheme
+(define-syntax-rule (for (x e1) e2)
+  (for-each (λ (x) e2) e1))
 ```
 
 The end.
