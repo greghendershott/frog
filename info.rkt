@@ -1,2 +1,3 @@
 #lang setup/infotab
-(define deps (list "markdown" "rackjure"))
+(define deps '(("markdown" "0.1.0")
+               "rackjure"))
