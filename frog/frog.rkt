@@ -267,19 +267,24 @@
                     "Older" 'rarr))])))
 
 (define (meta-data xs)
+  (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
-    [`((pre ()
-            (code ()
-                  ,(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
-                            (list _ title date tags))))
+    [`((pre ,(pregexp px (list _ title date tags)))
        ,more ...)
      (values title date (tag-string->tags tags) more)]
-    [`((pre ()
-            ,(pregexp "^Title: (.+?)\nDate: (.+?)\nTags:\\s*(.*?)\n*$"
-                      (list _ title date tags)))
+    [`((pre () ,(pregexp px (list _ title date tags)))
        ,more ...)
      (values title date (tag-string->tags tags) more)]
-    [_ (raise-user-error 'meta-data "Missing meta-data")]))
+    [`((pre () (code () ,(pregexp px (list _ title date tags))))
+       ,more ...)
+     (values title date (tag-string->tags tags) more)]
+    [_ (raise-user-error 'meta-data "Post needs meta-data")]))
+
+(module+ test
+  (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
+  (check-not-exn (thunk (meta-data `((pre ,s)))))
+  (check-not-exn (thunk (meta-data `((pre () ,s)))))
+  (check-not-exn (thunk (meta-data `((pre () (code () ,s)))))))
 
 (define (tag->xexpr s)
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
