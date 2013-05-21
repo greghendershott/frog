@@ -14,6 +14,9 @@
          web-server/http
          web-server/dispatchers/dispatch)
 
+(module+ test
+  (require rackunit))
+
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))
 
@@ -693,7 +696,6 @@
        " ..."))
 
 (module+ test
-  (require rackunit)
   (check-equal?
    (xexprs->description '((h1 ([class "foo"]) "A heading")
                           (p "A " (em "paragraph") " of some stuff.")
@@ -735,7 +737,6 @@
   (match (do x) [(pregexp "^(.*?)\\s*$" (list _ x)) x]))
 
 (module+ test
-  (require rackunit)
   (check-equal? (xexpr->markdown '(em "foobar"))
                 "_foobar_")
   (check-equal? (xexpr->markdown '(em ([class "foo"]) "foobar"))
@@ -1225,7 +1226,6 @@ EOF
                                        v)])]
         [else default]))
 
-(require (for-syntax racket/syntax))
 (define-syntax (parameterize-from-config stx)
   (syntax-case stx ()
     [(_ ([name default] ...)
