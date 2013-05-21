@@ -937,7 +937,7 @@
    '(p () "there")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Fucking Google
+;; Feed analytics without FeedBurner
 
 ;; If you want readership stats, but you can no longer use
 ;; FeedBurner.com (because Google shut down it and Google Reader):
