@@ -8,6 +8,7 @@
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
+         "watch-dir.rkt"
          ;; Remainder are just for the preview feature:
          web-server/servlet-env
          web-server/http
@@ -1165,6 +1166,19 @@ EOF
                  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (watch)
+  (build)
+  (define t (watch-directory (src-path)
+                             '(file)
+                             (lambda (path what)
+                               (build)
+                               (displayln #"\007")) ;; beep (hopefully)
+                             #:rate 5))
+  (preview)
+  (kill-thread t))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading config file into parameters
 
 (define config #f) ;; symbol? => any/c
@@ -1249,8 +1263,9 @@ EOF
                                [twitter-name #f]
                                [favicon "/favicon.ico"])
       ;; (clean)
-      (build)
-      (preview)
+      ;; (build)
+      ;; (preview)
+      (watch)
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1279,20 +1294,31 @@ EOF
       (command-line
        #:once-each
        [("-n" "--new") title
-        ("Create a file for a new post based on today's"
-         "date and your supplied <title>.")
+        (""
+         "Create a file for a new post based on today's date and <title>.")
         (new-post title)]
        [("-m" "--make" "-b" "--build")
-        "Generate files."
+        (""
+         "Generate files.")
         (build)]
        [("-p" "--preview")
-        "Run a local server and start your browser."
+        (""
+         "Run a local web server and start your browser.")
         (preview)]
        [("-c" "--clean")
-        "Delete generated files."
+        (""
+         "Delete generated files.")
         (clean)]
+       [("-w" "--watch")
+        (""
+         "1. Generate files."
+         "2. Run a local web server and start your browser."
+         "3. Watch for changed files, and generate again."
+         "   (You'll need to refresh the browser yourself.")
+        (watch)]
        [("--pygments-css") style-name
-        "Generate ./css/pygments.css using style-name (ex: 'default')"
+        (""
+         "Generate ./css/pygments.css using style-name (ex: 'default')")
         (make-pygments.css style-name)]
        #:once-any
        [("-v" "--verbose") "Verbose. Put first."
