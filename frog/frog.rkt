@@ -300,11 +300,12 @@
 
 (define (above-the-fold xs)
   (define-values (above below) (break more-xexpr? xs))
+
   (values above (not (empty? below))))
 
 (define (more-xexpr? x)
   (match x
-    [(list p "<!-- more -->") #t]
+    [`(p ,(pregexp "\\s*<!-- more -->\\s*")) #t]
     [else #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
