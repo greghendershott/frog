@@ -374,7 +374,35 @@
 (define (bs-row)
   (if (current-bootstrap-responsive?) "row-fluid" "row"))
 
-;; And now our Feature Presentation:
+(define (default-container dict)
+  `((div ([class ,(dict 'bootstrap-row-class)])
+         ;; Left column
+         (div ([id "left-sidebar"]
+               [class "span2 bs-docs-sidebar"])
+              ,@(dict 'tocs)
+              (p nbsp))
+         ;; Main column
+         (div ([id "content"]
+               [class "span8"])
+              ,@(dict 'bodies))
+         ;; Right column
+         (div ([id "right-sidebar"]
+               [class "span2"])
+              ,@(dict 'tags/feeds)
+              ,@(dict 'follow)))))
+
+(define container (make-parameter error))
+(define (container-proc)
+  (define p (build-path (src-path) "template.rkt"))
+  (cond [(file-exists? p)
+         (dynamic-require p
+                          'container
+                          (thunk
+                           (prn1 "template.rkt doesn't provide container")
+                           default-container))]
+        [else (prn1 "no template.rkt. using default container")
+              default-container]))
+
 (define (bodies->page xs                         ;listof xexpr?
                       #:title title              ;string?
                       #:description description  ;string?
@@ -413,23 +441,13 @@
          (body
           ,(navbar uri-path)
           (div ([class ,(bs-container)])
-               (div ([class ,(bs-row)])
-                    ;; Span2: Docs sidebar
-                    (div ([id "left-sidebar"]
-                          [class "span2 bs-docs-sidebar"])
-                         ,(cond [toc? (toc-xexpr xs)]
-                                [else ""])
-                         (p nbsp))
-                    ;; Span8: Main content
-                    (div ([id "content"]
-                          [class "span8"])
-                         ;; Caller's content
-                         ,@xs)
-                    ;; Span2: Tags list
-                    (div ([id "right-sidebar"]
-                          [class "span2"])
-                         ,@(tags/feeds)
-                         ,@(follow)))
+               ,@((container)
+                  {'bootstrap-row-class (bs-row)
+                   'bodies xs
+                   'tocs (list (cond [toc? (toc-xexpr xs)]
+                                           [else ""]))
+                   'tags/feeds (tags/feeds)
+                   'follow (follow)})
                (footer
                 (hr)
                 ,@(with-input-from-file
@@ -1244,8 +1262,9 @@ EOF
 
 ;; For interactive development
 (define (build/preview)
-  (parameterize ([top example]
-                 [current-verbosity 99])
+  (parameterize* ([top example]
+                  [current-verbosity 99]
+                  [container (container-proc)])
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
@@ -1274,7 +1293,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ main
-  (parameterize ([top (current-directory)])
+  (parameterize* ([top (current-directory)]
+                  [container (container-proc)])
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
