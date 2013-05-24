@@ -255,13 +255,14 @@ add values in the future.)  Your `container` function returns a
 `(listof xexpr?)`. Those x-expressions spliced into the container div
 for every page.
 
-See [`example/_src/template.rkt`]((https://github.com/greghendershott/frog/tree/master/example/_src/template.rkt) for an example.
+See [`example/_src/template.rkt`](https://github.com/greghendershott/frog/blob/master/example/_src/template.rkt) for an example.
 
 > This doesn't allow customizing the layout of the _entire_
 > page. Although you can accomplish a lot using CSS, it might not be
 > enough. As a result, someday `template.rkt` will probably also let you
 > define and provide a `page` functino to define the entire `html`
 > x-expression.
+
 
 ----------------------------------------------------------------------
 
