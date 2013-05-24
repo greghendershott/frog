@@ -236,13 +236,13 @@
       (display-to-file* dest-path #:exists 'replace)))
 
 (define (post-xexpr title uri-path date tags body older newer)
-  `((h1 ,title)
-    ,(date+tags->xexpr date tags)
-    ,@(syntax-highlight body)
-    (p 'nbsp)
-    ,(share uri-path)
-    (p 'nbsp)
-    ,(older/newer-nav older newer)))
+  `((article (header (h1 ,title))
+             ,(date+tags->xexpr date tags)
+             ,@(syntax-highlight body)
+             (footer (p 'nbsp)
+                     ,(share uri-path)
+                     (p 'nbsp)
+                     ,(older/newer-nav older newer)))))
 
 (define (older/newer-nav older newer)
   `(ul
@@ -294,7 +294,9 @@
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
 
 (define (date+tags->xexpr date tags)
-  `(p ,(substring date 0 10) ;; just YYYY-MM-DD
+  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
+  `(p (time ([datetime ,dt]
+             [pubdate "true"]) ,dt)
       " :: "
       ,@(add-between (map tag->xexpr tags)
                      ", ")))
@@ -589,13 +591,14 @@
          (match-define
           (post title dest-path uri-path date tags blurb more? body) x)
          `(article ([class "index-post"])
-                   (h2 (a ([href ,uri-path]) ,title))
+                   (header (h2 (a ([href ,uri-path]) ,title)))
                    ,(date+tags->xexpr date tags)
-                   ,@(cond [(current-index-full?) (syntax-highlight body)]
-                           [more? `(,@(syntax-highlight blurb)
-                                    (a ([href ,uri-path])
-                                       (em "Continue reading ...")))]
-                           [else (syntax-highlight blurb)]))))
+                   (div ([class "entry-content"])
+                        ,@(cond [(current-index-full?) (syntax-highlight body)]
+                                [more? `(,@(syntax-highlight blurb)
+                                         (a ([href ,uri-path])
+                                            (em "Continue reading ...")))]
+                                [else (syntax-highlight blurb)])))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
