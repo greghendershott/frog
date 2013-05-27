@@ -34,7 +34,7 @@ index-full? = false
 feed-full? = true
 
 # How many items to include on index pages?
-max-index-items = 20
+max-index-items = 2
 
 # How many items to include in feeds?
 max-feed-items = 20

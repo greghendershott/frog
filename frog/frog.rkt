@@ -236,8 +236,8 @@
       (display-to-file* dest-path #:exists 'replace)))
 
 (define (post-xexpr title uri-path date tags body older newer)
-  `((article (header (h1 ,title))
-             ,(date+tags->xexpr date tags)
+  `((article (header (h1 ,title)
+                     ,(date+tags->xexpr date tags))
              ,@(syntax-highlight body)
              (footer (p 'nbsp)
                      ,(share uri-path)
@@ -295,7 +295,8 @@
 
 (define (date+tags->xexpr date tags)
   (define dt (substring date 0 10)) ;; just YYYY-MM-DD
-  `(p (time ([datetime ,dt]
+  `(p ([class "date-and-tags"])
+      (time ([datetime ,dt]
              [pubdate "true"]) ,dt)
       " :: "
       ,@(add-between (map tag->xexpr tags)
@@ -587,18 +588,23 @@
              [(file-exists? homehead.md)
               (with-input-from-file homehead.md read-markdown)]
              [else `((h1 ,title))])
-       (for/list ([x (in-list (take<= xs (current-max-index-items)))])
+       (for/list ([x (in-list xs)]
+                  [n (in-naturals)])
          (match-define
           (post title dest-path uri-path date tags blurb more? body) x)
-         `(article ([class "index-post"])
-                   (header (h2 (a ([href ,uri-path]) ,title)))
-                   ,(date+tags->xexpr date tags)
-                   (div ([class "entry-content"])
-                        ,@(cond [(current-index-full?) (syntax-highlight body)]
-                                [more? `(,@(syntax-highlight blurb)
-                                         (a ([href ,uri-path])
-                                            (em "Continue reading ...")))]
-                                [else (syntax-highlight blurb)])))))
+         `(article
+           ([class "index-post"])
+           (header (h2 (a ([href ,uri-path]) ,title))
+                   ,(date+tags->xexpr date tags))
+           ,@(cond
+              [(< n (current-max-index-items))
+               `((div ([class "entry-content"])
+                      ,@(cond [(current-index-full?) (syntax-highlight body)]
+                              [more? `(,@(syntax-highlight blurb)
+                                       (a ([href ,uri-path])
+                                          (em "Continue reading ...")))]
+                              [else (syntax-highlight blurb)])))]
+              [else '()]))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
