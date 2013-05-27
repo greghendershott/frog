@@ -678,7 +678,7 @@
                           "-f html"
                           "-O linenos=1,encoding=utf-8"
                           "-l" lang
-                          "-o " tmp-out
+                          "-o" tmp-out
                           tmp-in))
          (define code (system/exit-code cmd))
          (begin0
