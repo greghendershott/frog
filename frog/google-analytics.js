@@ -3,6 +3,10 @@ _gaq.push(['_setAccount', '~a']);
 _gaq.push(['_setDomainName', '~a']);
 _gaq.push(['_trackPageview']);
 
+// http://drawingablank.me/blog/fix-your-bounce-rate.html
+setTimeout(function(){_gaq.push(['_trackEvent', '30_seconds', 'read'])},
+           30000);
+
 (function() {
     var ga = document.createElement('script');
     ga.type = 'text/javascript'; ga.async = true;
