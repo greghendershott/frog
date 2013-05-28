@@ -1188,6 +1188,26 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; For use with `watch`. For quicker edit/view cycle. Try to build one
+;; markdown file and only its HTML output (at the cost of leaving all
+;; the other dependencies out of date, and with bogus older/newer
+;; links for a post page.)  If can do this, return #t.  Else if can't
+;; (b/c `path` isn't a post markdown or non-post page markdown) return
+;; #f in which case caller might want to do a full build.
+(define (build-one path)
+  (define-values (base name dir?) (split-path path))
+  (cond [(equal? (str base) ;a post md file?
+                 (str (src/posts-path) "/"))
+         (match (read-post path 'file '())
+           [(list p) (write-post-page p p p) #t]
+           [_ #f])]
+        [else (match name
+                [(pregexp "\\.(md|markdown)$")
+                 (build-non-post-pages)]
+                [_ #f])]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (preview [port 3000])
   (serve/servlet (lambda (_) (next-dispatcher))
                  #:servlet-path "/"
@@ -1200,14 +1220,21 @@ EOF
 
 (define (watch)
   (build)
-  (define t (watch-directory (src-path)
-                             '(file)
-                             (lambda (path what)
-                               (build)
-                               (displayln #"\007")) ;; beep (hopefully)
-                             #:rate 5))
+  (define t
+    (watch-directory (build-path (top))
+                     '(file)
+                     (lambda (path what)
+                       (match (path->string path)
+                         ;; Output file
+                         [(pregexp "\\.(?:html|xml|txt)") (void)]
+                         ;; Source file
+                         [_ (unless (build-one path)
+                              (build))
+                            (displayln #"\007")])) ;beep (hopefully)
+                     #:rate 5))
   (preview)
-  (kill-thread t))
+  (kill-thread t)
+  (build))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading config file into parameters
