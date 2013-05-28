@@ -6,6 +6,7 @@
          (prefix-in h: html)
          net/uri-codec
          racket/date
+         (only-in net/sendurl external-browser)
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
          "watch-dir.rkt"
@@ -1189,12 +1190,17 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (preview [port 3000])
-  (serve/servlet (lambda (_) (next-dispatcher))
-                 #:servlet-path "/"
-                 #:extra-files-paths (list (www-path))
-                 #:port port
-                 #:launch-browser? #t
-                 ))
+  (define (go)
+    (serve/servlet (lambda (_) (next-dispatcher))
+                   #:servlet-path "/"
+                   #:extra-files-paths (list (www-path))
+                   #:port port
+                   #:launch-browser? #t
+                   ))
+  (match (system-type 'os)
+    ['unix (parameterize ([external-browser '("sensible-browser " . "")])
+             (go))]
+    [_ (go)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
