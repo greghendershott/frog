@@ -147,7 +147,7 @@
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
-(define post-file-px #px"^\\d{4}-\\d{2}-\\d{2}-(.+?)\\.(?:md|markdown)$")
+(define post-file-px #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown)$")
 
 (struct post (title      ;string?
               dest-path  ;path? - full pathname of local HTML file
@@ -171,8 +171,11 @@
     [(eq? type 'file)
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
-       [(pregexp post-file-px)
-        (define xs (with-input-from-file path read-markdown))
+       [(pregexp post-file-px (list _ dt nm))
+        ;; Footnote prefix is date & name w/o ext e.g. "2010-01-02-a-name"
+        (define footnote-prefix (~> (str dt "-" nm) string->symbol))
+        (define xs (with-input-from-file path
+                     (lambda () (read-markdown footnote-prefix))))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
@@ -195,8 +198,8 @@
                (define dest-path
                  (permalink-path year month day
                                  (~> title string-downcase our-encode)
-                                   (match (path->string name)
-                                     [(pregexp post-file-px (list _ s)) s])
+                                 (match (path->string name)
+                                   [(pregexp post-file-px (list _ _ s)) s])
                                  (current-permalink)))
                ;; And return our result
                (cons (post title
