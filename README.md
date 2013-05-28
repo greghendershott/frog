@@ -37,10 +37,10 @@ highlighting.
 Q: "Frog"?  
 A: Frozen blog.
 
-> Note: This has been tested on Mac OS/X; I'm using it for
+> Note: This has been tested on Mac OS/X and Ubuntu; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
-> yet been tested on Windows--it's likely that the path handling
-> isn't exactly right.
+> yet been tested on Windows--it's likely that the path handling isn't
+> exactly right.
 
 ## Posts
 
@@ -284,10 +284,14 @@ Install Frog:
 > need to install them individually, use `raco pkg install rackjure` and
 > `raco pkg install markdown`.
 
-Install Pygments (optional, if you want code block syntax
-highlighting). On Mac OS X:
+Install Pygments (optional, if you want syntax highlighting for fenced
+code blocks). On OS X and Linux:
 
     $ sudo easy_install Pygments
+
+On Linux you might first need to install `easy_install`:
+
+    $ sudo apt-get install python-setuptools
 
 ## Starting a new blog project
 
