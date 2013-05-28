@@ -37,10 +37,10 @@ highlighting.
 Q: "Frog"?  
 A: Frozen blog.
 
-> Note: This has been tested on Mac OS/X; I'm using it for
+> Note: This has been tested on Mac OS/X and Ubuntu; I'm using it for
 > [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
-> yet been tested on Windows--it's likely that the path handling
-> isn't exactly right.
+> yet been tested on Windows--it's likely that the path handling isn't
+> exactly right.
 
 ## Posts
 
