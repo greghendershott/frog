@@ -6,7 +6,6 @@
          (prefix-in h: html)
          net/uri-codec
          racket/date
-         (only-in net/sendurl external-browser)
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
          "watch-dir.rkt"
@@ -1213,17 +1212,24 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (preview [port 3000])
-  (define (go)
-    (serve/servlet (lambda (_) (next-dispatcher))
-                   #:servlet-path "/"
-                   #:extra-files-paths (list (www-path))
-                   #:port port
-                   #:launch-browser? #t
-                   ))
-  (match (system-type 'os)
-    ['unix (parameterize ([external-browser '("sensible-browser " . "")])
-             (go))]
-    [_ (go)]))
+  ;; `serve/servlet` uses the `send-url` from `net/sendurl`, which
+  ;; (unlike the `send-url` from `external/browser`) doesn't prompt
+  ;; the user if no external browser preference is set. This can
+  ;; matter on some Linux distributions, e.g. Ubuntu which needs
+  ;; xdg-open or sensible-browser, but `net/snedurl` uses neither and
+  ;; doesn't even prompt the user. So check for this case here, and if
+  ;; no browser preference set yet, ask the user, like the `send-url`
+  ;; from `external/browser` would do.
+  (when (eq? 'unix (system-type 'os))
+    (unless (get-preference 'external-browser)
+      (define ask (dynamic-require 'browser/external 'update-browser-preference))
+      (ask #f)))
+  (serve/servlet (lambda (_) (next-dispatcher))
+                 #:servlet-path "/"
+                 #:extra-files-paths (list (www-path))
+                 #:port port
+                 #:launch-browser? #t
+                 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
