@@ -86,7 +86,7 @@ Posts are automatically included in various index pages and feeds.
 Posts with _any_ tag go on the home page `/index.html`, in an Atom feed
 `/feeds/all.atom.xml`, and in an RSS feed `/feeds/all.rss.xml`.
 
-Posts for each tag go on an index page `tags/<tag>.html`, in an Atom
+Posts for each tag go on an index page `/tags/<tag>.html`, in an Atom
 feed `/feeds/<tag>.atom.xml`, and in an RSS feed
 `/feeds/<tag>.rss.xml`.
 
