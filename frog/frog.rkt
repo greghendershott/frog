@@ -109,6 +109,7 @@
 (define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
+(define current-show-tag-counts? (make-parameter #f))
 (define current-max-index-items (make-parameter 999))
 (define current-max-feed-items (make-parameter 999))
 (define current-google-analytics-account (make-parameter #f))
@@ -561,7 +562,7 @@
        (ul ,@(for/list ([(k v) (in-dict alist)])
                `(li ,(tag->xexpr k)
                     nbsp
-                    ,(format "(~a)" v)
+                    ,@(if (current-show-tag-counts?) `(,(format "(~a)" v)) '())
                     " "
                     (a ([href ,(atom-feed-uri k)])
                        (img ([src "/img/feed.png"]))))))
@@ -1320,6 +1321,7 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [show-tag-counts? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
@@ -1350,6 +1352,7 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [show-tag-counts? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]

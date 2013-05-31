@@ -34,7 +34,7 @@ simpler and faster.
 The only non-Racket part is optionally using [Pygments][] to do syntax
 highlighting.
 
-Q: "Frog"?  
+Q: "Frog"?
 A: Frozen blog.
 
 > Note: This has been tested on Mac OS/X and Ubuntu; I'm using it for
@@ -372,6 +372,9 @@ scheme/host = http://www.example.com
 
 title = My Awesome Blog
 author = The Unknown Author
+
+# Whether to show the count of posts next to each tag in sidebar
+show-tag-counts? = false
 
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
