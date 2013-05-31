@@ -63,8 +63,5 @@ feed-image-bugs? = true
 # Optional: Disqus comment system "short name"
 # disqus-shortname = MyShortName
 
-# Optional: Path to Pygments executable
-pygments-pathname = pygmentize
-
 # Optional: Twitter name for follow button. (Do NOT include @ prefix.)
 # twitter-name = xxx

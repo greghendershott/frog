@@ -8,7 +8,9 @@
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
+         "pygments.rkt"
          "watch-dir.rkt"
+         "verbosity.rkt"
          ;; Remainder are just for the preview feature:
          web-server/servlet-env
          web-server/http
@@ -102,7 +104,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parameters loaded from configuration file
 
-(define current-verbosity (make-parameter 0))
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
@@ -115,7 +116,6 @@
 (define current-google-analytics-account (make-parameter #f))
 (define current-google-analytics-domain (make-parameter #f))
 (define current-disqus-shortname (make-parameter #f))
-(define current-pygments-pathname (make-parameter #f))
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
 (define current-older/newer-buttons (make-parameter "both"))
@@ -123,25 +123,6 @@
 (define current-bootstrap-responsive? (make-parameter #f))
 (define current-twitter-name (make-parameter #f))
 (define current-favicon (make-parameter #f))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; verbosity
-
-(define (prn level fmt . vs)
-  (when (>= (current-verbosity) level)
-    (apply printf fmt vs)
-    (newline)))
-
-(define-syntax (define-prn stx)
-  (syntax-case stx ()
-    [(_ level)
-     (with-syntax ([id (format-id stx "prn~a" (syntax-e #'level))])
-       #'(define (id fmt . vs)
-           (apply prn level fmt vs)))]))
-
-(define-prn 0)
-(define-prn 1)
-(define-prn 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -678,50 +659,6 @@
                   [else `((pre ,text))])]
                [else (list x)]))))
 
-(define (pygmentize text lang)
-  (cond [(current-pygments-pathname)
-         (prn2 "  system call to pygmentize")
-         (define tmp-in (make-temporary-file))
-         (define tmp-out (make-temporary-file))
-         (display-to-file text tmp-in #:exists 'replace)
-         (define cmd (str #:sep " "
-                          (expand-user-path (current-pygments-pathname))
-                          "-f html"
-                          "-O linenos=1,encoding=utf-8"
-                          "-l" lang
-                          "-o" tmp-out
-                          tmp-in))
-         (define code (system/exit-code cmd))
-         (begin0
-             (cond [(zero? code)
-                    (define (elements->element xs)
-                      (make-element #f #f '*root '() xs))
-                    (with-input-from-file tmp-out
-                      (thunk
-                       (parameterize ([permissive-xexprs #t])
-                         (~> (h:read-html-as-xml)
-                             elements->element
-                             xml->xexpr
-                             cddr))))]
-                   [else `((pre ,text))])
-           (delete-file tmp-in)
-           (delete-file tmp-out))]
-        [else `((pre ,text))]))
-
-(define (pygments.css)
-  (path->string (build-path (www-path) "css" "pygments.css")))
-
-(define (make-pygments.css style)
-  (when (current-pygments-pathname)
-    (define cmd (str #:sep " "
-                     (expand-user-path (current-pygments-pathname))
-                     "-f html"
-                     "-S " style
-                     "> " (pygments.css)))
-    (prn0 "Generating css/pygments.css")
-    (system cmd)
-    (void)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (xexprs->description xs [num 3])
@@ -1127,6 +1064,7 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build)
+  (start-pygments)
   ;; Read the posts and get (listof post?) with which to do more work.
   ;; Sort the list by date, newest first.
   (define (post<=? a b)
@@ -1184,10 +1122,7 @@ EOF
     (thunk (for ([x (in-list (map full-uri
                                   (append (map post-uri-path posts) pages)))])
              (displayln x))))
-  ;; Generate pygments.css automatically ONLY if it doesn't already
-  ;; exist
-  (unless (file-exists? (pygments.css))
-    (make-pygments.css "default"))
+  (stop-pygments)
   (prn0 "Done generating files")
   (void))
 
@@ -1203,12 +1138,16 @@ EOF
   (define-values (base name dir?) (split-path path))
   (cond [(equal? (str base) ;a post md file?
                  (str (src/posts-path) "/"))
+         (start-pygments)
          (match (read-post path 'file '())
            [(list p) (write-post-page p p p) #t]
-           [_ #f])]
+           [_ #f])
+         (stop-pygments)]
         [else (match name
                 [(pregexp "\\.(md|markdown)$")
-                 (build-non-post-pages)]
+                 (start-pygments)
+                 (build-non-post-pages)
+                 (stop-pygments)]
                 [_ #f])]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1330,7 +1269,6 @@ EOF
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
-                               [pygments-pathname #f]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
@@ -1361,7 +1299,6 @@ EOF
                                [google-analytics-account #f]
                                [google-analytics-domain #f]
                                [disqus-shortname #f]
-                               [pygments-pathname #f]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [older/newer-buttons "both"]
@@ -1394,10 +1331,6 @@ EOF
          "3. Watch for changed files, and generate again."
          "   (You'll need to refresh the browser yourself.")
         (watch)]
-       [("--pygments-css") style-name
-        (""
-         "Generate ./css/pygments.css using style-name (ex: 'default')")
-        (make-pygments.css style-name)]
        #:once-any
        [("-v" "--verbose") "Verbose. Put first."
         (current-verbosity 1)
