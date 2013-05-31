@@ -372,6 +372,11 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Show a homepage link in the navbar?
+show-homepage-link? = false
+# If so, what text to show for it?
+homepage-link = Home
+
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
 # Here's an example of the Jekyll "pretty" style:
