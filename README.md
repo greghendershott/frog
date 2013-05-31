@@ -38,9 +38,8 @@ Q: "Frog"?
 A: Frozen blog.
 
 > Note: This has been tested on Mac OS/X and Ubuntu; I'm using it for
-> [my blog][].  It should work fine on Linux.  CAVEAT: It has _not_
-> yet been tested on Windows--it's likely that the path handling isn't
-> exactly right.
+> [my blog][]. CAVEAT: It has _not_ yet been tested on Windows--it's
+> likely that the path handling isn't exactly right.
 
 ## Posts
 
@@ -77,40 +76,30 @@ feeds. A "Continue reading..." link is provided instead.
 
 `Tags` are optional (although you have to include the `Tags:` part).
 
+> The tag `DRAFT` (all uppercase) causes the post `.html` file _not_
+> to be generated.
+
 ### Automatic post features
 
-Posts are automatically included in index pages and feeds.
+Posts are automatically included in various index pages and feeds.
 
-`/index.html` is an index for all posts, listed newest first.
+Posts with _any_ tag go on the home page `/index.html`, in an Atom feed
+`/feeds/all.atom.xml`, and in an RSS feed `/feeds/all.rss.xml`.
 
-`/feeds/all.atom.xml` is an Atom feed, and `/feeds/all.rss.xml` is an
-RSS feed, for _all_ posts.
-
-Each tag has an index page `tags/<tag>.html`, an Atom feed
-`/feeds/<tag>.atom.xml`, and an RSS feed `/feeds/<tag>.rss.xml`.
-
-If a post has any section headings (e.g. `# Heading Level 1`, `##
-Heading level 2`), then an _"On this page"_ table of contents is
-automatically generated and placed in the left side bar.
+Posts for each tag go on an index page `tags/<tag>.html`, in an Atom
+feed `/feeds/<tag>.atom.xml`, and in an RSS feed
+`/feeds/<tag>.rss.xml`.
 
 Twitter and Google+ sharing buttons are placed on each post page.
+
+Optional: If your `.frogrc` has a Twitter account name, then a follow
+button is automatically included.
 
 Optional: If your `.frogrc` has a Disqus shortname, then Disqus
 comments are automatically included.
 
 Optional: If your `.frogrc` has Google Analytics account information,
 then the appropriate tracking code is automatically inserted.
-
-### The `DRAFT` tag
-
-The tag `DRAFT` (all uppercase) causes the post _not_ to be generated.
-
-This way, you can commit the source `.md` file to your repo, and push,
-but there will be no corresponding `.html` generated and pushed.  (The
-use case here is GitHub pages. If you deploy to something like Amazon
-S3, the similar point is that no `.html` file will be generated and
-deployed to that.)  _I should rewrite this to be more clear about
-different usage scenarios_.
 
 ## Non-post pages
 
@@ -122,19 +111,26 @@ Non-post pages are _not_ included in any automatically generated index
 pages or feeds.  If you want them to be linked in, you must do so
 manually.
 
-## _src/footer.md
-
-The special file `_src/footer.md` is converted to HTML and placed at
-the foot of all pages (both posts and non-post pages).
-
 ## _src/navbar.md (optional)
 
 The special file `_src/navbar.md` optionally adds extra items to the
 top navbar.  It should consist of a single bulleted list of links, in
 Markdown.  For example:
 
-    - [About](/About.html)
-    - [Something Else](/path/to/thing)
+```markdown
+- [My Awesome Blog](/)
+- [About](/About.html)
+- [Something Else](/path/to/thing)
+```
+
+Tip: If you want the home link to have the Twitter Bootstrap "brand"
+class, you can simply use HTML for that item, like so:
+
+```markdown
+- <a href="/" class="brand">My Awesome Blog</a>
+- [About](/About.html)
+- [Something Else](/path/to/thing)
+```
 
 ## _src/homehead.md (optional)
 
@@ -143,6 +139,11 @@ the home page with whatever you prefer.
 
 Note that this is used _only_ for your blog's home page. This doesn't
 appear on tag index pages like "All posts tagged _Some Tag_".
+
+## _src/footer.md
+
+The special file `_src/footer.md` is converted to HTML and placed at
+the foot of all pages (both posts and non-post pages).
 
 ## sitemap.txt
 
