@@ -4,6 +4,9 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# Whether to show the count of posts next to each tag in sidebar
+show-tag-counts? = true
+
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
 # Here's an example of the Jekyll "pretty" style:
