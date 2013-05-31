@@ -489,9 +489,12 @@
 
 (define (nav-ul items active-uri-path)
   `(ul ([class "nav"])
-       (li ([style "width: 60px;"])
-           (img ([style "width: 42px; height:33px;"]
-                 [src "/img/navbar-logo.jpg"])))
+       ,@(let* ([logo "img/navbar-logo.jpg"])
+           (if (file-exists? (build-path (top) logo))
+               `((li ([style "width: 60px"])
+                     (img ([style "width: 42px; height:33px;"]
+                           [src ,(format "/~a" logo)]))))
+               '()))
        (li (a ([href "/index.html"][class "brand"]) ,(current-title)))
        ,(nav-li "/index.html" "Home" active-uri-path)
        ,@(for/list ([item items])
