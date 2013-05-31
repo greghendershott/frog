@@ -106,6 +106,8 @@
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
+(define current-show-homepage-link? (make-parameter #f))
+(define current-homepage-link (make-parameter #f))
 (define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
@@ -496,7 +498,9 @@
                            [src ,(format "/~a" logo)]))))
                '()))
        (li (a ([href "/index.html"][class "brand"]) ,(current-title)))
-       ,(nav-li "/index.html" "Home" active-uri-path)
+       ,@(if (current-show-homepage-link?)
+             `((nav-li "/index.html" (current-homepage-link) active-uri-path))
+             '())
        ,@(for/list ([item items])
            (match item
              [`(li (a ([href ,uri]) ,text))
@@ -1352,6 +1356,8 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [homepage-link "Home"]
+                               [show-homepage-link? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
