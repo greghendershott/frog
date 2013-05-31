@@ -106,9 +106,6 @@
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
-(define current-show-homepage-link? (make-parameter #f))
-(define current-show-navbar-title? (make-parameter #f))
-(define current-homepage-link (make-parameter #f))
 (define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
@@ -498,12 +495,6 @@
                      (img ([style "width: 42px; height:33px;"]
                            [src ,(format "/~a" logo)]))))
                '()))
-       ,@(if (current-show-navbar-title?)
-             `((li (a ([href "/index.html"][class "brand"]) ,(current-title))))
-             '())
-       ,@(if (current-show-homepage-link?)
-             `(,(nav-li "/index.html" (current-homepage-link) active-uri-path))
-             '())
        ,@(for/list ([item items])
            (match item
              [`(li (a ([href ,uri]) ,text))
@@ -1329,9 +1320,6 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
-                               [homepage-link "Home"]
-                               [show-homepage-link? #t]
-                               [show-navbar-title? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
@@ -1349,9 +1337,9 @@ EOF
                                [twitter-name #f]
                                [favicon "/favicon.ico"])
       ;; (clean)
-      ;; (build)
-      ;; (preview)
-      (watch)
+      (build)
+      (preview)
+      ;; (watch)
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1362,9 +1350,6 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
-                               [homepage-link "Home"]
-                               [show-homepage-link? #t]
-                               [show-navbar-title? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]

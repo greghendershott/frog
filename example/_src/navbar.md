@@ -1,1 +1,2 @@
+- <a href="/" class="brand">My Awesome Blog</a>
 - [About](/About.html)
