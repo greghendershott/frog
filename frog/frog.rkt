@@ -1326,6 +1326,8 @@ EOF
     (parameterize-from-config ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [homepage-link "Home"]
+                               [show-homepage-link? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
