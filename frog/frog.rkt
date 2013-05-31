@@ -107,6 +107,7 @@
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
 (define current-show-homepage-link? (make-parameter #f))
+(define current-show-navbar-title? (make-parameter #f))
 (define current-homepage-link (make-parameter #f))
 (define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
@@ -497,9 +498,11 @@
                      (img ([style "width: 42px; height:33px;"]
                            [src ,(format "/~a" logo)]))))
                '()))
-       (li (a ([href "/index.html"][class "brand"]) ,(current-title)))
+       ,@(if (current-show-navbar-title?)
+             `((li (a ([href "/index.html"][class "brand"]) ,(current-title))))
+             '())
        ,@(if (current-show-homepage-link?)
-             `((nav-li "/index.html" (current-homepage-link) active-uri-path))
+             `(,(nav-li "/index.html" (current-homepage-link) active-uri-path))
              '())
        ,@(for/list ([item items])
            (match item
@@ -1328,6 +1331,7 @@ EOF
                                [author "The Unknown Author"]
                                [homepage-link "Home"]
                                [show-homepage-link? #t]
+                               [show-navbar-title? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
@@ -1360,6 +1364,7 @@ EOF
                                [author "The Unknown Author"]
                                [homepage-link "Home"]
                                [show-homepage-link? #t]
+                               [show-navbar-title? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
