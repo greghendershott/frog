@@ -1123,7 +1123,9 @@ EOF
                                   (append (map post-uri-path posts) pages)))])
              (displayln x))))
   (stop-pygments)
-  (prn0 "Done generating files")
+  (let* ([d (current-date)]
+         [n (lambda (x) (~r (x d) #:min-width 2 #:pad-string "0"))])
+    (prn0 (~a (n date-hour) ":" (n date-minute) " Done generating files")))
   (void))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
