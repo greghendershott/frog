@@ -1052,10 +1052,16 @@ EOF
                              abs->rel/www
                              explode-path
                              cddr)))) ;lop off the "/" and "_src" parts
-    (define title (~> path
-                      (path-replace-suffix "")
-                      file-name-from-path
-                      path->string))
+    (define title
+      (match xs
+        ;; First h1 header, if any
+        [(list-no-order `(h1 (,_ ...) ... ,els ...) _ ...)
+         (string-join (map xexpr->markdown els) "")]
+        ;; Else name of the source file
+        [_ (~> path
+               (path-replace-suffix "")
+               file-name-from-path
+               path->string)]))
     (define uri-path (abs->rel/www dest-path))
     (prn1 "Generating non-post ~a" (abs->rel/top dest-path))
     (~> xs
