@@ -480,15 +480,31 @@
                '()))
        ,@(for/list ([item items])
            (match item
-             [`(li (a ([href ,uri]) ,text))
-              (nav-li uri text active-uri-path)]
+             [`(li (a ,(list-no-order `[href ,uri] attrs ...) ,els ...))
+              (nav-li uri attrs els active-uri-path)]
              [`(ul ,items ...) (nav-ul items active-uri-path)]
-             [else item]))))
+             [_ item]))))
 
-(define (nav-li href text uri-path)
+(define (nav-li href attrs els uri-path)
   `(li ,(cond [(string-ci=? href uri-path) `([class "active"])]
               [else `()])
-       (a ([href ,href]) ,text)))
+       (a ([href ,href] ,@attrs) ,@els)))
+
+(module+ test
+  ;; Regression test for https://github.com/greghendershott/frog/issues/39
+  (define-runtime-path HERE ".")
+  (parameterize ([top HERE])
+    (check-equal?
+     (nav-ul '((li (a ([href "/index.html"][class "brand"])
+                      "My " (em "Awesome") " Blog"))
+               (li (a ([href "/About.html"]) "About")))
+             "/index.html")
+     '(ul ([class "nav"])
+          (li ([class "active"])
+              (a ([href "/index.html"][class "brand"])
+                 "My " (em "Awesome") " Blog"))
+          (li ()
+              (a ([href "/About.html"]) "About"))))))
 
 (define (google-analytics)
   (cond [(and (current-google-analytics-account)
