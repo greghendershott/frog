@@ -679,9 +679,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (xexprs->description xs [num 3])
-  (str (apply str #:sep " " (for/list ([i (in-range num)]
-                                       [x (in-list xs)])
-                              (xexpr->markdown x)))
+  (str (string-join (map xexpr->markdown (take<= xs num)))
        " ..."))
 
 (module+ test
@@ -703,27 +701,22 @@
    "A heading: A _paragraph_ of some stuff.  ..."))
 
 ;; Not full markdown, just a "lite" variation.
-(define (xexpr->markdown x)
-  (define (do x)
-    (match x
-      [`(em ,_ ... ,s) (str "_" s "_")]
-      [`(strong ,_ ... ,s) (str "**" s "**")]
-      [`(h1 ,_ ... ,s) (str s ":")]
-      [`(h2 ,_ ... ,s) (str s ":")]
-      [`(h3 ,_ ... ,s) (str s ":")]
-      [`(,tag ([,_ ,_] ...) ... ,es ...) (str
-                                          (for/fold ([s ""]) ([e (in-list es)])
-                                            (str s  (do e)))
-                                          (match tag
-                                            [(or 'p 'li 'blockquote) " "]
-                                            [else ""]))]
-      [(? string? s) s]
-      ['ndash "--"]
-      ['mdash "--"]
-      [(? symbol? s) (str "&" s ";")]
-      [else ""])) ;; ignore others
-  ;; Kill trailing space
-  (match (do x) [(pregexp "^(.*?)\\s*$" (list _ x)) x]))
+(define (xexpr->markdown x [p-append ""])
+  (define (->s es)
+    (apply str (map (curryr xexpr->markdown p-append) es)))
+  (match x
+    [`(em     ([,_ ,_] ...) ... ,es ...) (str "_" (->s es) "_")]
+    [`(strong ([,_ ,_] ...) ... ,es ...) (str "**" (->s es) "**")]
+    [`(h1     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
+    [`(h2     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
+    [`(h3     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
+    [`(p      ([,_ ,_] ...) ... ,es ...) (str (->s es) p-append)]
+    [`(,tag   ([,_ ,_] ...) ... ,es ...) (str (->s es))]
+    [(? string? s) s]
+    ['ndash "--"]
+    ['mdash "--"]
+    [(? symbol? s) (str "&" s ";")]
+    [else ""])) ;; ignore others
 
 (module+ test
   (check-equal? (xexpr->markdown '(em "foobar"))
@@ -741,8 +734,8 @@
                 "I am some _emphasized_ text")
   (check-equal? (xexpr->markdown '(p "M" 'amp "Ms" 'mdash "gotta love 'em"))
                 "M&amp;Ms--gotta love 'em")
-  (check-equal? (xexpr->markdown '(span (p "Hi.") (p "Hi.")))
-                "Hi. Hi.")
+  (check-equal? (xexpr->markdown '(span (p "Hi.") (p "Hi.")) "\n")
+                "Hi.\nHi.\n")
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
