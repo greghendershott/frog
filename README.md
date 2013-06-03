@@ -118,7 +118,7 @@ top navbar.  It should consist of a single bulleted list of links, in
 Markdown.  For example:
 
 ```markdown
-- [My Awesome Blog](/)
+- [My Awesome Blog](/index.html)
 - [About](/About.html)
 - [Something Else](/path/to/thing)
 ```
@@ -127,7 +127,7 @@ Tip: If you want the home link to have the Twitter Bootstrap "brand"
 class, you can simply use HTML for that item, like so:
 
 ```markdown
-- <a href="/" class="brand">My Awesome Blog</a>
+- <a href="/index.html" class="brand">My Awesome Blog</a>
 - [About](/About.html)
 - [Something Else](/path/to/thing)
 ```
