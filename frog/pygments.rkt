@@ -10,7 +10,6 @@
          pygmentize)
 
 (define-runtime-path pipe.py "pipe.py")
-;;(define-runtime-path pipe.py "fart.py")
 
 (define (start-pygments-process)
   (match-define (list pyg-in pyg-out pyg-pid pyg-err pyg-proc)
@@ -19,7 +18,7 @@
   (define (running?)
     (eq? 'running (pyg-proc 'status)))
   (case-lambda
-    [(code lang)
+    [(code lang) ;; string? string? -> (listof xexpr?)
      (cond [(running?)
             (file-stream-buffer-mode pyg-out 'line)
             (displayln lang pyg-out)
@@ -33,9 +32,10 @@
                                xml->xexpr
                                cddr)]
                 [(? string? v) (loop (str s v "\n"))]
-                [_ (copy-port pyg-err (current-output-port))]))]
-           [else code])]
-    [() ;; stop
+                [_ (copy-port pyg-err (current-output-port))
+                   `((pre ,code))]))]
+           [else `((pre ,code))])]
+    [() ;; stop :: -> number?
      (cond [(running?)
             (file-stream-buffer-mode pyg-out 'line)
             (displayln "__EXIT__" pyg-out)
@@ -56,9 +56,9 @@
   (pyg)
   (set! pyg #f))
 
-(define (pygmentize code lang)
+(define (pygmentize code lang) ;; string? string? -> (listof xexpr?)
   (cond [pyg (pyg code lang)]
-        [else code]))
+        [else `((pre ,code))]))
 
 ;; (start-pygments)
 ;; (define-runtime-path pygments.rkt "pygments.rkt")
