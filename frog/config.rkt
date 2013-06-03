@@ -1,37 +1,50 @@
 #lang racket
 
+;; Provide a form that's like `parameterize`, except:
+;;
+;; - Try to read the values from the specified configuration file. The
+;; value supplied for each parameter in the form is used only as a
+;; default if present in the config file.
+;;
+;; - The parameters are assumed to be named with a "current-"
+;; prefix. But in the form, the parameter names are specified without
+;; the "current-" prefix. Likewise the configuration file doesn't use
+;; any "current-" prefix (would be unnecessarily verbose for users).
+;;
+;; - The defaults supplied in the form act as lite types: If the
+;; default is a number, then the config file value must be a number.
+;;
+;; - Booleans may be specified in the config file as any of `#t`,
+;; `#f`, `true`, or `false`.
+;;
+;; Example:
+;;
+;; (define current-twaddle-level (make-parameter 0))
+;; (parameterize-from-config "foo.cfg"
+;;                           ([twaddle-level 10])
+;;    ....)
+
 (require (for-syntax racket/syntax)
          "verbosity.rkt")
 
 (provide parameterize-from-config)
 
-(define config #f) ;; symbol? => any/c
+(define-syntax (parameterize-from-config stx)
+  (syntax-case stx ()
+    [(_ cfg-path ([name default] ...)
+        body ...)
+     (map identifier? (syntax->list #'(name ...)))
+     (with-syntax ([(id ...) (map (lambda (x)
+                                    (format-id stx "current-~a" x))
+                                  (syntax->list #'(name ...)))])
+       #'(parameterize ([id (get-config (quote name) default cfg-path)] ...)
+           body ...))]))
 
-(define (maybe-read-config p)
-  (unless config
-    (set! config
-          (cond [(file-exists? p)
-                 (prn0 "Using configuration ~a" p)
-                 (for/hasheq ([s (file->lines p)])
-                   (match s
-                     [(pregexp "^(.*)#?.*$" (list _ s))
-                      (match s
-                        [(pregexp "^\\s*(\\S+)\\s*=\\s*(.+)$" (list _ k v))
-                         (values (string->symbol k) (maybe-bool v))]
-                        [else (values #f #f)])]
-                     [else (values #f #f)]))]
-                [else
-                 (prn0 "Configuration ~a not found; using defaults." p)
-                 (make-hasheq)]))))
-
-(define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
-  (match v
-    [(or "true" "#t") #t]
-    [(or "false" "#f") #f]
-    [else v]))
-
+(define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)
-  (maybe-read-config cfg-path)
+  ;; Read all & memoize
+  (unless config
+    (set! config (read-config cfg-path)))
   (cond [(dict-has-key? config name)
          (define v (dict-ref config name))
          (cond [(string? default) v]
@@ -48,13 +61,23 @@
                                        v)])]
         [else default]))
 
-(define-syntax (parameterize-from-config stx)
-  (syntax-case stx ()
-    [(_ cfg-path ([name default] ...)
-        body ...)
-     (map identifier? (syntax->list #'(name ...)))
-     (with-syntax ([(id ...) (map (lambda (x)
-                                    (format-id stx "current-~a" x))
-                                  (syntax->list #'(name ...)))])
-       #'(parameterize ([id (get-config (quote name) default cfg-path)] ...)
-           body ...))]))
+(define (read-config p)
+  (cond [(file-exists? p)
+         (prn0 "Using configuration ~a" p)
+         (for/hasheq ([s (file->lines p)])
+           (match s
+             [(pregexp "^(.*)#?.*$" (list _ s))
+              (match s
+                [(pregexp "^\\s*(\\S+)\\s*=\\s*(.+)$" (list _ k v))
+                 (values (string->symbol k) (maybe-bool v))]
+                [else (values #f #f)])]
+             [_ (values #f #f)]))]
+        [else
+         (prn0 "Configuration ~a not found; using defaults." p)
+         (make-hasheq)]))
+
+(define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
+  (match v
+    [(or "true" "#t") #t]
+    [(or "false" "#f") #f]
+    [else v]))
