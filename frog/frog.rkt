@@ -701,17 +701,19 @@
    "A heading: A _paragraph_ of some stuff.  ..."))
 
 ;; Not full markdown, just a "lite" variation.
-(define (xexpr->markdown x [p-append ""])
+(define (xexpr->markdown x [p-suffix ""])
+  (define (heading? s)
+    (memq s '(h1 h2 h3 h4 h5 h6 h7 h8 h9)))
+  (define (recur x)
+    (xexpr->markdown x p-suffix))
   (define (->s es)
-    (apply str (map (curryr xexpr->markdown p-append) es)))
+    (apply str (map recur es)))
   (match x
-    [`(em     ([,_ ,_] ...) ... ,es ...) (str "_" (->s es) "_")]
-    [`(strong ([,_ ,_] ...) ... ,es ...) (str "**" (->s es) "**")]
-    [`(h1     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
-    [`(h2     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
-    [`(h3     ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
-    [`(p      ([,_ ,_] ...) ... ,es ...) (str (->s es) p-append)]
-    [`(,tag   ([,_ ,_] ...) ... ,es ...) (str (->s es))]
+    [`(em            ([,_ ,_] ...) ... ,es ...) (str "_" (->s es) "_")]
+    [`(strong        ([,_ ,_] ...) ... ,es ...) (str "**" (->s es) "**")]
+    [`(,(? heading?) ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
+    [`(p             ([,_ ,_] ...) ... ,es ...) (str (->s es) p-suffix)]
+    [`(,tag          ([,_ ,_] ...) ... ,es ...) (str (->s es))]
     [(? string? s) s]
     ['ndash "--"]
     ['mdash "--"]
@@ -719,24 +721,25 @@
     [else ""])) ;; ignore others
 
 (module+ test
-  (check-equal? (xexpr->markdown '(em "foobar"))
-                "_foobar_")
-  (check-equal? (xexpr->markdown '(em ([class "foo"]) "foobar"))
-                "_foobar_")
-  (check-equal? (xexpr->markdown '(strong "foobar"))
-                "**foobar**")
-  (check-equal? (xexpr->markdown '(strong ([class "foo"]) "foobar"))
-                "**foobar**")
-  (check-equal? (xexpr->markdown '(p "I am some " (em "emphasized") " text"))
-                "I am some _emphasized_ text")
+  (check-equal? (xexpr->markdown '(em "italic"))
+                "_italic_")
+  (check-equal? (xexpr->markdown '(em ([class "foo"]) "italic"))
+                "_italic_")
+  (check-equal? (xexpr->markdown '(strong "bold"))
+                "**bold**")
+  (check-equal? (xexpr->markdown '(strong ([class "foo"]) "bold"))
+                "**bold**")
+  (check-equal? (xexpr->markdown '(em "italic " (strong "bold") " italic"))
+                "_italic **bold** italic_")
+  (check-equal? (xexpr->markdown '(p "I am some " (em "italic") " text"))
+                "I am some _italic_ text")
   (check-equal? (xexpr->markdown '(p ([class "foo"])
-                                     "I am some " (em "emphasized") " text"))
-                "I am some _emphasized_ text")
+                                     "I am some " (em "italic") " text"))
+                "I am some _italic_ text")
   (check-equal? (xexpr->markdown '(p "M" 'amp "Ms" 'mdash "gotta love 'em"))
                 "M&amp;Ms--gotta love 'em")
-  (check-equal? (xexpr->markdown '(span (p "Hi.") (p "Hi.")) "\n")
-                "Hi.\nHi.\n")
-  )
+  (check-equal? (xexpr->markdown '(div (p "Hi.") (p "Hi.")) "\n")
+                "Hi.\nHi.\n"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
