@@ -12,13 +12,17 @@
 (define-runtime-path pipe.py "pipe.py")
 
 (define (start-pygments-process)
+  ;; Start a subprocess running our pipe.py script:
   (match-define (list pyg-in pyg-out pyg-pid pyg-err pyg-proc)
                 (process (str "python -u " pipe.py)))
+  ;; Wait a second for process to start and load pipe.py, and either
+  ;; be OK or error due to `import pygments` failing b/c Pygments not
+  ;; installed.
   (sleep 1)
   (define (running?)
     (eq? 'running (pyg-proc 'status)))
   (case-lambda
-    [(code lang) ;; string? string? -> (listof xexpr?)
+    [(code lang) ;; lex :: string? string? -> (listof xexpr?)
      (cond [(running?)
             (file-stream-buffer-mode pyg-out 'line)
             (displayln lang pyg-out)
@@ -32,7 +36,7 @@
                                xml->xexpr
                                cddr)]
                 [(? string? v) (loop (str s v "\n"))]
-                [_ (copy-port pyg-err (current-output-port))
+                [_ (copy-port pyg-err (current-output-port)) ;echo error msg
                    `((pre ,code))]))]
            [else `((pre ,code))])]
     [() ;; stop :: -> number?
