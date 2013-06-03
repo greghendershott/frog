@@ -8,6 +8,7 @@
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
+         "config.rkt"
          "pygments.rkt"
          "watch-dir.rkt"
          "verbosity.rkt"
@@ -1195,71 +1196,14 @@ EOF
   (build))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Loading config file into parameters
-
-(define config #f) ;; symbol? => any/c
-
-(define (maybe-read-config)
-  (unless config
-    (define p (build-path (top) ".frogrc"))
-    (set! config
-          (cond [(file-exists? p)
-                 (prn0 "Using configuration ~a" p)
-                 (for/hasheq ([s (file->lines p)])
-                   (match s
-                     [(pregexp "^(.*)#?.*$" (list _ s))
-                      (match s
-                        [(pregexp "^\\s*(\\S+)\\s*=\\s*(.+)$" (list _ k v))
-                         (values (string->symbol k) (maybe-bool v))]
-                        [else (values #f #f)])]
-                     [else (values #f #f)]))]
-                [else
-                 (prn0 "Configuration ~a not found; using defaults." p)
-                 (make-hasheq)]))))
-
-(define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
-  (match v
-    [(or "true" "#t") #t]
-    [(or "false" "#f") #f]
-    [else v]))
-
-(define (get-config name default) ;; (symbol? any/c -> any/c)
-  (maybe-read-config)
-  (cond [(dict-has-key? config name)
-         (define v (dict-ref config name))
-         (cond [(string? default) v]
-               [(boolean? default) v]
-               [(number? default)
-                (or (string->number v)
-                    (begin
-                      (eprintf
-                       "Expected number for ~a. Got '~a'. Using default: ~a\n"
-                       name v default)
-                      default))]
-               [else (raise-type-error 'get-config
-                                       "string, boolean, or number"
-                                       v)])]
-        [else default]))
-
-(define-syntax (parameterize-from-config stx)
-  (syntax-case stx ()
-    [(_ ([name default] ...)
-        body ...)
-     (map identifier? (syntax->list #'(name ...)))
-     (with-syntax ([(id ...) (map (lambda (x)
-                                    (format-id stx "current-~a" x))
-                                  (syntax->list #'(name ...)))])
-       #'(parameterize ([id (get-config (quote name) default)] ...)
-           body ...))]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; For interactive development
 (define (build/preview)
   (parameterize* ([top example]
                   [current-verbosity 99]
                   [container (container-proc)])
-    (parameterize-from-config ([scheme/host "http://www.example.com"]
+    (parameterize-from-config (build-path (top) ".frogrc")
+                              ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [show-tag-counts? #t]
@@ -1289,7 +1233,8 @@ EOF
 (module+ main
   (parameterize* ([top (current-directory)]
                   [container (container-proc)])
-    (parameterize-from-config ([scheme/host "http://www.example.com"]
+    (parameterize-from-config (build-path (top) ".frogrc")
+                              ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [show-tag-counts? #t]
