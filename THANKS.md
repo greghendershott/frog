@@ -8,7 +8,7 @@ Thanks to the following people for contributing pull requests!
 
 - [WillemDeGroef](https://github.com/WillemDeGroef).
 
-- [therac25](https://github.com/therac25).
+- [voila](https://github.com/voila).
 
 ## Issues
 
