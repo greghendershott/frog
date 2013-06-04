@@ -8,6 +8,7 @@
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
+         "cached-file.rkt"
          "config.rkt"
          "pygments.rkt"
          "take.rkt"
@@ -452,25 +453,20 @@
              (div ([class "container"])
                   ,(nav-ul (read-navbar) active-uri-path)))))
 
-(define read-navbar
-  (let ([navbar-xexpr #f]) ;; read navbar.md on-demand, memoize
-    (lambda ()
-      (unless navbar-xexpr
-        (define /md (build-path (src-path) "navbar.md"))
-        (set! navbar-xexpr
-              (cond [(file-exists? /md)
-                     (define md (abs->rel/top /md))
-                     (match (with-input-from-file /md read-markdown)
-                       [`((ul ,xs ...))
-                        (prn1 "Read bulleted list for navbar from ~a" md)
-                        xs]
-                       [else
-                        (prn0 "Bulleted list not found; ignoring ~a" md)
-                        '()])]
-                    [else
-                     (prn1 "~a not found; no extra navbar items" /md)
-                     '()])))
-      navbar-xexpr)))
+(define (read-navbar)
+  (cached-file (build-path (src-path) "navbar.md")
+               #:read read-markdown
+               #:post-proc (lambda (x)
+                             (match x
+                               [`((ul ,xs ...))
+                                (prn1 "Using bulleted list from navbar.md")
+                                xs]
+                               [else
+                                (prn0 "Bulleted list not found in navbar.md")
+                                '()]))
+               #:default-proc (lambda ()
+                                (prn1 "navbar.md not found")
+                                '())))
 
 (define (nav-ul items active-uri-path)
   `(ul ([class "nav"])
