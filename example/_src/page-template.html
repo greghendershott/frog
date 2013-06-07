@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Most of the <head> section you can leave alone. -->
-    <!-- Notice some template variables like @title, @description and
-    so on whcih you could also use in other parts of this template if
-    you wish. -->
+    <!-- Most of the <head> section you can leave alone.  Notice some
+         template variables like `title`, `description` etc. which you
+         could also use in other parts of this template if you
+         wish. -->
     <meta charset="utf-8" />
     <title>@|title|</title>
     <meta name="description" content="@|description|">
@@ -49,14 +49,15 @@
         <div class="container">
           <ul class="nav">
             <!-- Notice we can define Racket functions. Here's a
-            helper to check if a nav bar item is for this page, as
-            indiated by @uri-path -->
+                 helper to check if a nav bar item is for this page, as
+                 indiated by `uri-path` -->
             @define[(nav-item uri label [a-attribs ""])]{
-            @list{
-            <li @(if (string-ci=? uri uri-path) " class='active'" "")>
-              <a href="@|uri|" @|a-attribs|>@|label|</a></li>
-            }}
-            @nav-item["/index.html" "All Posts" " class='brand'"]
+              @list{
+                <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
+                  <a href="@|uri|"@|a-attribs|>@|label|</a>
+                </li>
+              }}
+            @nav-item["/index.html" "All Posts" " class=\"brand\""]
             @nav-item["/About.html" "About"]
           </ul>
         </div>
@@ -70,8 +71,8 @@
       <div class="row-fluid">
         <!-- Main column -->
         <div id="content" class="span9">
-          <!-- To put text only on the home page, check for @uri-path
-          being "/index.html" -->
+          <!-- To put text only on the home page, check for `uri-path`
+               being "/index.html" -->
           @(when (string-ci=? uri-path "/index.html")
           @list{
           <h1>Welcome</h1>
@@ -79,17 +80,16 @@
             matched on <code>uri-path</code>
             being <code>/index.html</code>.</p>
           })
-          <!-- Index pages for posts tagged something have non-#f @tag -->
+          <!-- Index pages for posts tagged something have non-#f `tag` -->
           @(when tag
             @list{<h1>Posts tagged <em>@|tag|</em></h1>})
-          <!-- The main page contents are in @contents -->
+          <!-- The main page contents are in `contents` -->
           @|contents|
         </div>
         <!-- Right column -->
         <div id="right-sidebar" class="span3">
-          <!-- @tags/feeds is a list of tags and feeds -->
+          <!-- `tags/feeds` is a list of tags and feeds -->
           @|tags/feeds|
-
           <!-- Example of a Twitter follow button -->
           <a href="https://twitter.com/racketlang"
              class="twitter-follow-button"
