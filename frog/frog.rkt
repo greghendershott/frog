@@ -883,6 +883,26 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (init-project)
+  (define (copy path)
+    (define from (~> (build-path example path) simplify-path))
+    (define to   (~> (build-path (top) path) simplify-path))
+    (prn0 "~a" to)
+    (make-directories-if-needed to)
+    (copy-directory/files from to))
+  (prn0 "Creating files in ~a:" (build-path (top)))
+  (copy ".frogrc")
+  (copy "_src/About.md")
+  (copy "_src/page-template.html")
+  (copy "_src/post-template.html")
+  (copy "_src/posts/2012-01-01-a-2012-blog-post.md")
+  (copy "css/")
+  (copy "js/")
+  (copy "img/")
+  (prn0 "Project ready. Try `raco frog -bp` to build and preview."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; For interactive development
 (define (build/preview)
   (parameterize* ([top example]
@@ -923,6 +943,11 @@ EOF
                                [feed-image-bugs? #f])
       (command-line
        #:once-each
+       [("--init")
+        (""
+         "Initialize current directory as a new Frog project, creating"
+         "_src subdir and default template files.")
+        (init-project)]
        [("-n" "--new") title
         (""
          "Create a file for a new post based on today's date and <title>.")
