@@ -29,12 +29,16 @@
     <div id="disqus_thread"></div>
     <!-- Older/Newer post buttons -->
     <ul class="pager">
-      <li class="previous @if[newer-uri "" "disabled"]">
-        <a href="@|newer-uri|">&larr; <em>@|newer-title|</em></a>
-      </li>
-      <li class="next @if[older-uri "" "disabled"]">
-        <a href="@|older-uri|"><em>@|older-title|</em> &rarr;</a>
-      </li>
+      @(when newer-uri
+        @list{
+          <li class="previous">
+            <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
+          </li>})
+      @(when older-uri
+        @list{
+          <li class="next">
+            <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
+          </li>})
     </ul>
   </footer>
 </article>
