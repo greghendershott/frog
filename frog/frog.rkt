@@ -942,15 +942,16 @@ EOF
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f])
       (command-line
+       #:program "frog"
        #:once-each
        [("--init")
         (""
          "Initialize current directory as a new Frog project, creating"
-         "_src subdir and default template files.")
+         "default files as a starting point.")
         (init-project)]
        [("-n" "--new") title
         (""
-         "Create a file for a new post based on today's date and <title>.")
+         "Create a .md file for a new post based on today's date and <title>.")
         (new-post title)]
        [("-m" "--make" "-b" "--build")
         (""
@@ -958,7 +959,7 @@ EOF
         (build)]
        [("-p" "--preview")
         (""
-         "Run a local web server and start your browser.")
+         "Run a local web server and start your browser on blog home page.")
         (preview)]
        [("-c" "--clean")
         (""
@@ -966,6 +967,7 @@ EOF
         (clean)]
        [("-w" "--watch")
         (""
+         "(Experimental: Only rebuilds some files.)"
          "1. Generate files."
          "2. Run a local web server and start your browser."
          "3. Watch for changed files, and generate again."
