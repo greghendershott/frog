@@ -49,10 +49,9 @@
         <div class="container">
           <ul class="nav">
             <!-- Notice we can define Racket functions. Here's a
-                 helper to check if a nav bar item is for this page, as
-                 indiated by `uri-path` -->
-            @define[(nav-item uri label [a-attribs ""])]{
-              @list{
+                 helper to add class="active" to a nav bar item if it
+                 is for this page (as indiated by `uri-path`) -->
+                 @define[(nav-item uri label [a-attribs ""])]{ @list{
                 <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
                   <a href="@|uri|"@|a-attribs|>@|label|</a>
                 </li>
@@ -63,16 +62,20 @@
         </div>
       </div>
     </div>
+    <!-- This div's class should be "container-fluid" if you're using
+         Bootstrap's responsive CSS, else "container". -->
     <div class="container-fluid">
-      <!-- Remember that Twitter Bootstrap has a 12 cell model. The
-           spanN classes should add up to 12.  For instance 3 "span4"
-           divs, or 2 "span6" divs, and so on. In this example the
-           main content is "span9", and a "span3" right sidebar. -->
+      <!-- This div's class should be "row-fluid" if you're using
+           Bootstrap's responsive CSS, else "row". -->
       <div class="row-fluid">
+        <!-- Remember that Twitter Bootstrap has a 12 cell model. The
+             spanN classes should add up to 12.  For instance 3
+             "span4" divs, or 2 "span6" divs. In this example the main
+             content is "span9", plsu a "span3" right sidebar. -->
         <!-- Main column -->
         <div id="content" class="span9">
-          <!-- To put text only on the home page, check for `uri-path`
-               being "/index.html" -->
+          <!-- To put something only on the home page, check for
+               `uri-path` being "/index.html" -->
           @(when (string-ci=? uri-path "/index.html")
             @list{
             <h1>Welcome</h1>
@@ -81,7 +84,7 @@
               being <code>/index.html</code>.</p>
             }
           )
-          <!-- Index pages for posts tagged something have non-#f `tag` -->
+          <!-- Index pages for posts have non-#f `tag` -->
           @(when tag
             @list{<h1>Posts tagged <em>@|tag|</em></h1>})
           <!-- The main page contents are in `contents` -->
@@ -92,11 +95,11 @@
           <!-- `tags/feeds` is a list of tags and feeds -->
           @|tags/feeds|
           <!-- Example of a Twitter follow button -->
-          <a href="https://twitter.com/racketlang"
+          <a href="https://twitter.com/racketlang" <!-- CHANGE THIS -->
              class="twitter-follow-button"
              data-show-count="false"
              data-lang="en">
-            "Follow RacketLang"
+            "Follow RacketLang"                    <!-- CHANGE THIS -->
           </a>
           <script type="text/javascript">
             !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
