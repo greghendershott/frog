@@ -8,10 +8,10 @@
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
-         "cached-file.rkt"
          "config.rkt"
          "pygments.rkt"
          "take.rkt"
+         "template.rkt"
          "watch-dir.rkt"
          "xexpr2text.rkt"
          "verbosity.rkt"
@@ -117,16 +117,8 @@
 (define current-show-tag-counts? (make-parameter #t))
 (define current-max-index-items (make-parameter 999))
 (define current-max-feed-items (make-parameter 999))
-(define current-google-analytics-account (make-parameter #f))
-(define current-google-analytics-domain (make-parameter #f))
-(define current-disqus-shortname (make-parameter #f))
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
-(define current-older/newer-buttons (make-parameter "both"))
-(define current-bootstrap-minified? (make-parameter #t))
-(define current-bootstrap-responsive? (make-parameter #f))
-(define current-twitter-name (make-parameter #f))
-(define current-favicon (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -204,61 +196,6 @@
         v])]
     [else v]))
 
-(define (maybe-make-directory p)
-  (unless (directory-exists? p)
-    (prn0 "Creating directory ~a" (abs->rel/top p))
-    (make-directory p)))
-
-(define (write-post-page p older newer)
-  (match-define (post title dest-path uri-path date tags blurb more? body) p)
-  (prn1 "Generating post ~a" (abs->rel/top dest-path))
-  (~> (post-xexpr title uri-path date tags body older newer)
-      (bodies->page #:title title
-                    #:description (xexprs->description blurb)
-                    #:uri-path uri-path
-                    #:keywords tags)
-      xexpr->string/pretty
-      (list "<!DOCTYPE html>")
-      reverse
-      string-join
-      string->bytes/utf-8
-      (display-to-file* dest-path #:exists 'replace)))
-
-(define (post-xexpr title uri-path date tags body older newer)
-  `((article (header (h1 ,title)
-                     ,(date+tags->xexpr date tags))
-             ,@(syntax-highlight body)
-             (footer (p 'nbsp)
-                     ,(share uri-path)
-                     (p 'nbsp)
-                     ,(older/newer-nav older newer)))))
-
-(define (older/newer-nav older newer)
-  `(ul
-    ([class "pager"])
-    ,(cond [newer
-            `(li ([class "previous"])
-                 (a ([href ,(post-uri-path newer)])
-                    ,@(match (current-older/newer-buttons)
-                        ["both"  `(larr "Newer" nbsp (em ,(post-title newer)))]
-                        ["age"   `(larr "Newer")]
-                        ["title" `(larr (em ,(post-title newer)))])))]
-           [else
-            `(li ([class "previous disabled"])
-                 (a ([href "#"])
-                    'larr "Newer"))])
-    ,(cond [older
-            `(li ([class "next"])
-                 (a ([href ,(post-uri-path older)])
-                    ,@(match (current-older/newer-buttons)
-                        ["both"  `((em ,(post-title older)) nbsp "Older" rarr)]
-                        ["age"   `("Older" rarr)]
-                        ["title" `((em ,(post-title older)) rarr)])))]
-           [else
-            `(li ([class "next disabled"])
-                 (a ([href "#"])
-                    "Older" 'rarr))])))
-
 (define (meta-data xs)
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
@@ -279,18 +216,6 @@
   (check-not-exn (thunk (meta-data `((pre () ,s)))))
   (check-not-exn (thunk (meta-data `((pre () (code () ,s)))))))
 
-(define (tag->xexpr s)
-  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
-
-(define (date+tags->xexpr date tags)
-  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
-  `(p ([class "date-and-tags"])
-      (time ([datetime ,dt]
-             [pubdate "true"]) ,dt)
-      " :: "
-      ,@(add-between (map tag->xexpr tags)
-                     ", ")))
-
 (define (tag-string->tags s)
   (regexp-split #px",\\s*" s))
 
@@ -305,31 +230,42 @@
     [else #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helpers to reduce redundancy in xexprs
 
-(define (meta k v)
-  `(meta ([name ,k]
-          [content ,v])))
+(define (write-post-page p older newer)
+  (match-define (post title dest-path uri-path date tags blurb more? body) p)
+  (prn1 "Generating post ~a" (abs->rel/top dest-path))
+  (~> (render-template
+       (src-path)
+       "post-template.html"
+       (hash 'title title
+             'uri-path uri-path
+             'full-uri full-uri
+             'date+tags (xexpr->string (date+tags->xexpr date tags))
+             'content (xexprs->string (syntax-highlight body))
+             'older-uri (and older (post-uri-path older))
+             'newer-uri (and newer (post-uri-path newer))
+             'older-title (and older (post-title older))
+             'newer-title (and newer (post-title newer))))
+      ;; bodies->page wants (listof xexpr?) so convert from string? to that
+      string->xexpr
+      list
+      (bodies->page #:title title
+                    #:description (xexprs->description blurb)
+                    #:uri-path uri-path
+                    #:keywords tags)
+      (display-to-file* dest-path #:exists 'replace)))
 
-(define (link/css href)
-  `(link ([href ,href]
-          [rel "stylesheet"]
-          [type "text/css"])))
+(define (date+tags->xexpr date tags)
+  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
+  `(p ([class "date-and-tags"])
+      (time ([datetime ,dt]
+             [pubdate "true"]) ,dt)
+      " :: "
+      ,@(add-between (map tag->xexpr tags)
+                     ", ")))
 
-;; Link to JS
-(define (script/js src)
-  `(script ([src ,src]
-            [type "text/javascript"])))
-
-;; Include local JS, with format -- can be "templated" JS with
-;; formatters like ~a. Use case: Plug in some account number or name.
-(define (script/js/inc v . vs)
-  (let* ([s (cond [(path? v) (file->string v)]
-                  [(string? v) v]
-                  [else (raise-type-error 'script/js/inc "path? or ?str" v)])]
-         [js (apply format s vs)])
-    `(script ([type "text/javascript"])
-             ,js)))
+(define (tag->xexpr s)
+  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -337,199 +273,33 @@
 ;;
 ;; Put the body elements in a master page template.
 
-;; Some static JS we "include"
-(define-runtime-path google-analytics.js "google-analytics.js")
-(define-runtime-path tweet-button.js "tweet-button.js")
-(define-runtime-path disqus.js "disqus.js")
-
-;; Maybe insert ".min" before the extension.
-;; e.g. "foo.js" => "foo.min.js"
-(define (maybe-mini s)
-  (if (current-bootstrap-minified?)
-      (match s
-        [(pregexp "^(.+)\\.(.+)$" (list _ base ext))
-         (str base ".min." ext)])
-      s))
-
-(define (bootstrap-js)
-  (script/js (maybe-mini "/js/bootstrap.js")))
-
-(define (bootstrap-css)
-  (cons (link/css (maybe-mini "/css/bootstrap.css"))
-        (if (current-bootstrap-responsive?) ;; need one more CSS
-            (list (link/css (maybe-mini "/css/bootstrap-responsive.css")))
-            (list))))
-
-(define (bs-container)
-  (if (current-bootstrap-responsive?) "container-fluid" "container"))
-
-(define (bs-row)
-  (if (current-bootstrap-responsive?) "row-fluid" "row"))
-
-(define (default-container dict)
-  `((div ([class ,(dict 'bootstrap-row-class)])
-         ;; Left column
-         (div ([id "left-sidebar"]
-               [class "span2 bs-docs-sidebar"])
-              ,@(dict 'tocs)
-              (p nbsp))
-         ;; Main column
-         (div ([id "content"]
-               [class "span8"])
-              ,@(dict 'bodies))
-         ;; Right column
-         (div ([id "right-sidebar"]
-               [class "span2"])
-              ,@(dict 'tags/feeds)
-              ,@(dict 'follow)))))
-
-(define container (make-parameter error))
-(define (container-proc)
-  (define p (build-path (src-path) "template.rkt"))
-  (cond [(file-exists? p)
-         (dynamic-require p
-                          'container
-                          (thunk
-                           (prn1 "template.rkt doesn't provide container")
-                           default-container))]
-        [else (prn1 "no template.rkt. using default container")
-              default-container]))
-
-(define (bodies->page xs                         ;listof xexpr?
+(define (bodies->page contents                   ;(listof xexpr?)
                       #:title title              ;string?
                       #:description description  ;string?
                       #:uri-path uri-path        ;string?
                       #:feed [feed "all"]        ;string?
                       #:keywords [keywords '()]  ;listof string?
+                      #:tag [tag #f]             ;(or/c string? #f)
                       #:toc-sidebar? [toc? #t])
-  `(html ([lang "en"])
-         (head (meta ([charset "utf-8"]))
-               (title ,title)
-               ,(meta "description" description)
-               ,(meta "author" (current-author))
-               ,(meta "keywords" (string-join keywords ","))
-               (link ([rel "canonical"][href ,(full-uri uri-path)]))
-               (link ([href ,(current-favicon)][rel "icon"]))
-               (meta ([name "viewport"]
-                      [content "width=device-width, initial-scale=1.0"]))
-               ;; CSS
-               ,@(bootstrap-css)
-               ,(link/css "/css/pygments.css")
-               ,(link/css "/css/custom.css")
-               ;; Atom feed
-               (link ([href ,(atom-feed-uri feed)]
-                      [type "application/atom+xml"]
-                      [rel "alternate"]
-                      [title ,(str "Atom: " (current-title) " / " feed)]))
-               ;; RSS feed
-               (link ([href ,(rss-feed-uri feed)]
-                      [type "application/rss+xml"]
-                      [rel "alternate"]
-                      [title ,(str "RSS: " (current-title) " / " feed)]))
-               ;; JS
-               ,(script/js "http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js")
-               ,(bootstrap-js)
-               ,@(google-analytics))
-         (body
-          ,(navbar uri-path)
-          (div ([class ,(bs-container)])
-               ,@((container)
-                  {'bootstrap-row-class (bs-row)
-                   'bodies xs
-                   'tocs (list (cond [toc? (toc-xexpr xs)]
-                                           [else ""]))
-                   'tags/feeds (tags/feeds)
-                   'follow (follow)})
-               (footer
-                (hr)
-                ,@(with-input-from-file
-                      (build-path (src-path) "footer.md")
-                    read-markdown)))
-          )))
+  (render-template
+   (src-path)
+   "page-template.html"
+   (hash
+    'contents (xexprs->string contents)
+    'title title
+    'description description
+    'uri-path uri-path
+    'full-uri (full-uri uri-path)
+    'atom-feed-uri (atom-feed-uri feed)
+    'rss-feed-uri (rss-feed-uri feed)
+    'keywords (string-join keywords ", ")
+    'table-of-contents (cond [toc? (xexpr->string (toc-xexpr contents))]
+                             [else ""])
+    'tag tag
+    'tags/feeds (xexprs->string (tags/feeds)))))
 
-(define (navbar active-uri-path)
-  `(div ([class "navbar navbar-inverse"])
-        (div ([class "navbar-inner"])
-             (div ([class "container"])
-                  ,(nav-ul (read-navbar) active-uri-path)))))
-
-(define (read-navbar)
-  (cached-file (build-path (src-path) "navbar.md")
-               #:read read-markdown
-               #:post-proc (lambda (x)
-                             (match x
-                               [`((ul ,xs ...))
-                                (prn1 "Using bulleted list from navbar.md")
-                                xs]
-                               [else
-                                (prn0 "Bulleted list not found in navbar.md")
-                                '()]))
-               #:default-proc (lambda ()
-                                (prn1 "navbar.md not found")
-                                '())))
-
-(define (nav-ul items active-uri-path)
-  `(ul ([class "nav"])
-       ,@(let* ([logo "img/navbar-logo.jpg"])
-           (if (file-exists? (build-path (top) logo))
-               `((li ([style "width: 60px"])
-                     (img ([style "width: 42px; height:33px;"]
-                           [src ,(format "/~a" logo)]))))
-               '()))
-       ,@(for/list ([item items])
-           (match item
-             [`(li (a ,(list-no-order `[href ,uri] attrs ...) ,els ...))
-              (nav-li uri attrs els active-uri-path)]
-             [`(ul ,items ...) (nav-ul items active-uri-path)]
-             [_ item]))))
-
-(define (nav-li href attrs els uri-path)
-  `(li ,(cond [(string-ci=? href uri-path) `([class "active"])]
-              [else `()])
-       (a ([href ,href] ,@attrs) ,@els)))
-
-(module+ test
-  ;; Regression test for https://github.com/greghendershott/frog/issues/39
-  (define-runtime-path HERE ".")
-  (parameterize ([top HERE])
-    (check-equal?
-     (nav-ul '((li (a ([href "/index.html"][class "brand"])
-                      "My " (em "Awesome") " Blog"))
-               (li (a ([href "/About.html"]) "About")))
-             "/index.html")
-     '(ul ([class "nav"])
-          (li ([class "active"])
-              (a ([href "/index.html"][class "brand"])
-                 "My " (em "Awesome") " Blog"))
-          (li ()
-              (a ([href "/About.html"]) "About"))))))
-
-(define (google-analytics)
-  (cond [(and (current-google-analytics-account)
-              (current-google-analytics-domain))
-         `(,(script/js/inc google-analytics.js
-                           (current-google-analytics-account)
-                           (current-google-analytics-domain)))]
-        [else '()]))
-
-(define (share uri-path)
-  `(p
-    ;; Twitter
-    ,(script/js/inc tweet-button.js)
-    (a ([href "https://twitter.com/share"]
-        [class "twitter-share-button"]
-        [data-url ,(full-uri uri-path)]
-        [data-dnt "true"])
-       "Tweet")
-    ;; Google+
-    ,(script/js "https://apis.google.com/js/plusone.js")
-    (g:plusone ([size "medium"]
-                [href ,(full-uri uri-path)]))
-    ;; Disqus for comments (but only if (current-disqus-shortname) not #f)
-    ,@(cond [(current-disqus-shortname)
-             `(,(script/js/inc disqus.js (current-disqus-shortname))
-               (div ([id "disqus_thread"])))]
-            [else `()])))
+(define (xexprs->string xs)
+  (string-join (map xexpr->string xs) "\n"))
 
 (define (toc-xexpr xs)
   (match (toc xs)
@@ -538,15 +308,6 @@
            [else `(div (p "On this page:"
                           (ol ([class "nav nav-list bs-docs-sidenav"])
                               ,@contents)))])]))
-
-(define (follow)
-  (cond [(current-twitter-name)
-         `((a ([href ,(str "https://twitter.com/" (current-twitter-name))]
-               [class "twitter-follow-button"]
-               [data-show-count "false"]
-               [data-lang="en"]) ,(str "Follow " (current-twitter-name)))
-           (script "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=\"//platform.twitter.com/widgets.js\";fjs.parentNode.insertBefore(js,fjs);}}(document,\"script\",\"twitter-wjs\");"))]
-        [else '()]))
 
 (define (tags/feeds)
   ;; Sort alphabetically by tag name. Use association list (can't sort
@@ -571,45 +332,35 @@
 
 (define (write-index xs    ;(listof post?) -> any
                      title ;string?
-                     tag   ;or/c #f string?
+                     tag   ;(or/c #f string?)
                      feed  ;string?
                      file) ;path?
   (prn1 "Generating ~a" (abs->rel/top file))
-  (define homehead.md (build-path (src-path) "homehead.md"))
-  (~> (append
-       (cond [tag `((h1 "Posts tagged " (em ,tag)))]
-             [(file-exists? homehead.md)
-              (with-input-from-file homehead.md read-markdown)]
-             [else `((h1 ,title))])
-       (for/list ([x (in-list xs)]
-                  [n (in-naturals)])
-         (match-define
-          (post title dest-path uri-path date tags blurb more? body) x)
-         `(article
-           ([class "index-post"])
-           (header (h2 (a ([href ,uri-path]) ,title))
-                   ,(date+tags->xexpr date tags))
-           ,@(cond
-              [(< n (current-max-index-items))
-               `((div ([class "entry-content"])
-                      ,@(cond [(current-index-full?) (syntax-highlight body)]
-                              [more? `(,@(syntax-highlight blurb)
-                                       (a ([href ,uri-path])
-                                          (em "Continue reading ...")))]
-                              [else (syntax-highlight blurb)])))]
-              [else '()]))))
+  (~> (for/list ([x (in-list xs)]
+                 [n (in-naturals)])
+        (match-define
+         (post title dest-path uri-path date tags blurb more? body) x)
+        `(article
+          ([class "index-post"])
+          (header (h2 (a ([href ,uri-path]) ,title))
+                  ,(date+tags->xexpr date tags))
+          ,@(cond
+             [(< n (current-max-index-items))
+              `((div ([class "entry-content"])
+                     ,@(cond [(current-index-full?) (syntax-highlight body)]
+                             [more? `(,@(syntax-highlight blurb)
+                                      (a ([href ,uri-path])
+                                         (em "Continue reading ...")))]
+                             [else (syntax-highlight blurb)])))]
+             [else '()])))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
                     #:uri-path (abs->rel/www file)
                     #:keywords (cond [tag (list tag)]
                                      [else (hash-keys all-tags)])
+                    #:tag tag
                     #:toc-sidebar? tag) ;; no toc on home page
-      xexpr->string/pretty
-      (list "<!DOCTYPE html>")
-      reverse
-      string-join
-      string->bytes/utf-8
       (display-to-file* file #:exists 'replace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -966,7 +717,6 @@ EOF
   (cond
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown)$" path)
-         (not (member (path->string name) '("homehead.md" "footer.md" "navbar.md")))
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
     (define xs (syntax-highlight (with-input-from-file path read-markdown)))
@@ -994,11 +744,6 @@ EOF
         (bodies->page #:title title
                       #:description (xexprs->description xs)
                       #:uri-path uri-path)
-        xexpr->string/pretty
-        (list "<!DOCTYPE html>")
-        reverse
-        string-join
-        string->bytes/utf-8
         (display-to-file* dest-path #:exists 'replace))
     (cons uri-path v)]
    [else v]))
@@ -1141,8 +886,7 @@ EOF
 ;; For interactive development
 (define (build/preview)
   (parameterize* ([top example]
-                  [current-verbosity 99]
-                  [container (container-proc)])
+                  [current-verbosity 99])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
@@ -1153,16 +897,8 @@ EOF
                                [feed-full? #f]
                                [max-index-items 999]
                                [max-feed-items 999]
-                               [google-analytics-account #f]
-                               [google-analytics-domain #f]
-                               [disqus-shortname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f]
-                               [older/newer-buttons "both"]
-                               [bootstrap-responsive? #t]
-                               [bootstrap-minified? #t]
-                               [twitter-name #f]
-                               [favicon "/favicon.ico"])
+                               [feed-image-bugs? #f])
       ;; (clean)
       (build)
       (preview)
@@ -1172,8 +908,7 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ main
-  (parameterize* ([top (current-directory)]
-                  [container (container-proc)])
+  (parameterize* ([top (current-directory)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
@@ -1184,16 +919,8 @@ EOF
                                [feed-full? #f]
                                [max-index-items 999]
                                [max-feed-items 999]
-                               [google-analytics-account #f]
-                               [google-analytics-domain #f]
-                               [disqus-shortname #f]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f]
-                               [older/newer-buttons "both"]
-                               [bootstrap-responsive? #t]
-                               [bootstrap-minified? #t]
-                               [twitter-name #f]
-                               [favicon "/favicon.ico"])
+                               [feed-image-bugs? #f])
       (command-line
        #:once-each
        [("-n" "--new") title

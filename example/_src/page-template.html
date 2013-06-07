@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Most of the <head> section you can leave alone. -->
+    <!-- Notice some template variables like @title, @description and
+    so on whcih you could also use in other parts of this template if
+    you wish. -->
+    <meta charset="utf-8" />
+    <title>@|title|</title>
+    <meta name="description" content="@|description|">
+    <meta name="author"      content="The Unknown Blogger">
+    <meta name="keywords"    content="@|keywords|">
+    <meta name="viewport"    content="width=device-width, initial-scale=1.0">
+    <link rel="icon"      href="/favicon.ico">
+    <link rel="canonical" href="@|full-uri|">
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap-responsive.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/pygments.css">
+    <link rel="stylesheet" type="text/css" href="/css/custom.css">
+    <!-- Feeds -->
+    <link ref="alternate" type="application/atom+xml"
+          href="@|atom-feed-uri|" title="Atom Feed">
+    <link ref="alternate" type="application/rss+xml"
+          href="@|rss-feed-uri|" title="RSS Feed">
+    <!-- JS -->
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-xxxxxx']);       <!-- SET THIS -->
+      _gaq.push(['_setDomainName', 'example.com']);  <!-- SET THIS -->
+      _gaq.push(['_trackPageview']);
+      // http://drawingablank.me/blog/fix-your-bounce-rate.html
+      setTimeout(function(){_gaq.push(['_trackEvent', '30_seconds', 'read'])}, 30000);
+      (function() {
+      var ga = document.createElement('script');
+      ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- A standard Twitter Bootstrap nav bar -->
+    <div class="navbar navbar-inverse">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <!-- Notice we can define Racket functions. Here's a
+            helper to check if a nav bar item is for this page, as
+            indiated by @uri-path -->
+            @define[(nav-item uri label [a-attribs ""])]{
+            @list{
+            <li @(if (string-ci=? uri uri-path) " class='active'" "")>
+              <a href="@|uri|" @|a-attribs|>@|label|</a></li>
+            }}
+            @nav-item["/index.html" "All Posts" " class='brand'"]
+            @nav-item["/About.html" "About"]
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid">
+      <!-- Remember that Twitter Bootstrap has a 12 cell model. The
+           spanN classes should add up to 12.  For instance 3 "span4"
+           divs, or 2 "span6" divs, and so on. In this example the
+           main content is "span9", and a "span3" right sidebar. -->
+      <div class="row-fluid">
+        <!-- Main column -->
+        <div id="content" class="span9">
+          <!-- To put text only on the home page, check for @uri-path
+          being "/index.html" -->
+          @(when (string-ci=? uri-path
+          "/index.html") @list{
+          <h1>Welcome</h1>
+          <p>Here is some text that only goes on the home page, because we
+            matched on <code>uri-path</code>
+            being <code>/index.html</code>.</p>
+          })
+          <!-- Index pages for posts tagged something have non-#f @tag -->
+          @(when tag @list{<h1>Posts tagged <em>@|tag|</em></h1>})
+          <!-- The main page contents are in @contents -->
+          @|contents|
+        </div>
+        <!-- Right column -->
+        <div id="right-sidebar" class="span3">
+          <!-- @tags/feeds is a list of tags and feeds -->
+          @|tags/feeds|
+
+          <!-- Example of a Twitter follow button -->
+          <a href="https://twitter.com/racketlang"
+             class="twitter-follow-button"
+             data-show-count="false"
+             data-lang="en">
+            "Follow RacketLang"
+          </a>
+          <script type="text/javascript">
+            !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
+          </script>
+        </div>
+      </div>
+      <footer>
+        <hr />
+        <p>Site generated
+        by <a href="https://github.com/greghendershott/frog">Frog</a>,
+        the <strong>fr</strong>ozen bl<strong>og</strong> tool.</p>
+        <p>Using <a href="http://twitter.github.com/bootstrap/index.html">Bootstrap</a>.</p>
+        <p><em>Your legal notice here</em>.</p>
+      </footer>
+    </div>
+  </body>
+</html>
