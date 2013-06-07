@@ -133,7 +133,7 @@ repetition.
 The `_src/page-template.html` template specifies an `<html>` element
 used by Frog to generate every page on your site.
 
-Anything in the file that looks like `@variable` or `@|variable` is a
+Anything in the file that looks like `@variable` or `@|variable|` is a
 template variable supplied by Frog.  Most of these should be
 self-explanatory from their name and from seeing how they are used in
 the default template.
@@ -141,8 +141,8 @@ the default template.
 ## Post template: `_src/post-template.html`
 
 The `_src/post-template.html` template determines how blog posts are
-laid out, on a page that is dedicated to one post. The default
-template is one `<article>` element.
+laid out, on page that are dedicated to one post. The default template
+defines an `<article>` element.
 
 For pages that are blog posts, the result of `post-template.html`
 becomes most of the `@|contents|` variable in `page-template.html`. In
@@ -158,11 +158,6 @@ can also be used for pages that are not blog post pages.)
     |       +---------------+   |
     |                           |
     +---------------------------+
-
-Anything in the file that looks like `@variable` or `@|variable` is a
-template variable supplied by Frog.  Most of these should be
-self-explanatory from their name and from seeing how they are used in
-the default template.
 
 > **NOTE**: This template does _not_ control how a blog post is laid
 > out on an index page like `/index.html` or
