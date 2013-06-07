@@ -285,11 +285,11 @@ On Linux you might first need to install `easy_install`:
 Creating a new blog project is 3 easy steps:
 
 ```sh
-# Create a subdir
+# 1. Create a subdir
 $ mkdir frog-project
-# Go there
+# 2. Go there
 $ cd frog-project
-# Tell Frog to create default files and dirs
+# 3. Tell Frog to create default files and dirs
 $ raco frog --init
 Configuration /tmp/frog-project/.frogrc not found; using defaults.
 Creating files in /tmp/frog-project/:
@@ -302,7 +302,6 @@ Creating files in /tmp/frog-project/:
 /tmp/frog-project/js/
 /tmp/frog-project/img/
 Project ready. Try `raco frog -bp` to build and preview.
-$
 ```
 
 You can go ahead and build/preview this to get a feel for the default
@@ -319,7 +318,6 @@ Stop this program at any time to terminate the Web Server.
 # Switch back to the command prompt and type C-c to quit:
 ^C
 Web Server stopped.
-$
 ```
 
 
