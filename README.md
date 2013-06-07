@@ -115,17 +115,47 @@ pages for tags.)
 
 ## Templates
 
-Frog uses the
+Frog uses the Racket
 [`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
-system based on `scribble/text` `@` expressions.
+system based on `scribble/text` `@` expressions. This means that the
+files are basically normal HTML format, with the ability to use `@` to
+reference a template variable --- or indeed "escape" to any Racket
+code.
 
-## `page-template.html`
+In contrast to most templating systems, you have a full programming
+language available -- Racket -- should you need it. However most of
+what you need to do will probably very simple, such as the occasional
+`if` or `when` test, or perhaps defining a helper function to minimize
+repetition.
 
-**TO-DO**
+## Page template: `_src/page-template.html`
 
-## `post-template.html`
+The `_src/page-template.html` template determines every page on your
+site.
 
-**TO-DO**
+Anything in the file that looks like `@variable` or `@|variable` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template.
+
+## Post template: `_src/post-template.html`
+
+The `_src/post-template.html` template determines how blog posts are
+laid out within a page that is dedicated to one post. If you represent
+the post itself as one `<article>` element (recommended), then this
+file is the contents of that element.
+
+Anything in the file that looks like `@variable` or `@|variable` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template.
+
+> **NOTE**: This template does _not_ control how a blog post is laid
+> out on an index page like `/index.html` or
+> `/tags/<some-tag>.html`. Why?  The main purpose of this template is
+> to specify things like Disqus comments, Tweet and +1 sharing
+> buttons, and older/newer links --- things that only make sense in
+> the context of the post's dedicated page.
 
 ## Code blocks
 
@@ -212,6 +242,7 @@ pre {
 ```
 
 ----------------------------------------------------------------------
+----------------------------------------------------------------------
 
 ## Installing Frog
 
@@ -242,6 +273,8 @@ On Linux you might first need to install `easy_install`:
 
 ## Starting a new blog project
 
+Creating a new blog project is 3 easy steps:
+
 ```sh
 # Create a subdir
 $ mkdir frog-project
@@ -260,6 +293,13 @@ Creating files in /tmp/frog-project/:
 /tmp/frog-project/js/
 /tmp/frog-project/img/
 Project ready. Try `raco frog -bp` to build and preview.
+$
+```
+
+You can go ahead and build/preview this to get a feel for the default
+starting point:
+
+```sh
 # Build and preview it
 $ raco frog -bp
 Using configuration /tmp/frog-project/.frogrc
@@ -270,7 +310,9 @@ Stop this program at any time to terminate the Web Server.
 # Switch back to the command prompt and type C-c to quit:
 ^C
 Web Server stopped.
+$
 ```
+
 
 ### Project file tree
 
