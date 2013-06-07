@@ -239,7 +239,7 @@
        "post-template.html"
        (hash 'title title
              'uri-path uri-path
-             'full-uri full-uri
+             'full-uri (full-uri uri-path)
              'date+tags (xexpr->string (date+tags->xexpr date tags))
              'content (xexprs->string (syntax-highlight body))
              'older-uri (and older (post-uri-path older))
