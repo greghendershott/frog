@@ -3,14 +3,15 @@ If you had started to use Frog before version 0.3:
 1. Thank you!
 
 2. You'll need to move some things form `navbar.md`, `footer.md`, and
-`homehead.md` to `_src/page-template.html`.
+`homehead.md` to a new template file, `_src/page-template.html`.
 
-3. You'll need to move some things from `.frogrc` to a couple new
-files, `_src/page-template.html` and `_src/post-template.html`.
+3. You'll need to move some things from `.frogrc` to
+`_src/page-template.html` and to another new template file,
+`_src/post-template.html`.
 
-Starting with version 0.3, Frog lets `web-server/templates` do more of
-the work when it comes to layout and appearance, instead of building
-the HTML itself using `.frogrc` variables.
+Starting with version 0.3, Frog uses `web-server/templates` to do more
+of the work when it comes to layout and appearance, instead of
+building the HTML itself using `.frogrc` variables.
 
 # `navbar.md`
 
@@ -176,4 +177,5 @@ In `page-template.html`, change it:
 
 Of course, the point of Frog leveraging templates is that now you have
 more freedom to choose what services you use, and how and where they
-appear.
+appear. I'm sorry for the disruption making this change, but I think
+this will let people accomplish more.
