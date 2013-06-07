@@ -130,8 +130,8 @@ repetition.
 
 ## Page template: `_src/page-template.html`
 
-The `_src/page-template.html` template determines every page on your
-site.
+The `_src/page-template.html` template specifies an `<html>` element
+used by Frog to generate every page on your site.
 
 Anything in the file that looks like `@variable` or `@|variable` is a
 template variable supplied by Frog.  Most of these should be
@@ -141,9 +141,23 @@ the default template.
 ## Post template: `_src/post-template.html`
 
 The `_src/post-template.html` template determines how blog posts are
-laid out within a page that is dedicated to one post. If you represent
-the post itself as one `<article>` element (recommended), then this
-file is the contents of that element.
+laid out, on a page that is dedicated to one post. The default
+template is one `<article>` element.
+
+For pages that are blog posts, the result of `post-template.html`
+becomes most of the `@|contents|` variable in `page-template.html`. In
+other words, the post template is effectively nested in the page
+template. (They are two separate templates so that the page template
+can also be used for pages that are not blog post pages.)
+
+    +---------------------------+
+    | page-template             |
+    |                           |
+    |       +---------------+   |
+    |       | post-template |   |
+    |       +---------------+   |
+    |                           |
+    +---------------------------+
 
 Anything in the file that looks like `@variable` or `@|variable` is a
 template variable supplied by Frog.  Most of these should be
@@ -155,7 +169,7 @@ the default template.
 > `/tags/<some-tag>.html`. Why?  The main purpose of this template is
 > to specify things like Disqus comments, Tweet and +1 sharing
 > buttons, and older/newer links --- things that only make sense in
-> the context of the post's dedicated page.
+> the context of pages dedicated to one blog post.
 
 ## Code blocks
 
