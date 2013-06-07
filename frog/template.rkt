@@ -1,20 +1,16 @@
 #lang racket/base
 
-(require web-server/templates)
+(require racket/dict web-server/templates)
 
 (provide render-template)
 
 (define (render-template dir filename dict)
   (define namespace-for-template (make-empty-namespace))
-  (namespace-attach-module (current-namespace) 'web-server/templates
+  (namespace-attach-module (current-namespace)
+                           'web-server/templates
                            namespace-for-template)
-  (hash-map dict
-            (lambda (key value)
-              (namespace-set-variable-value!
-               key
-               value
-               #f
-               namespace-for-template)))
+  (for ([(k v) (in-dict dict)])
+    (namespace-set-variable-value! k v #f namespace-for-template))
   (parameterize [(current-namespace namespace-for-template)]
     (namespace-require 'web-server/templates))
   (define to-eval
