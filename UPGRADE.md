@@ -9,9 +9,10 @@ If you had started to use Frog before version 0.3:
 `_src/page-template.html` and to another new template file,
 `_src/post-template.html`.
 
-Starting with version 0.3, Frog uses `web-server/templates` to do more
-of the work when it comes to layout and appearance, instead of
-building the HTML itself using `.frogrc` variables.
+Starting with version 0.3, Frog uses
+[`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
+to do more of the work when it comes to layout and appearance, instead
+of building the HTML itself using `.frogrc` variables.
 
 # `navbar.md`
 
