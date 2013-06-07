@@ -293,13 +293,13 @@
     'atom-feed-uri (atom-feed-uri feed)
     'rss-feed-uri (rss-feed-uri feed)
     'keywords (string-join keywords ", ")
-    'table-of-contents (cond [toc? (xexpr->string (toc-xexpr contents))]
+    'table-of-contents (cond [toc? (xexpr->string/pretty (toc-xexpr contents))]
                              [else ""])
     'tag tag
     'tags/feeds (xexprs->string (tags/feeds)))))
 
 (define (xexprs->string xs)
-  (string-join (map xexpr->string xs) "\n"))
+  (string-join (map xexpr->string/pretty xs) "\n"))
 
 (define (toc-xexpr xs)
   (match (toc xs)
