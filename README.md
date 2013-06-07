@@ -337,9 +337,7 @@ project/
 
 ### Per-project configuration: .frogrc
 
-You need to place a `.frogrc` file in your project directory.
-
-The contents:
+`raco frog --init` creates a `.frogrc` file in your project directory:
 
 ```sh
 # Required: Should NOT end in trailing slash.
