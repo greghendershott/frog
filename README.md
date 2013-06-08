@@ -380,7 +380,7 @@ markdown using backtick code blocks you can specify a language:
     of code
     ```
 
-That _language_ is given to Pygments as the lexer to use.
+That `language` is given to Pygments as the lexer to use.
 
 For example this:
 
@@ -395,7 +395,7 @@ For example this:
         // it works!
     ```
 
-Yields this:
+Yields this using the `js` lexer:
 
 ```js
 /**
@@ -418,7 +418,7 @@ And this:
         (printf "source file: ~a\n" path)))
     ```
 
-Yields this:
+Yields this using the `racket` lexer:
 
 ```racket
 #lang racket
@@ -428,17 +428,8 @@ Yields this:
     (printf "source file: ~a\n" path)))
 ```
 
-The appearance is controlled by your `css/pygments.css` file:
-[examples](https://github.com/richleland/pygments-css).
-
-I have a soft spot for [Pygments][] because it's actually the first
-existing open source project to which I contributed. I added a lexer
-for the [Racket][] language. More importantly it has lexers for tons
-of languages and is used by things like GitHub (via [pygments.rb][]),
-BitBucket, and so on. Plus, it fits the spirit of static web site
-generation better than JavaScript options like [SyntaxHighlighter][].
-
-### How to avoid wrapping
+The colors are controlled by your `css/pygments.css` file. There are
+[examples of many styles](https://github.com/richleland/pygments-css).
 
 If you use larger font sizes, code may wrap and get out of alignment
 with the line numbers. To avoid the wrapping, add the following to
@@ -453,6 +444,15 @@ pre {
     width: inherit;
 }
 ```
+
+> **NOTE**: I have a soft spot for [Pygments][] because it's actually
+> the first existing open source project to which I contributed. I added
+> a lexer for the [Racket][] language. More importantly it has lexers
+> for tons of languages and is used by things like GitHub (via
+> [pygments.rb][]), BitBucket, and so on. Plus, it fits the spirit of
+> static web site generation better than JavaScript options like
+> [SyntaxHighlighter][].
+
 
 # Bug reports? Feature requests?
 
