@@ -928,6 +928,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ main
+  (require "../info.rkt")
+  (printf "Frog ~a\n" (#%info-lookup 'version))
   (parameterize* ([top (current-directory)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
