@@ -36,12 +36,12 @@ Posts" (home) and "About" items. You can add or change:
             <!-- Notice we can define Racket functions. Here's a
                  helper to check if a nav bar item is for this page, as
                  indiated by `uri-path` -->
-            @define[(nav-item uri label [a-attribs ""])]{
+            @define[ (nav-item uri label [a-attribs ""]) ]{
               @list{
                 <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
                   <a href="@|uri|"@|a-attribs|>@|label|</a>
                 </li>
-              }}
+            }}
             @nav-item["/index.html" "All Posts" " class=\"brand\""]
             @nav-item["/About.html" "About"]
             <!-- ADD YOUR NAV BAR ITEMS HERE -->

@@ -51,11 +51,12 @@
             <!-- Notice we can define Racket functions. Here's a
                  helper to add class="active" to a nav bar item if it
                  is for this page (as indiated by `uri-path`) -->
-                 @define[(nav-item uri label [a-attribs ""])]{ @list{
+            @define[ (nav-item uri label [a-attribs ""]) ]{
+              @list{
                 <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
                   <a href="@|uri|"@|a-attribs|>@|label|</a>
                 </li>
-              }}
+            }}
             @nav-item["/index.html" "All Posts" " class=\"brand\""]
             @nav-item["/About.html" "About"]
           </ul>
