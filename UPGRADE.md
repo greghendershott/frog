@@ -1,3 +1,8 @@
+Starting with version 0.3, Frog uses
+[`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
+to do more of the work when it comes to layout and appearance, instead
+of building the HTML itself using `.frogrc` variables.
+
 If you had started to use Frog before version 0.3:
 
 1. Thank you!
@@ -9,10 +14,8 @@ If you had started to use Frog before version 0.3:
 `_src/page-template.html` and to another new template file,
 `_src/post-template.html`.
 
-Starting with version 0.3, Frog uses
-[`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
-to do more of the work when it comes to layout and appearance, instead
-of building the HTML itself using `.frogrc` variables.
+This should take just a few minutes! (If you have any questions or
+problems, please let me know.)
 
 # `navbar.md`
 
@@ -21,8 +24,8 @@ of building the HTML itself using `.frogrc` variables.
 > and create a `navbar.html` file from it!
 
 In `page-template.html`, create navbar `<li>` items using the
-`@nav-item` function. The example `page-template.html` defines All
-Posts (home) and About items, you can add/change:
+`@nav-item` function. The example `page-template.html` defines "All
+Posts" (home) and "About" items. You can add or change:
 
 ```html
     <!-- A standard Twitter Bootstrap nav bar -->
@@ -41,6 +44,7 @@ Posts (home) and About items, you can add/change:
               }}
             @nav-item["/index.html" "All Posts" " class=\"brand\""]
             @nav-item["/About.html" "About"]
+            <!-- ADD YOUR NAV BAR ITEMS HERE -->
           </ul>
         </div>
       </div>
@@ -110,7 +114,7 @@ In `page-template.html`, set the style sheets yourself:
 In `post-template.html`, set them as you like:
 
 ```html
-  </footer>
+  <footer>
     ...
     <!-- Older/Newer post buttons -->
     <ul class="pager">
@@ -151,7 +155,8 @@ In `page-template.html`, set these:
 
 ## `disqus-shortname`
 
-In `post-template.html`, set it:
+In `post-template.html`, change `SHORTNAME` to your actual Disqus
+shortname:
 
 ```html
     <!-- Disqus comments -->
@@ -162,7 +167,8 @@ In `post-template.html`, set it:
 
 ## `twitter-name` (for Follow button)
 
-In `page-template.html`, change it:
+In `page-template.html`, change the `href` for your Twitter page, and,
+change the "Follow" text:
 
 ```html
         <!-- Right column -->
@@ -181,6 +187,7 @@ In `page-template.html`, change it:
 # Conclusion
 
 Of course, the point of Frog leveraging templates is that now you have
-more freedom to choose what services you use, and how and where they
-appear. I'm sorry for the disruption making this change, but I think
-this will let people accomplish more.
+more freedom to choose what elements and services you use, as well as
+how and where they appear. I'm sorry for the disruption making this
+change, but I think this will let people accomplish more of what they
+want for the long term.
