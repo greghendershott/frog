@@ -221,7 +221,6 @@
 
 (define (above-the-fold xs)
   (define-values (above below) (break more-xexpr? xs))
-
   (values above (not (empty? below))))
 
 (define (more-xexpr? x)
