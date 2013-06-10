@@ -246,7 +246,7 @@
              'older-title (and older (post-title older))
              'newer-title (and newer (post-title newer))))
       ;; bodies->page wants (listof xexpr?) so convert from string? to that
-      string->xexpr
+      string->xexpr/minimal-whitespace
       list
       (bodies->page #:title title
                     #:description (xexprs->description blurb)
@@ -265,6 +265,10 @@
 
 (define (tag->xexpr s)
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
+
+(define (string->xexpr/minimal-whitespace s)
+  (parameterize ([collapse-whitespace #t])
+    (string->xexpr s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
