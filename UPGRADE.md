@@ -87,12 +87,10 @@ checks whether the `@uri-path` template variable is `string-ci=?` to
                being "/index.html" -->
           @(when (string-ci=? uri-path "/index.html")
             @list{
-            <h1>Welcome</h1>
-            <p>Here is some text that only goes on the home page,
-              because we matched on <code>uri-path</code>
-              being <code>/index.html</code>.</p>
-            }
-          )
+              <h1>Welcome</h1>
+              <p>Here is some text that only goes on the home page,
+                because we matched on <code>uri-path</code>
+                being <code>/index.html</code>.</p> })
       ....
 ```
 
