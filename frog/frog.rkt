@@ -45,7 +45,7 @@
         [root (path->string (www-path))])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
-      [else (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
+      [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
 
 ;; Convert from absolute local path to one relative to project top dir.
 ;; Ex: ~/project/css would become css
@@ -58,7 +58,7 @@
         [root (path->string (top))])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
-      [else (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+      [_ (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -188,7 +188,7 @@
                            more?
                            (filter (negate more-xexpr?) body))
                      v)])]
-       [else
+       [_
         (prn2 (str "Skipping ~a\n"
                    "         Not named ~a")
               (abs->rel/top path)
@@ -226,7 +226,7 @@
 (define (more-xexpr? x)
   (match x
     [`(p ,(pregexp "\\s*<!-- more -->\\s*")) #t]
-    [else #f]))
+    [_ #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -417,8 +417,8 @@
                 (match brush
                   [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
                    (pygmentize text lang)]
-                  [else `((pre ,text))])]
-               [else (list x)]))))
+                  [_ `((pre ,text))])]
+               [_ (list x)]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -704,7 +704,7 @@ EOF
             [else (match (path->string path)
                     [(pregexp "\\d{4}/\\d{2}/.+?\\.html$")
                      (rm path)]
-                    [else (void)])])]))
+                    [_ (void)])])]))
   (fold-files maybe-delete '() (www-path) #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
