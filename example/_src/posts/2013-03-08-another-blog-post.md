@@ -4,7 +4,7 @@
 
 Here's some [Bullshit Ipsum](http://bullshitipsum.com/?paragraphs=2).
 
-Addelivery integrate ecologies e-markets standards-compliant utilize
+Addelivery & integrate ecologies e-markets standards-compliant utilize
 technologies aggregate addelivery viral--communities dynamic
 functionalities. Mindshare engineer viral A-list: cross-platform remix
 engage social cross-media social innovate distributed matrix

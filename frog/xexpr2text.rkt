@@ -1,6 +1,6 @@
 #lang rackjure
 
-(require "take.rkt")
+(require xml "take.rkt")
 
 (provide xexprs->description
          xexpr->markdown)
@@ -43,11 +43,14 @@
     [`(strong        ([,_ ,_] ...) ... ,es ...) (str "**" (->s es) "**")]
     [`(,(? heading?) ([,_ ,_] ...) ... ,es ...) (str (->s es) ":")]
     [`(p             ([,_ ,_] ...) ... ,es ...) (str (->s es) p-suffix)]
-    [`(,tag          ([,_ ,_] ...) ... ,es ...) (str (->s es))]
+    [`(,(? symbol?)  ([,_ ,_] ...) ... ,es ...) (str (->s es))]
     [(? string? s) s]
     ['ndash "--"]
     ['mdash "--"]
-    [(? symbol? s) (str "&" s ";")]
+    ['amp "&"]
+    [(or 'lsquo 'rsquo) "'"]
+    [(or 'ldquo 'rdquo) "&quot;"]
+    [(? valid-char? c) (integer->char c)]
     [else ""])) ;; ignore others
 
 (module+ test
@@ -67,6 +70,8 @@
                                      "I am some " (em "italic") " text"))
                 "I am some _italic_ text")
   (check-equal? (xexpr->markdown '(p "M" 'amp "Ms" 'mdash "gotta love 'em"))
-                "M&amp;Ms--gotta love 'em")
+                "M&Ms--gotta love 'em")
   (check-equal? (xexpr->markdown '(div (p "Hi.") (p "Hi.")) "\n")
-                "Hi.\nHi.\n"))
+                "Hi.\nHi.\n")
+  (check-equal? (xexpr->markdown '(p "Hi" #x20 "there"))
+                "Hi there"))
