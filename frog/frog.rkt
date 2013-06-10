@@ -568,11 +568,11 @@
     ;; Footnote definition return link
     [`(a ([href ,href]) "↩") ""]
     ;; All else
-    [`(,tag ([,as] ...+) ,es ...)
-     `(,tag (,as) ,@(map unlinkify-footnotes/xexpr es))]
-    [`(,tag ,es ...)
-     `(,tag ,@(map unlinkify-footnotes/xexpr es))]
-    [else x]))
+    [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) ,es ...)
+     `(,tag ,(map list ks vs) ,@(unlinkify-footnotes es))]
+    [`(,(? symbol? tag) ,es ...)
+     `(,tag ,@(unlinkify-footnotes es))]
+    [_ x]))
 
 (module+ test
   (check-equal?
