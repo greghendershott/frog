@@ -188,12 +188,11 @@
                            more?
                            (filter (negate more-xexpr?) body))
                      v)])]
-       [_
-        (prn2 (str "Skipping ~a\n"
-                   "         Not named ~a")
-              (abs->rel/top path)
-              post-file-px)
-        v])]
+       [_ (prn2 (str "Skipping ~a\n"
+                     "         Not named ~a")
+                (abs->rel/top path)
+                post-file-px)
+          v])]
     [else v]))
 
 (define (meta-data xs)
