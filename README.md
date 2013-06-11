@@ -77,8 +77,10 @@ Creating a new blog project is 3 easy steps:
 ```sh
 # 1. Create a subdir
 $ mkdir frog-project
+
 # 2. Go there
 $ cd frog-project
+
 # 3. Tell Frog to create default files and dirs
 $ raco frog --init
 Configuration /tmp/frog-project/.frogrc not found; using defaults.
