@@ -235,15 +235,15 @@
   (~> (render-template
        (src-path)
        "post-template.html"
-       (hash 'title title
-             'uri-path uri-path
-             'full-uri (full-uri uri-path)
-             'date+tags (xexpr->string (date+tags->xexpr date tags))
-             'content (xexprs->string (syntax-highlight body))
-             'older-uri (and older (post-uri-path older))
-             'newer-uri (and newer (post-uri-path newer))
-             'older-title (and older (post-title older))
-             'newer-title (and newer (post-title newer))))
+       {'title title
+        'uri-path uri-path
+        'full-uri (full-uri uri-path)
+        'date+tags (xexpr->string (date+tags->xexpr date tags))
+        'content (xexprs->string (syntax-highlight body))
+        'older-uri (and older (post-uri-path older))
+        'newer-uri (and newer (post-uri-path newer))
+        'older-title (and older (post-title older))
+        'newer-title (and newer (post-title newer))})
       ;; bodies->page wants (listof xexpr?) so convert from string? to that
       string->xexpr/minimal-whitespace
       list
@@ -286,8 +286,7 @@
   (render-template
    (src-path)
    "page-template.html"
-   (hash
-    'contents (xexprs->string contents)
+   {'contents (xexprs->string contents)
     'title title
     'description description
     'uri-path uri-path
@@ -298,7 +297,7 @@
     'table-of-contents (cond [toc? (xexpr->string/pretty (toc-xexpr contents))]
                              [else ""])
     'tag tag
-    'tags/feeds (xexprs->string (tags/feeds)))))
+    'tags/feeds (xexprs->string (tags/feeds))}))
 
 (define (xexprs->string xs)
   (string-join (map xexpr->string/pretty xs) "\n"))
