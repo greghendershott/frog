@@ -374,8 +374,9 @@ can also be used for pages that are not blog post pages.)
 
 ## Code blocks
 
-Frog optionally uses [Pygments][] to do syntax highlighting. In your
-markdown using backtick code blocks you can specify a language:
+Frog optionally uses [Pygments][] to do syntax highlighting. When
+using fenced code blocks, you can specify a language (as on
+[GitHub][GHFM]):
 
     ```language
     some lines
@@ -471,3 +472,4 @@ Please use [GitHub Issues][].
 [SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
 [GitHub Pages]: https://help.github.com/articles/user-organization-and-project-pages
 [GitHub Issues]: https://github.com/greghendershott/frog/issues
+[GHFM]: https://help.github.com/articles/github-flavored-markdown#syntax-highlighting
