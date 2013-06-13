@@ -27,6 +27,32 @@
 ;; at different times. Just please do your best to follow the
 ;; indentation style already being used.
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Disqus
+;;
+
+(define (disqus-comments short-name)
+  @list{
+        <script type="text/javascript">
+          var disqus_shortname = '@|short-name|';
+          (function() {
+              var dsq = document.createElement('script');
+              dsq.type = 'text/javascript';
+              dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+        <div id="disqus_thread"></div>
+        })
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Google Analytics
+;;
+
 (define (google-analytics account domain)
    @list{
          <script type="text/javascript">
@@ -44,6 +70,43 @@
            })();
          </script>
          })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Google+
+;;
+
+(define (google-plus-share-button full-uri)
+  @list{<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+        <g:plusone size="medium" href="@full-uri"></g:plusone>})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Older/newer post navigation
+;;
+
+(define (older/newer-links older-uri older-title newer-uri newer-title)
+  @list{
+        <ul class="pager">
+        @(when newer-uri
+          @list{
+                <li class="previous">
+                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
+                </li>
+                })
+        @(when older-uri
+          @list{
+                <li class="next">
+                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
+                </li>
+                })
+      </ul>
+      })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Twitter
+;;
 
 (define (twitter-follow-button name [label #f])
   (let ([label (or label (string-append "Follow " name))])
@@ -67,6 +130,53 @@
           </script>
           }))
   
+;; See https://dev.twitter.com/docs/embedded-timelines for instructions
+;; how to create a timeline and get its "widget ID".
+(define (twitter-timeline user
+                          widget-id
+                          #:width [width #f]
+                          #:height [height #f]
+                          #:lang [lang #f]
+                          #:theme [data-theme #f]
+                          #:link-color [data-link-color #f]
+                          #:border-color [data-border-color #f]
+                          #:tweet-limit [data-tweet-limit #f]
+                          #:chrome [data-chrome #f]
+                          #:aria-polite [data-aria-polite #f]
+                          #:related [data-related #f])
+  ;; Reduce the tedium of translating optional arguments into HTML
+  ;; attributes, where #f means no values at all.
+  (define-syntax (and/attrs stx)
+    (syntax-case stx ()
+      [(_ id ...)
+       #'(string-join (filter identity
+                              (list (and id
+                                         (format "~a=\"~a\"" 'id id)) ...)))]))
+  (define attrs (and/attrs width
+                           height
+                           lang
+                           data-theme
+                           data-link-color
+                           data-border-color
+                           data-tweet-limit
+                           data-chrome
+                           data-aria-polite
+                           data-related))
+  @list{<a class="twitter-timeline" href="https://twitter.com/@|user|"
+           data-widget-id="@|widget-id|" @|attrs|></a>
+        <script>
+          !function(d,s,id){
+              var js,fjs=d.getElementsByTagName(s)[0];
+              if(!d.getElementById(id)){
+                  js=d.createElement(s);
+                  js.id=id;
+                  js.src="//platform.twitter.com/widgets.js";
+                  fjs.parentNode.insertBefore(js,fjs);
+              }
+          }(document,"script","twitter-wjs");
+        </script>
+        })
+
 (define (twitter-share-button uri)
   @list{
         <script type="text/javascript">
@@ -86,88 +196,3 @@
            data-dnt="true">
           "Tweet"</a>
           })
-
-(define (google-plus-share-button full-uri)
-  @list{<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
-        <g:plusone size="medium" href="@full-uri"></g:plusone>})
-
-(define (disqus-comments short-name)
-  @list{
-        <script type="text/javascript">
-          var disqus_shortname = '@|short-name|';
-          (function() {
-              var dsq = document.createElement('script');
-              dsq.type = 'text/javascript';
-              dsq.async = true;
-              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-          })();
-        </script>
-        <div id="disqus_thread"></div>
-        })
-
-(define (older/newer-links older-uri older-title newer-uri newer-title)
-  @list{
-        <ul class="pager">
-        @(when newer-uri
-          @list{
-                <li class="previous">
-                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
-                </li>
-                })
-        @(when older-uri
-          @list{
-                <li class="next">
-                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
-                </li>
-                })
-      </ul>
-      })
-
-;; See https://dev.twitter.com/docs/embedded-timelines for instructions
-;; how to create a timeline and get its "widget ID".
-(define (twitter-timeline user
-                          widget-id
-                          #:width [width #f]
-                          #:height [height #f]
-                          #:lang [lang #f]
-                          #:theme [data-theme #f]
-                          #:link-color [data-link-color #f]
-                          #:border-color [data-border-color #f]
-                          #:tweet-limit [data-tweet-limit #f]
-                          #:chrome [data-chrome #f]
-                          #:aria-polite [data-aria-polite #f]
-                          #:related [data-related #f])
-  (define opt-attrs (and/attrs width
-                               height
-                               lang
-                               data-theme
-                               data-link-color
-                               data-border-color
-                               data-tweet-limit
-                               data-chrome
-                               data-aria-polite
-                               data-related))
-  @list{<a class="twitter-timeline" href="https://twitter.com/@|user|"
-           data-widget-id="@|widget-id|" @|opt-attrs|></a>
-        <script>
-          !function(d,s,id){
-              var js,fjs=d.getElementsByTagName(s)[0];
-              if(!d.getElementById(id)){
-                  js=d.createElement(s);
-                  js.id=id;
-                  js.src="//platform.twitter.com/widgets.js";
-                  fjs.parentNode.insertBefore(js,fjs);
-              }
-          }(document,"script","twitter-wjs");
-        </script>
-        })
-
-;; Reduce the tedium of translating optional arguments into HTML
-;; attributes, where #f means no values at all.
-(define-syntax (and/attrs stx)
-  (syntax-case stx ()
-    [(_ id ...)
-     #'(string-join (filter identity
-                            (list (and
-                                   id (format "~a=\"~a\"" 'id id)) ...)))]))
