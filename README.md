@@ -400,6 +400,31 @@ the default template. Specifically:
 - `newer-uri`: The URI of the next newer post, if any, or `#f`
 - `newer-title`: The title of the next newer post, if any, or `#f`
 
+### Widgets
+
+In addition to the variables described above for each template, some
+predefined functions are available for templates to use: "widgets".
+
+Anything a widget can do, you could code directly in the
+template. There's no magic. But widgets minimize clutter in the
+templates. Plus they make clearer what are the user-specific
+parameters (as opposed to putting stuff like `<!-- CHANGE THIS! -->`
+in the template).
+
+For example, `@google-analytics["UA-xxxxx" "example.com"]` returns
+text for a `<script>` element to insert Google Analytics tracking
+code. You supply it the two user-specific pieces of information, which
+it plugs into the boilerplate and returns.
+
+Likewise there are widgets for things like Twitter and Google+ share
+buttons, Twitter follow button, Disqus comments, older/newer post
+links.
+
+See `widgets.rkt` for the complete list. See the example page and post
+templates for usage examples.
+
+> **NOTE**: If you'd like to add a widget, pull requests are welcome!
+
 ## Code blocks
 
 Frog optionally uses [Pygments][] to do syntax highlighting. When

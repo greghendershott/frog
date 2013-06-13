@@ -5,40 +5,9 @@
   </header>
   @|content|
   <footer>
-    <!-- Tweet button -->
-    <script type="text/javascript">
-      !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
-    </script>
-    <a href="https://twitter.com/share"
-       class="twitter-share-button"
-       data-url="@full-uri"
-       data-dnt="true">
-      "Tweet"</a>
-    <!-- Google+ -->
-    <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
-    <g:plusone size="medium" href="@full-uri"></g:plusone>
-    <!-- Disqus comments -->
-    <script type="text/javascript">
-      var disqus_shortname = 'SHORTNAME'; // CHANGE THIS
-      (function() {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-      })();
-    </script>
-    <div id="disqus_thread"></div>
-    <!-- Older/Newer post buttons -->
-    <ul class="pager">
-      @(when newer-uri
-        @list{
-          <li class="previous">
-            <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
-          </li>})
-      @(when older-uri
-        @list{
-          <li class="next">
-            <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
-          </li>})
-    </ul>
+    @twitter-share-button[full-uri]
+    @google-plus-share-button[full-uri]
+    @disqus-comments["shortname"]
+    @older/newer-links[older-uri older-title newer-uri newer-title]
   </footer>
 </article>

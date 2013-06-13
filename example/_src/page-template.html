@@ -26,21 +26,7 @@
     <!-- JS -->
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
     <script type="text/javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-xxxxxx']);       <!-- SET THIS -->
-      _gaq.push(['_setDomainName', 'example.com']);  <!-- SET THIS -->
-      _gaq.push(['_trackPageview']);
-      // http://drawingablank.me/blog/fix-your-bounce-rate.html
-      setTimeout(function(){_gaq.push(['_trackEvent', '30_seconds', 'read'])}, 30000);
-      (function() {
-      var ga = document.createElement('script');
-      ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0];
-      s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
+    @google-analytics["UA-xxxxx" "example.com"]
   </head>
   <body>
     <!-- A standard Twitter Bootstrap nav bar -->
@@ -93,15 +79,7 @@
           <!-- `tags/feeds` is a list of tags and feeds -->
           @|tags/feeds|
           <!-- Example of a Twitter follow button -->
-          <a href="https://twitter.com/racketlang" <!-- CHANGE THIS -->
-             class="twitter-follow-button"
-             data-show-count="false"
-             data-lang="en">
-            "Follow RacketLang"                    <!-- CHANGE THIS -->
-          </a>
-          <script type="text/javascript">
-            !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
-          </script>
+          @twitter-follow-button["racketlang" "Follow RacketLang"]
         </div>
       </div>
       <footer>
