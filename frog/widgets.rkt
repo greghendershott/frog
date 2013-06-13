@@ -123,3 +123,51 @@
                 })
       </ul>
       })
+
+;; See https://dev.twitter.com/docs/embedded-timelines for instructions
+;; how to create a timeline and get its "widget ID".
+(define (twitter-timeline user
+                          widget-id
+                          #:width [width #f]
+                          #:height [height #f]
+                          #:lang [lang #f]
+                          #:theme [data-theme #f]
+                          #:link-color [data-link-color #f]
+                          #:border-color [data-border-color #f]
+                          #:tweet-limit [data-tweet-limit #f]
+                          #:chrome [data-chrome #f]
+                          #:aria-polite [data-aria-polite #f]
+                          #:related [data-related #f])
+  (define opt-attrs (and/attrs width
+                               height
+                               lang
+                               data-theme
+                               data-link-color
+                               data-border-color
+                               data-tweet-limit
+                               data-chrome
+                               data-aria-polite
+                               data-related))
+  @list{<a class="twitter-timeline" href="https://twitter.com/@|user|"
+           data-widget-id="@|widget-id|" @|opt-attrs|></a>
+        <script>
+          !function(d,s,id){
+              var js,fjs=d.getElementsByTagName(s)[0];
+              if(!d.getElementById(id)){
+                  js=d.createElement(s);
+                  js.id=id;
+                  js.src="//platform.twitter.com/widgets.js";
+                  fjs.parentNode.insertBefore(js,fjs);
+              }
+          }(document,"script","twitter-wjs");
+        </script>
+        })
+
+;; Reduce the tedium of translating optional arguments into HTML
+;; attributes, where #f means no values at all.
+(define-syntax (and/attrs stx)
+  (syntax-case stx ()
+    [(_ id ...)
+     #'(string-join (filter identity
+                            (list (and
+                                   id (format "~a=\"~a\"" 'id id)) ...)))]))
