@@ -323,10 +323,10 @@ pages for tags.)
 
 Frog uses the Racket
 [`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
-system based on `scribble/text` `@` expressions. This means that the
+system based on `scribble/text` `@`-expressions. This means that the
 files are basically normal HTML format, with the ability to use `@` to
-reference a template variable --- or indeed "escape" to any Racket
-code.
+reference a template variable --- or indeed to "escape" to arbitrary
+Racket code.
 
 In contrast to most templating systems, you have a full programming
 language available -- Racket -- should you need it. However most of
@@ -334,7 +334,7 @@ what you need to do will probably very simple, such as the occasional
 `if` or `when` test, or perhaps defining a helper function to minimize
 repetition.
 
-## Page template: `_src/page-template.html`
+### Page template: `_src/page-template.html`
 
 The `_src/page-template.html` template specifies an `<html>` element
 used by Frog to generate every page on your site.
@@ -342,9 +342,22 @@ used by Frog to generate every page on your site.
 Anything in the file that looks like `@variable` or `@|variable|` is a
 template variable supplied by Frog.  Most of these should be
 self-explanatory from their name and from seeing how they are used in
-the default template.
+the default template. Specifically:
 
-## Post template: `_src/post-template.html`
+- `contents`: The contents of the page.
+- `title`: The title of the page (for `<title>`)
+- `description`: The description of the page (for `<meta>` content element)
+- `keywords`: The keywords for the page (for `<meta>` keywords element)
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `atom-feed-uri`: The full URI to the Atom feed
+- `rss-feed-uri`: The full URI to the RSS feed
+- `tag`: If this an index page, `tag` is the name of the index (such
+  as "All Posts") or ("Posts tagged foo"), else `tag` is `#f`.
+- `tags/feeds`: HTML that has, for each tag, a link to its index page
+  and a link to its Atom feed.
+
+### Post template: `_src/post-template.html`
 
 The `_src/post-template.html` template determines how blog posts are
 laid out, on page that are dedicated to one post. The default template
@@ -371,6 +384,21 @@ can also be used for pages that are not blog post pages.)
 > to specify things like Disqus comments, Tweet and +1 sharing
 > buttons, and older/newer links --- things that only make sense in
 > the context of pages dedicated to one blog post.
+
+Anything in the file that looks like `@variable` or `@|variable|` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template. Specifically:
+
+- `title`: The title of the post
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `date+tags`: The date and tags of the post
+- `content`: The content of the post
+- `older-uri`: The URI of the next older post, if any, or `#f`
+- `older-title`: The title of the next older post, if any, or `#f`
+- `newer-uri`: The URI of the next newer post, if any, or `#f`
+- `newer-title`: The title of the next newer post, if any, or `#f`
 
 ## Code blocks
 
