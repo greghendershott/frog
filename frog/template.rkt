@@ -11,12 +11,13 @@
 ;;
 ;; The idea here is that we make some variables visible in the
 ;; namespace in which the template is evaluated. Some of these are the
-;; variables and values explicitly passed to use in `dict`. The others
-;; are from teh modules web-server/templates and frog/widgets.
+;; variables and values explicitly passed to us in `dict`. The others
+;; are from the modules web-server/templates and frog/widgets.
 ;;
-;; Now, web-server/templates is normally used "statically" -- compiled
-;; into the web-server application. However it's also possible to use
-;; them "dynamically" -- to load and use one at run time.
+;; Now, web-server/templates are normally used "statically" --
+;; compiled into the web-server application. However it's also
+;; possible to use them "dynamically" -- to load and use one at run
+;; time.
 ;;
 ;; I wish I had a crisper understanding how and why the following
 ;; works, but it does, following this Racket mailing list thread:

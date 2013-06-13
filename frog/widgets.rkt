@@ -3,7 +3,7 @@
 (provide (all-defined-out))
 
 ;; Functions provided by this module are made available by
-;; `render-template` totemplates like `page-template.html` and
+;; `render-template` to templates like `page-template.html` and
 ;; `post-template.html`. You could describe functions here as
 ;; "widgets": handy bits of functionality to use in templates.
 ;;

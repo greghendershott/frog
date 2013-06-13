@@ -31,7 +31,7 @@
                         3)
    "A heading: A _paragraph_ of some stuff. ..."))
 
-;; Not full markdown, just a "lite" variation.
+;; Not full markdown, just a "lite" variant for human readers only.
 (define (xexpr->markdown x [block-suffix ""])
   (define (heading? s)
     (memq s '(h1 h2 h3 h4 h5 h6 h7 h8 h9)))
@@ -56,6 +56,8 @@
     ['mdash "--"]
     ['amp "&"]
     [(or 'lsquo 'rsquo) "'"]
+    ;; However use &auot; not "" because destined for an HTML
+    ;; attribute value that will be quoted.
     [(or 'ldquo 'rdquo) "&quot;"]
     [(? valid-char? c) (integer->char c)]
     [else ""])) ;; ignore others
