@@ -3,8 +3,10 @@
 (require markdown ;; dependency 2 of 2
          racket/runtime-path
          xml
-         (prefix-in h: html)
+         (only-in html read-html-as-xml)
          net/uri-codec
+         net/url
+         json
          racket/date
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
@@ -119,6 +121,7 @@
 (define current-max-feed-items (make-parameter 999))
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
+(define current-auto-embed-tweets? (make-parameter #t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -239,7 +242,7 @@
         'uri-path uri-path
         'full-uri (full-uri uri-path)
         'date+tags (xexpr->string (date+tags->xexpr date tags))
-        'content (xexprs->string (syntax-highlight body))
+        'content (~> body enhance-body xexprs->string)
         'older-uri (and older (post-uri-path older))
         'newer-uri (and newer (post-uri-path newer))
         'older-title (and older (post-title older))
@@ -344,11 +347,11 @@
           ,@(cond
              [(< n (current-max-index-items))
               `((div ([class "entry-content"])
-                     ,@(cond [(current-index-full?) (syntax-highlight body)]
-                             [more? `(,@(syntax-highlight blurb)
+                     ,@(cond [(current-index-full?) (enhance-body body)]
+                             [more? `(,@(enhance-body blurb)
                                       (a ([href ,uri-path])
                                          (em "Continue reading ...")))]
-                             [else (syntax-highlight blurb)])))]
+                             [else (enhance-body blurb)])))]
              [else '()])))
       (bodies->page #:title title
                     #:description title
@@ -404,6 +407,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (enhance-body xs)
+  (~> xs
+      syntax-highlight
+      auto-embed-tweets))
+
 (define (syntax-highlight xs)
   (append* (for/list ([x xs])
              (match x
@@ -413,6 +421,34 @@
                    (pygmentize text lang)]
                   [_ `((pre ,text))])]
                [_ (list x)]))))
+
+;; This inentionally only works for an <a> element that's nested alone
+;; in a <p>. (In Markdown source this means for example an
+;; <http://auto-link> alone with blank lines above and below.) Why?
+;; The embedded tweet is a block element.
+(define (auto-embed-tweets xs)
+  (define (do-it xs)
+    (for/list ([x xs])
+      (match x
+        [`(p ,_ ...
+             (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
+                                 (list uri))])
+                ,_ ...))
+         (define oembed-url
+           (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
+                             "url=" (uri-encode uri)
+                             "&align=center")))
+         (define js (call/input-url oembed-url get-pure-port read-json))
+         (define html ('html js))
+         (cond [html (~>> (with-input-from-string html read-html-as-xml)
+                          (element #f #f
+                                   'div `(,(attribute #f #f
+                                                      'class "embed-tweet")))
+                          xml->xexpr)]
+               [else x])]
+        [_ x])))
+  (cond [(current-auto-embed-tweets?) (do-it xs)]
+        [else xs]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -465,7 +501,7 @@
      ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
-         ,@(~> (cond [(current-feed-full?) body] ;don't syntax-highlight
+         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
                      [more? `(,@blurb
                               (a ([href ,item-uri])
                                  (em "Continue reading ...")))]
@@ -515,7 +551,7 @@
      ,(xexpr->string/pretty
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
-         ,@(~> (cond [(current-feed-full?) body] ;don't syntax-highlight
+         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
                      [more? `(,@blurb
                               (a ([href ,item-uri])
                                  (em "Continue reading ...")))]
@@ -716,7 +752,7 @@ EOF
          (regexp-match? #px"\\.(?:md|markdown)$" path)
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
-    (define xs (syntax-highlight (with-input-from-file path read-markdown)))
+    (define xs (~> (with-input-from-file path read-markdown) enhance-body))
     (define dest-path
       (build-path (www-path)
                   (apply build-path
@@ -915,7 +951,8 @@ EOF
                                [max-index-items 999]
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f])
+                               [feed-image-bugs? #f]
+                               [auto-embed-tweets? #t])
       ;; (clean)
       (build)
       (preview)
@@ -939,7 +976,8 @@ EOF
                                [max-index-items 999]
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f])
+                               [feed-image-bugs? #f]
+                               [auto-embed-tweets? #t])
       (command-line
        #:program "frog"
        #:once-each

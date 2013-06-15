@@ -14,6 +14,10 @@ evolve technologies sexy methodologies." Enhance grow compelling
 iterate architect matrix plug-and-play reinvent scale, distributed
 incentivize, extend.[^fn]
 
+Following is an embedded Tweet:
+
+<https://twitter.com/racketlang/status/332176422003163138>
+
 Revolutionary proactive. Target; envisioneer e-services sticky robust
 morph users methodologies, markets content supply-chains, granular
 monetize reinvent harness initiatives. Plug-and-play productize

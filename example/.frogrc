@@ -37,3 +37,11 @@ decorate-feed-uris? = true
 # Insert in each feed item an image bug whose URI is decorated with
 # Google Analytics query parameters like utm_source ?
 feed-image-bugs? = true
+
+# Replace links to tweets with embedded tweets?
+# In Markdown, must be auto-links alone in a pargraph (blank lines
+# above and below), for example:
+#
+# <https://twitter.com/racketlang/status/332176422003163138>
+#
+auto-embed-tweets? = true
