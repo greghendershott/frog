@@ -37,7 +37,7 @@ highlighting.
 Q: "Frog"?
 A: Frozen blog.
 
-> Note: This has been tested on Mac OS/X and Ubuntu; I'm using it for
+> **NOTE:** This has been tested on Mac OS/X and Ubuntu; I'm using it for
 > [my blog][]. CAVEAT: It has _not_ yet been tested on Windows--it's
 > likely that the path handling isn't exactly right.
 
@@ -428,8 +428,9 @@ Likewise there are widgets for things like Twitter and Google+ share
 buttons, Twitter follow button, Disqus comments, older/newer post
 links.
 
-See `widgets.rkt` for the complete list. See the example page and post
-templates for usage examples.
+See [`widgets.rkt`][] for the complete list. See the
+[example page template][] and [example post template][] for usage
+examples.
 
 > **NOTE**: If you'd like to add a widget, pull requests are welcome!
 
@@ -534,3 +535,6 @@ Please use [GitHub Issues][].
 [GitHub Pages]: https://help.github.com/articles/user-organization-and-project-pages
 [GitHub Issues]: https://github.com/greghendershott/frog/issues
 [GHFM]: https://help.github.com/articles/github-flavored-markdown#syntax-highlighting
+[`widgets.rkt`]: https://github.com/greghendershott/frog/blob/master/frog/widgets.rkt
+[example page template]: https://github.com/greghendershott/frog/blob/master/example/_src/page-template.html
+[example post template]: https://github.com/greghendershott/frog/blob/master/example/_src/post-template.html
