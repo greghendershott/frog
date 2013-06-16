@@ -434,6 +434,12 @@
              (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
                                  (list uri))])
                 ,_ ...))
+         ;; Note: Although v1.0 API stopped working June 2013,
+         ;; /statuses/oembed is an exception. See
+         ;; <https://dev.twitter.com/docs/faq#17750>. That's good
+         ;; because v1.1 requires authentication, which would
+         ;; complicate this (we would sometimes need to launch a
+         ;; browser to do an OAuth flow, yada yada yada).
          (define oembed-url
            (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
                              "url=" (uri-encode uri)
