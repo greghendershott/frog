@@ -1,14 +1,22 @@
 #lang scribble/manual
-@; If you want links to online docs, require the module(s):
-@(require (for-label racket))
 
-@; The first non-blank text lines must be these 3, the post meta-data:
+@; This is a Scribble comment.
+
+@; The first non-blank text lines MUST be these 3, the post meta-data:
 
 Title: My Post Title
 Date: 2013-06-19T00:00:00
 Tags: Racket, blogging
 
+@; If you want links to online docs, `require` the module(s) using
+@; `for-label`:
+
+@(require (for-label racket))
+
 Here is some intro text, above "the jump".
+
+@; The "jump" marker is simply the same text it would be in
+@; Markdown, an HTML comment, "more":
 
 <!-- more -->
 
@@ -54,3 +62,17 @@ retain comments:
 (define (foo #:bar bar)
   #t)
 ]
+
+Here is a @racket[interaction]:
+
+@(require racket/sandbox
+          scribble/eval)
+@(define my-evaluator
+   (parameterize ([sandbox-output 'string]
+                  [sandbox-error-output 'string])
+     (make-evaluator 'typed/racket/base)))
+@interaction[#:eval my-evaluator
+             (: my-sqr (Real -> Real))
+             (define (my-sqr x)
+               (* x x))
+             (my-sqr 42)]
