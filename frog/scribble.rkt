@@ -46,7 +46,7 @@
 (define (adjust-scribble-html xs)
   (for/list ([x (in-list xs)])
     (match x
-      ;; 1. Change code blocks to use <pre> instead of <table>.
+      ;; Change code blocks to use <pre> instead of <table>.
       [`(blockquote ([class "SCodeFlow"])
                     (table (,_ ...)
                            (tbody ()
@@ -65,12 +65,14 @@
                         (div ([class "source"])
                              (pre ()
                                   ,@(simplify&newline xss)))))))]
-      ;; 3. Hoist the headings up one level to be consistent with the
-      ;; Markdown format sources.
-      [`(h2 ,x ...) `(h1 ,@x)]
-      [`(h3 ,x ...) `(h2 ,@x)]
-      [`(h4 ,x ...) `(h3 ,@x)]
-      [`(h5 ,x ...) `(h4 ,@x)]
+      ;; Scribble @section is rendered as <h3> (and subsection as
+      ;; <h4>, and so on). Hoist the headings up a couple levels to
+      ;; be consistent with the Markdown format sources.
+      [`(h3 ,x ...) `(h1 ,@x)]
+      [`(h4 ,x ...) `(h2 ,@x)]
+      [`(h5 ,x ...) `(h3 ,@x)]
+      [`(h6 ,x ...) `(h4 ,@x)]
+      [`(h7 ,x ...) `(h5 ,@x)]
       [x x])))
 
 (define (simplify&newline xss)
