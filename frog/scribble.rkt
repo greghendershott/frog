@@ -23,10 +23,10 @@
   ;; Extract the part we care about -- the elements in the "main" div
   ;; after the "versionbox" div.  (The `match` might be too fragile
   ;; way to do this.)
-  (match (~>> (with-input-from-file (build-path dir "frog.html")
-                read-html-as-xml)
-              second
-              xml->xexpr)
+  (match (~> (with-input-from-file (build-path dir "frog.html")
+               read-html-as-xml)
+             second
+             xml->xexpr)
     [`(html
        ()
        (head ,_ ...)
