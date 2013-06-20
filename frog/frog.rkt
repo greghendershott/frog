@@ -12,6 +12,7 @@
          (for-syntax racket/syntax)
          "config.rkt"
          "pygments.rkt"
+         "scribble.rkt"
          "take.rkt"
          "template.rkt"
          "watch-dir.rkt"
@@ -61,6 +62,10 @@
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
       [_ (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+
+;; Given a uri-path, prepend the scheme & host to make a full URI.
+(define (full-uri uri-path)
+  (str (current-scheme/host) uri-path))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -127,7 +132,8 @@
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
-(define post-file-px #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown)$")
+(define post-file-px
+  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl)$")
 
 (struct post (title      ;string?
               dest-path  ;path? - full pathname of local HTML file
@@ -141,10 +147,6 @@
                          ;syntax highlighted
               ))
 
-;; Given a uri-path, prepend the scheme & host to make a full URI.
-(define (full-uri uri-path)
-  (str (current-scheme/host) uri-path))
-
 ;; A function for `fold-files` to gather post source files.
 (define (read-post path type v)
   (cond
@@ -152,10 +154,17 @@
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
        [(pregexp post-file-px (list _ dt nm))
-        ;; Footnote prefix is date & name w/o ext e.g. "2010-01-02-a-name"
-        (define footnote-prefix (~> (str dt "-" nm) string->symbol))
-        (define xs (with-input-from-file path
-                     (lambda () (read-markdown footnote-prefix))))
+        ;; Read either Markdown or Scribble file
+        (define xs
+          (match (path->string name)
+            [(pregexp "\\.scrbl$")
+             (read-scribble-file path)]
+            [_
+             ;; Footnote prefix is date & name w/o ext
+             ;; e.g. "2010-01-02-a-name"
+             (define footnote-prefix (~> (str dt "-" nm) string->symbol))
+             (with-input-from-file path
+               (lambda () (read-markdown footnote-prefix)))]))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
@@ -201,16 +210,14 @@
 (define (meta-data xs)
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
-    [`((pre ,(pregexp px (list _ title date tags)))
+    [`((pre ,(pregexp px (list _ title date tags)))    ;Markdown
        ,more ...)
      (values title date (tag-string->tags tags) more)]
-    [`((pre () ,(pregexp px (list _ title date tags)))
+    [`((p () ,(pregexp px (list _ title date tags)))   ;Scribble
        ,more ...)
      (values title date (tag-string->tags tags) more)]
-    [`((pre () (code () ,(pregexp px (list _ title date tags))))
-       ,more ...)
-     (values title date (tag-string->tags tags) more)]
-    [_ (raise-user-error 'meta-data "Post needs meta-data")]))
+    [_ (raise-user-error 'meta-data
+                         "Post missing Title/Date/Tags meta-data")]))
 
 (module+ test
   (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
@@ -227,7 +234,8 @@
 
 (define (more-xexpr? x)
   (match x
-    [`(p ,(pregexp "\\s*<!-- more -->\\s*")) #t]
+    [`(p ,(pregexp "\\s*<!-- more -->\\s*")) #t]  ;from Markdown
+    [`(p () "<" "!" ndash " more " ndash ">") #t] ;from Scribble
     [_ #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -755,10 +763,14 @@ EOF
   (define-values (base name must-be-dir?) (split-path path))
   (cond
    [(and (eq? type 'file)
-         (regexp-match? #px"\\.(?:md|markdown)$" path)
+         (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
-    (define xs (~> (with-input-from-file path read-markdown) enhance-body))
+    (define xs
+      (~> (match (path->string name)
+            [(pregexp "\\.scrbl$") (read-scribble-file path)]
+            [_ (with-input-from-file path read-markdown)])
+          enhance-body))
     (define dest-path
       (build-path (www-path)
                   (apply build-path
