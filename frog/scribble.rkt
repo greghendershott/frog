@@ -30,15 +30,13 @@
     [`(html
        ()
        (head ,_ ...)
-       (body ([id "scribble-racket-lang-org"])
-             (div ([class "tocset"])
-              ,_ ...)
-             (div ([class "maincolumn"])
-                  (div ([class "main"])
-                       (div ([class "versionbox"])
-                            (span ([class "versionNoNav"]) ,_))
-                       ,xs ...))
-             (div ([id "contextindicator"]) nbsp)))
+       ,(list-no-order
+         `(div ([class "maincolumn"])
+               (div ([class "main"])
+                    (div ([class "versionbox"])
+                         (span ([class "versionNoNav"]) ,_))
+                    ,xs ...))
+         _ ...))
      (adjust-scribble-html xs)]
     [x
      (displayln "Bad Scribble post:")
