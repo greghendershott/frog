@@ -11,6 +11,7 @@
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
          "config.rkt"
+         "doc-uri.rkt"
          "pygments.rkt"
          "scribble.rkt"
          "take.rkt"
@@ -426,9 +427,52 @@
                [`(pre ([class ,brush]) ,text)
                 (match brush
                   [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-                   (pygmentize text lang)]
+                   (match lang
+                     ["racket" (~> (pygmentize text lang)
+                                   add-racket-doc-links)]
+                     [_ (pygmentize text lang)])]
                   [_ `((pre ,text))])]
                [_ (list x)]))))
+
+(define (add-racket-doc-links xs)
+  (define (linkify x)
+    ;; If a span element and the element text has documentation URI,
+    ;; link to it.
+    (match x
+      [`(span ([class ,c])
+              ,(pregexp #px"^(\\s*)(\\S+)(\\s*)$"
+                        (list _ pre s post)))
+       `(span ([class ,c])
+              ,pre
+              ,(match (doc-uri (string->symbol s))
+                 [(? string? uri) `(a ([href ,uri]) ,s)]
+                 [_ s])
+              ,post)]
+      [x x]))
+  (match (car xs)
+    [`(table ((class "sourcetable"))
+             (tbody ()
+                    (tr ()
+                        (td ((class "linenos"))
+                            ,line-nos-div)
+                        (td ((class "code"))
+                            (div ((class "source"))
+                                 (pre ()
+                                      ,xs ...))
+                            ,_ ...)
+                        ,_ ...)
+                    ,_ ...)
+             ,_ ...)
+     `((table ((class "sourcetable"))
+              (tbody ()
+                     (tr ()
+                         (td ((class "linenos"))
+                             ,line-nos-div)
+                         (td ((class "code"))
+                             (div ((class "source"))
+                                  (pre ()
+                                       ,@(map linkify xs))))))))]
+    [_ xs]))
 
 ;; This inentionally only works for an <a> element that's nested alone
 ;; in a <p>. (In Markdown source this means for example an
