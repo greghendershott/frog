@@ -68,7 +68,7 @@
                     (td ([class "code"])
                         (div ([class "source"])
                              (pre ()
-                                  ,@(add-pyg-classes/xexprs xss)))))))]
+                                  ,@(add-pyg-classes xss)))))))]
       ;; 3. Hoist the headings up one level to be consistent with the
       ;; Markdown format sources.
       [`(h2 ,x ...) `(h1 ,@x)]
