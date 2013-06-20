@@ -1,0 +1,89 @@
+/* Don't need all Scribble CSS, e.g for page "apparatus" like table of
+   contents, and so on. Mainly just need the classes from racket.css,
+   for syntax highlighting. */
+
+.RktIn, .RktRdr, .RktPn, .RktMeta,
+.RktMod, .RktKw, .RktVar, .RktSym,
+.RktRes, .RktOut, .RktCmt, .RktVal {
+  font-family: monospace;
+  white-space: inherit;
+}
+
+.RktIn {
+  color: #cc6633;
+  background-color: #eeeeee;
+}
+
+.RktInBG {
+  background-color: #eeeeee;
+}
+
+.RktRdr {
+}
+
+.RktPn {
+  color: #843c24;
+}
+
+.RktMeta {
+  color: black;
+}
+
+.RktMod {
+  color: black;
+}
+
+.RktOpt {
+  color: black;
+}
+
+.RktKw {
+  color: black;
+  /* font-weight: bold; */
+}
+
+.RktErr {
+  color: red;
+  font-style: italic;
+}
+
+.RktVar {
+  color: #262680;
+  font-style: italic;
+}
+
+.RktSym {
+  color: #262680;
+}
+
+.RktValLink {
+  text-decoration: none;
+  color: blue !important;
+}
+
+.RktModLink {
+  text-decoration: none;
+  color: blue !important;
+}
+
+.RktStxLink {
+  text-decoration: none;
+  color: black !important;
+  /* font-weight: bold; */
+}
+
+.RktRes {
+  color: #0000af;
+}
+
+.RktOut {
+  color: #960096;
+}
+
+.RktCmt {
+  color: #c2741f;
+}
+
+.RktVal {
+  color: #228b22;
+}

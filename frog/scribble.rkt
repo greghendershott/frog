@@ -47,8 +47,6 @@
   (for/list ([x (in-list xs)])
     (match x
       ;; 1. Change code blocks to use <pre> instead of <table>.
-      ;; 2. Change span classes: Add Pygments CSS classes (and keep
-      ;; the Scribble classes) so eople can use either in their CSS.
       [`(blockquote ([class "SCodeFlow"])
                     (table (,_ ...)
                            (tbody ()
@@ -66,7 +64,7 @@
                     (td ([class "code"])
                         (div ([class "source"])
                              (pre ()
-                                  ,@(add-pyg-classes xss)))))))]
+                                  ,@(simplify&newline xss)))))))]
       ;; 3. Hoist the headings up one level to be consistent with the
       ;; Markdown format sources.
       [`(h2 ,x ...) `(h1 ,@x)]
@@ -75,44 +73,11 @@
       [`(h5 ,x ...) `(h4 ,@x)]
       [x x])))
 
-(define (add-pyg-classes xss)
+(define (simplify&newline xss)
   (append* (for/list ([xs (in-list xss)])
              (append (for/list ([x (in-list xs)])
                        (match x
                          [`(span ([class "hspace"]) nbsp) 'nbsp]
                          [`(span ([class "RktMeta"])) ""] ;noise
-                         [`(span ([class ,c])
-                                 (a ([class ,c2]
-                                     ,as ...)
-                                    ,els ...))
-                          `(span ([class ,(add-pyg-class c)])
-                                 (a ([class ,(add-pyg-class c2)]
-                                     ,@as)
-                                    ,@els))]
-                         [`(span ([class ,c]) ,els ...)
-                          `(span ([class ,(add-pyg-class c)])
-                                 ,@els)]
                          [_ x]))
                      (list "\n")))))
-
-(define (add-pyg-class class)
-  (string-append class
-                 (match class
-                   ["RktPn"  ", p"]
-                   ["RktSym" ", nb"]
-                   ["RktVal" ", m"]
-                   ["RktMod" ", nn"]
-                   ["RktKw" ", kc"]
-                   ["RktVar" ", nv"]
-                   ["RktCmt" ", c"]
-                   ["RktErr" ", err"]
-                   ["RktValLink" ", nf"]
-                   ["RktStxLink" ", nf"]
-                   ["RktModLink" ", nf"]
-                   ;; ??? TO-DO ???
-                   ["RktIn"  ""]
-                   ["RktOut" ""]
-                   ["RktRes" ""]
-                   ["RktRdr" ""]
-                   ["RktMeta" ""]
-                   [_ ""])))
