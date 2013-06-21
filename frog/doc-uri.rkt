@@ -54,9 +54,7 @@
                 tag
                 #:external-root-url "http://docs.racket-lang.org/"))
              (string-append path "#" anchor)]
-        [else (displayln id)
-              (displayln mod)
-              ""]))
+        [else ""]))
 
 (define (symbol<? a b)
   (string<? (symbol->string a) (symbol->string b)))
