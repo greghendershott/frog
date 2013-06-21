@@ -223,8 +223,8 @@
 (module+ test
   (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
   (check-not-exn (thunk (meta-data `((pre ,s)))))
-  (check-not-exn (thunk (meta-data `((pre () ,s)))))
-  (check-not-exn (thunk (meta-data `((pre () (code () ,s)))))))
+  (check-not-exn (thunk (meta-data `((p () ,s))))))
+
 
 (define (tag-string->tags s)
   (regexp-split #px",\\s*" s))
