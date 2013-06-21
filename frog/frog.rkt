@@ -429,26 +429,16 @@
                   [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
                    (match lang
                      ["racket" (~> (pygmentize text lang)
-                                   add-racket-doc-links)]
+                                   pygments-racket-doc-links)]
                      [_ (pygmentize text lang)])]
                   [_ `((pre ,text))])]
                [_ (list x)]))))
 
-(define (add-racket-doc-links xs)
+(define (pygments-racket-doc-links xs)
   (define (linkify x)
-    ;; If a span element and the element text has documentation URI,
-    ;; link to it.
     (match x
-      [`(span ([class ,c])
-              ,(pregexp #px"^(\\s*)(\\S+)(\\s*)$"
-                        (list _ pre s post)))
-       `(span ([class ,c])
-              ,pre
-              ,(match (doc-uri (string->symbol s))
-                 [(? string? uri) `(a ([href ,uri]
-                                       [style "color: inherit"]) ,s)]
-                 [_ s])
-              ,post)]
+      [`(span ([class ,c]) ,(? string? s))
+       `(span ([class ,c]) ,@(string->racket-doc-links s))]
       [x x]))
   (match (car xs)
     [`(table ([class "sourcetable"])
@@ -474,6 +464,25 @@
                                   (pre ()
                                        ,@(map linkify xs))))))))]
     [_ xs]))
+
+(define (string->racket-doc-links a-string)
+  (define (not-blank-string s)
+    (or (not (string? s))
+        (not (string=? s ""))))
+  (filter
+   not-blank-string
+   (add-between
+    (for/list ([s (in-list (regexp-split #rx" " a-string))])
+      (match (doc-uri (string->symbol s))
+        [(? string? uri) `(a ([href ,uri] [style "color: inherit"]) ,s)]
+        [_ s]))
+    " ")))
+
+(module+ test
+  (check-equal?
+   (string->racket-doc-links "printf ")
+   '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
+     " ")))
 
 ;; This inentionally only works for an <a> element that's nested alone
 ;; in a <p>. (In Markdown source this means for example an
