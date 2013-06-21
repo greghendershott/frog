@@ -445,7 +445,8 @@
        `(span ([class ,c])
               ,pre
               ,(match (doc-uri (string->symbol s))
-                 [(? string? uri) `(a ([href ,uri]) ,s)]
+                 [(? string? uri) `(a ([href ,uri]
+                                       [style "color: inherit"]) ,s)]
                  [_ s])
               ,post)]
       [x x]))
