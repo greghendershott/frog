@@ -18,6 +18,8 @@
          "template.rkt"
          "watch-dir.rkt"
          "xexpr2text.rkt"
+         "xexpr-map.rkt"
+         "util.rkt"
          "verbosity.rkt"
          ;; Remainder are just for the preview feature:
          web-server/servlet-env
@@ -41,6 +43,7 @@
 (define (www-path) (build-path (top)))
 (define (www/tags-path) (build-path (www-path) "tags"))
 (define (www/feeds-path) (build-path (www-path) "feeds"))
+(define (www/img-path) (build-path (www-path) "img"))
 
 ;; Convert from absolute local path to what the URI path should be.
 ;; Ex: ~/project/css would become /css
@@ -159,7 +162,10 @@
         (define xs
           (match (path->string name)
             [(pregexp "\\.scrbl$")
-             (read-scribble-file path)]
+             (define img-dest (build-path (www/img-path) (str dt "-" nm)))
+             (read-scribble-file path
+                                 #:img-local-path img-dest
+                                 #:img-uri-prefix (abs->rel/www img-dest))]
             [_
              ;; Footnote prefix is date & name w/o ext
              ;; e.g. "2010-01-02-a-name"
@@ -398,72 +404,23 @@
   (check-equal? (our-encode "Here's a question--how many hyphens???")
                 "Here-s-a-question-how-many-hyphens"))
 
-;; Less typing, but also returns its value so good for sticking in ~>
-;; for debugging
-(define (pp v)
-  (pretty-print v)
-  v)
-
-;; Like display-to-file, but makes directories if needed.
-(define (display-to-file* v path #:exists exists #:mode [mode 'binary])
-  (make-directories-if-needed path)
-  (display-to-file v path #:exists exists #:mode mode))
-
-(define (make-directories-if-needed path)
-  (with-handlers ([exn:fail? (const (void))])
-    (define-values (base name dir?)(split-path path))
-    (make-directory* base)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (enhance-body xs)
   (~> xs
       syntax-highlight
+      racket-doc-links
       auto-embed-tweets))
 
 (define (syntax-highlight xs)
-  (append* (for/list ([x xs])
-             (match x
-               [`(pre ([class ,brush]) ,text)
-                (match brush
-                  [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-                   (match lang
-                     ["racket" (~> (pygmentize text lang)
-                                   pygments-racket-doc-links)]
-                     [_ (pygmentize text lang)])]
-                  [_ `((pre ,text))])]
-               [_ (list x)]))))
-
-(define (pygments-racket-doc-links xs)
-  (define (linkify x)
+  (for/list ([x xs])
     (match x
-      [`(span ([class ,c]) ,(? string? s))
-       `(span ([class ,c]) ,@(string->racket-doc-links s))]
-      [x x]))
-  (match (car xs)
-    [`(table ([class "sourcetable"])
-             (tbody ()
-                    (tr ()
-                        (td ([class "linenos"])
-                            ,line-nos-div)
-                        (td ([class "code"])
-                            (div ([class "source"])
-                                 (pre ()
-                                      ,xs ...))
-                            ,_ ...)
-                        ,_ ...)
-                    ,_ ...)
-             ,_ ...)
-     `((table ([class "sourcetable"])
-              (tbody ()
-                     (tr ()
-                         (td ([class "linenos"])
-                             ,line-nos-div)
-                         (td ([class "code"])
-                             (div ([class "source"])
-                                  (pre ()
-                                       ,@(map linkify xs))))))))]
-    [_ xs]))
+      [`(pre ([class ,brush]) ,text)
+       (match brush
+         [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
+          `(div ([brush ,lang]) ,@(pygmentize text lang))]
+         [_ `(pre ,text)])]
+      [_ x])))
 
 (define (string->racket-doc-links a-string)
   (define (not-blank-string s)
@@ -483,6 +440,29 @@
    (string->racket-doc-links "printf ")
    '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
      " ")))
+
+(define (racket-doc-links xs)
+  (for/list ([x (in-list xs)])
+    (xexpr-map (lambda (x parents)
+                 (match* (parents x)
+                   ;; All code blocks, from `backticks` in Markdown.
+                   ;; This should be an option, per-user or per-post.
+                   [(_
+                     `(code () ,s))
+                    `((code () ,@(string->racket-doc-links s)))]
+                   ;; Only spans from Pygments lexed as Racket
+                   [(`((pre ,_ ...)
+                       (div ,_ ...)
+                       (td ,_ ...)
+                       (tr ,_ ...)
+                       (tbody ,_ ...)
+                       (table ,_ ...)
+                       (div ([brush "racket"]) ,_ ...))
+                     `(span ([class ,c]) ,(? string? s)))
+                    `((span ([class ,c]) ,@(string->racket-doc-links s)))]
+                   [(_ x)
+                    (list x)]))
+               x)))
 
 ;; This inentionally only works for an <a> element that's nested alone
 ;; in a <p>. (In Markdown source this means for example an
@@ -820,11 +800,6 @@ EOF
          (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/top path))
-    (define xs
-      (~> (match (path->string name)
-            [(pregexp "\\.scrbl$") (read-scribble-file path)]
-            [_ (with-input-from-file path read-markdown)])
-          enhance-body))
     (define dest-path
       (build-path (www-path)
                   (apply build-path
@@ -833,6 +808,15 @@ EOF
                              abs->rel/www
                              explode-path
                              cddr)))) ;lop off the "/" and "_src" parts
+    (define xs
+      (~> (match (path->string name)
+            [(pregexp "\\.scrbl$")
+             (define img-dest (path-replace-suffix dest-path ""))
+             (read-scribble-file path
+                                 #:img-local-path img-dest
+                                 #:img-uri-prefix (abs->rel/www img-dest))]
+            [_ (with-input-from-file path read-markdown)])
+          enhance-body))
     (define title
       (match xs
         ;; First h1 header, if any

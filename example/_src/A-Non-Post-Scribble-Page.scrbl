@@ -2,25 +2,12 @@
 
 @; This is a Scribble comment.
 
-@; The first non-blank text lines MUST be these 3, the post meta-data:
-
-Title: A Scribble Post
-Date: 2013-06-19T00:00:00
-Tags: Racket, blogging
-
 @; If you want links to online docs, `require` the module(s) using
 @; `for-label`:
 
 @(require (for-label racket))
 
-The source of this post is Scribble format (not Markdown).
-
-Here is some intro text, above "the jump".
-
-@; The "jump" marker is simply the same text it would be in
-@; Markdown, an HTML comment, "more":
-
-<!-- more -->
+This is an example of a non-post page written in Scribble.
 
 Here's some @hyperlink["http://bullshitipsum.com/?paragraphs=2"
 "Bullshit Ipsum"].
