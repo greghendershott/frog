@@ -3,27 +3,30 @@
 (require xml racket/match racket/list racket/function)
 (provide xexpr-map)
 
-;; Does depth-first traversal of the xexpr, calling `f` each one.
+;; Does depth-first traversal of the xexpr `x`, calling `f` for each
+;; sub-xexpr of `x` (including `x`itself).
 ;;
 ;; The xexprs passed to `f` always have an explicit attributes list --
 ;; similar to `(parameterize ([xexpr-drop-empty-attributes
 ;; #f]))`. Normalizing them like this simplifies matching.
 ;;
-;; Note that `f` must return a (listof xexpr?), not an xexpr?. This
-;; permits `f` to replace one xexpr with several that get spliced in
-;; where the original one was (without needing to artifically nest
-;; them in some parent element such as a div). For example: Can
-;; replace '(em "foo" "bar") with "foo" "bar".  To delete an xexpr
-;; completely, return the empty list '(). Of course, this means if it
-;; wants to return the xexpr unchanged, it must be nested in list:
-;; `(list original)` not `original`.
+;; Note that `f` must return a `(listof xexpr?)`, not an
+;; `xexpr?`. This permits `f` to replace one xexpr with several that
+;; get spliced in where the original one was (without needing to nest
+;; them in some artificial parent element like a `span` or `div`). For
+;; example: Can replace '(em "foo" "bar") with "foo" "bar". Of course,
+;; this means if `f` wants to return the xexpr unchanged, it must be
+;; nested in list: `(list original)` not `original`.  To delete an
+;; xexpr completely, `f` can return the empty list '().
 ;;
-;; `f` is also passed a (listof xexpr?) of its parent xexprs, in
-;; "reverse" order (from parent to grandparent and so on). This allows
-;; processing elements that are only descendants of specific other
+;; `f` is also passed a `(listof xexpr?)` that is the parent xexprs,
+;; in "reverse" order (parent, grandparent, and so on). This allows
+;; transforming elements that are only descendants of specific other
 ;; elements. Note that these are the full xexprs; if you only care
 ;; about the tag symbols, you can run the list through (map first
 ;; parents) to get something like `(td tr tbody table)` or whatever.
+;; To match on both the xexpr and the parents, you may find `match*`
+;; handy.
 (define (xexpr-map f x)
   ;;((xexpr/c (listof xexpr/c) . -> . (listof xexpr/c)) xexpr/c . -> . xexpr/c)
   (define (inner ps f x)
