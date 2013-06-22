@@ -162,7 +162,9 @@
         (define xs
           (match (path->string name)
             [(pregexp "\\.scrbl$")
-             (define img-dest (build-path (www/img-path) (str dt "-" nm)))
+             (define img-dest (build-path (www/img-path)
+                                          "posts"
+                                          (str dt "-" nm)))
              (read-scribble-file path
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (abs->rel/www img-dest))]
