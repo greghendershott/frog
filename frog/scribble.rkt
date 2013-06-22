@@ -24,12 +24,12 @@
                           "++xref-in" "setup/xref" "load-collections-xref"
                           (path->string path))])
     (dynamic-require 'scribble/run #f))
-  ;; Move any .PNG files from dir to img-dir
-  (define (png-file? p)
+  ;; Move any .PNG or .GIF or .SVG files from dir to img-dir
+  (define (image-file? p)
     (match (path->string p)
-      [(pregexp "(?i:\\.png)$") #t]
+      [(pregexp "(?i:\\.((png)|(gif)|(svg)))$") #t]
       [_ #f]))
-  (for ([from (in-list (find-files png-file? dir))])
+  (for ([from (in-list (find-files image-file? dir))])
     (define-values (base name _) (split-path from))
     (define to (build-path img-dir name))
     (copy-file* from to #t))
