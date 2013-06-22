@@ -131,6 +131,8 @@
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
 (define current-auto-embed-tweets? (make-parameter #t))
+(define current-racket-doc-link-code? (make-parameter #t))
+(define current-racket-doc-link-prose? (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -411,7 +413,7 @@
 (define (enhance-body xs)
   (~> xs
       syntax-highlight
-      racket-doc-links
+      add-racket-doc-links
       auto-embed-tweets))
 
 (define (syntax-highlight xs)
@@ -443,27 +445,40 @@
    '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
      " ")))
 
-(define (racket-doc-links xs)
+(define (add-racket-doc-links xs)
   (for/list ([x (in-list xs)])
     (xexpr-map (lambda (x parents)
-                 (match* (parents x)
-                   ;; All code blocks, from `backticks` in Markdown.
-                   ;; This should be an option, per-user or per-post.
-                   [(_
-                     `(code () ,s))
-                    `((code () ,@(string->racket-doc-links s)))]
-                   ;; Only spans from Pygments lexed as Racket
-                   [(`((pre ,_ ...)
-                       (div ,_ ...)
-                       (td ,_ ...)
-                       (tr ,_ ...)
-                       (tbody ,_ ...)
-                       (table ,_ ...)
-                       (div ([brush "racket"]) ,_ ...))
-                     `(span ([class ,c]) ,(? string? s)))
-                    `((span ([class ,c]) ,@(string->racket-doc-links s)))]
-                   [(_ x)
-                    (list x)]))
+                 (list
+                  (match* (parents x)
+                    ;; Markdown that was `symbol`[racket] will become
+                    ;; (code () "symbol") "racket" inside of some other
+                    ;; xexpr.
+                    [(_
+                      `(,tag ,attrs
+                             ,pres ...
+                             (code () ,symbol)
+                             ,(pregexp "^\\[racket\\](.*)$" (list _ post0))
+                             ,posts ...))
+                     (if (current-racket-doc-link-prose?)
+                         `(,tag ,attrs
+                                ,@pres
+                                (code () ,@(string->racket-doc-links symbol))
+                                ,post0
+                                ,@posts)
+                         x)]
+                    ;; Only spans from Pygments lexed as Racket
+                    [(`((pre ,_ ...)
+                        (div ,_ ...)
+                        (td ,_ ...)
+                        (tr ,_ ...)
+                        (tbody ,_ ...)
+                        (table ,_ ...)
+                        (div ([brush "racket"]) ,_ ...))
+                      `(span ([class ,c]) ,(? string? s)))
+                     (if (current-racket-doc-link-code?)
+                         `(span ([class ,c]) ,@(string->racket-doc-links s))
+                         x)]
+                    [(_ x) x])))
                x)))
 
 ;; This inentionally only works for an <a> element that's nested alone
@@ -1010,7 +1025,9 @@ EOF
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
-                               [auto-embed-tweets? #t])
+                               [auto-embed-tweets? #t]
+                               [racket-doc-link-code? #t]
+                               [racket-doc-link-prose? #f])
       ;; (clean)
       (build)
       (preview)
@@ -1035,7 +1052,9 @@ EOF
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
-                               [auto-embed-tweets? #t])
+                               [auto-embed-tweets? #t]
+                               [racket-doc-link-code? #t]
+                               [racket-doc-link-prose? #f])
       (command-line
        #:program "frog"
        #:once-each

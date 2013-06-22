@@ -228,6 +228,15 @@ feed-image-bugs? = true
 # <https://twitter.com/racketlang/status/332176422003163138>
 #
 auto-embed-tweets? = true
+
+# Try to automatically link symbols in Markdown ```racket fenced code
+# blocks, to Racket documentation?
+racket-doc-link-code? = true
+
+# Try to automatically Markdown of the form `symbol`[racket] to Racket
+# documentation? i.e. This is similar to the @racket[] form in
+# Scribble.
+racket-doc-link-prose? = true
 ```
 
 ## Creating blog posts

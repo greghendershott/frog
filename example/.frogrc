@@ -25,7 +25,7 @@ index-full? = false
 feed-full? = true
 
 # How many items to include on index pages?
-max-index-items = 2
+max-index-items = 3
 
 # How many items to include in feeds?
 max-feed-items = 20
@@ -45,3 +45,12 @@ feed-image-bugs? = true
 # <https://twitter.com/racketlang/status/332176422003163138>
 #
 auto-embed-tweets? = true
+
+# Try to automatically link symbols in Markdown ```racket fenced code
+# blocks, to Racket documentation?
+racket-doc-link-code? = true
+
+# Try to automatically Markdown of the form `symbol`[racket] to Racket
+# documentation? i.e. This is similar to the @racket[] form in
+# Scribble.
+racket-doc-link-prose? = true
