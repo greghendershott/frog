@@ -422,16 +422,24 @@
       [`(pre ([class ,brush]) ,text)
        (match brush
          [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-          `(div ([brush ,lang]) ,@(pygmentize text lang))]
+          `(div ([class ,(str "brush: " lang)])
+                ,@(pygmentize text lang))]
          [_ `(pre ,text)])]
       [_ x])))
 
-(define (string->racket-doc-links a-string)
-  (define (not-blank-string s)
-    (or (not (string? s))
-        (not (string=? s ""))))
+(define (->racket-doc-links xs)
+  (define (not-empty-string s)
+    (not (and (string? s)
+              (string=? s ""))))
+  (define a-string
+    (string-join (for/list ([x (in-list xs)])
+                   (match x
+                     [(? integer?) (make-string 1 (integer->char x))]
+                     [(? string?) x]
+                     [_ ""]))
+                 ""))
   (filter
-   not-blank-string
+   not-empty-string
    (add-between
     (for/list ([s (in-list (regexp-split #rx" " a-string))])
       (match (doc-uri (string->symbol s))
@@ -441,30 +449,38 @@
 
 (module+ test
   (check-equal?
-   (string->racket-doc-links "printf ")
+   (->racket-doc-links '("printf "))
    '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
-     " ")))
+     " "))
+  (check-equal?
+   (->racket-doc-links '("symbol-" ">" "string"))
+   '((a ([href "http://docs.racket-lang.org/reference/symbols.html#(def._((quote._~23~25kernel)._symbol-~3estring))"]
+         [style "color: inherit"])
+        "symbol->string")))
+  (check-equal?
+   (->racket-doc-links '("printf displayln"))
+   '((a ([href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))"]
+         [style "color: inherit"])
+        "printf")
+     " "
+     (a ([href "http://docs.racket-lang.org/reference/Writing.html#(def._((lib._racket/private/misc..rkt)._displayln))"]
+         [style "color: inherit"])
+        "displayln"))))
 
 (define (add-racket-doc-links xs)
   (for/list ([x (in-list xs)])
     (xexpr-map (lambda (x parents)
+                 ;; Not necessarily (tag () "string"). For example it
+                 ;; won't be (tag () "number->symbol"), it will be
+                 ;; (tag () "number-" ">" "symbol").
                  (list
                   (match* (parents x)
-                    ;; Markdown that was `symbol`[racket] will become
-                    ;; (code () "symbol") "racket" inside of some other
-                    ;; xexpr.
+                    ;; Markdown `symbol`[racket] becomes xexpr like
+                    ;; (code ([class "brush: racket"]) "symbol")
                     [(_
-                      `(,tag ,attrs
-                             ,pres ...
-                             (code () ,symbol)
-                             ,(pregexp "^\\[racket\\](.*)$" (list _ post0))
-                             ,posts ...))
+                      `(code ([class "brush: racket"]) ,xs ...))
                      (if (current-racket-doc-link-prose?)
-                         `(,tag ,attrs
-                                ,@pres
-                                (code () ,@(string->racket-doc-links symbol))
-                                ,post0
-                                ,@posts)
+                         `(code () ,@(->racket-doc-links xs))
                          x)]
                     ;; Only spans from Pygments lexed as Racket
                     [(`((pre ,_ ...)
@@ -473,16 +489,16 @@
                         (tr ,_ ...)
                         (tbody ,_ ...)
                         (table ,_ ...)
-                        (div ([brush "racket"]) ,_ ...))
-                      `(span ([class ,c]) ,(? string? s)))
+                        (div ([class "brush: racket"]) ,_ ...))
+                      `(span ([class ,c]) ,xs ...))
                      (if (current-racket-doc-link-code?)
-                         `(span ([class ,c]) ,@(string->racket-doc-links s))
+                         `(span ([class ,c]) ,@(->racket-doc-links xs))
                          x)]
                     [(_ x) x])))
                x)))
 
-;; This inentionally only works for an <a> element that's nested alone
-;; in a <p>. (In Markdown source this means for example an
+;; This intentionally only works for an <a> element that's nested
+;; alone in a <p>. (In Markdown source this means for example an
 ;; <http://auto-link> alone with blank lines above and below.) Why?
 ;; The embedded tweet is a block element.
 (define (auto-embed-tweets xs)
