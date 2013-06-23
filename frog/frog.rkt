@@ -12,9 +12,12 @@
          (for-syntax racket/syntax)
          "config.rkt"
          "doc-uri.rkt"
+         "feeds.rkt"
+         "params.rkt"
+         "paths.rkt"
+         "post.rkt"
          "pygments.rkt"
          "scribble.rkt"
-         "take.rkt"
          "template.rkt"
          "watch-dir.rkt"
          "xexpr2text.rkt"
@@ -29,129 +32,12 @@
 (module+ test
   (require rackunit))
 
-;; top is the project directory (e.g. the main dir in Git)
-(define top (make-parameter #f))
-
-;; For interactive development
-(define-runtime-path example "../example/")
-
-;; sources
-(define (src-path) (build-path (top) "_src"))
-(define (src/posts-path) (build-path (src-path) "posts"))
-
-;; destinations, from root of the generated web site on down
-(define (www-path) (build-path (top)))
-(define (www/tags-path) (build-path (www-path) "tags"))
-(define (www/feeds-path) (build-path (www-path) "feeds"))
-(define (www/img-path) (build-path (www-path) "img"))
-
-;; Convert from absolute local path to what the URI path should be.
-;; Ex: ~/project/css would become /css
-(define (abs->rel/www path)
-  (let ([path (path->string path)]
-        [root (path->string (www-path))])
-    (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
-      [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
-
-;; Convert from absolute local path to one relative to project top dir.
-;; Ex: ~/project/css would become css
-;;
-;; (Once upon a time (top) and (www-path) weren't necessarily the same.
-;; Now they always are, and the only difference from abs->rel/www is the
-;; lack of the leading slash. Could rewrite this.)
-(define (abs->rel/top path)
-  (let ([path (path->string path)]
-        [root (path->string (top))])
-    (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
-      [_ (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
-
-;; Given a uri-path, prepend the scheme & host to make a full URI.
-(define (full-uri uri-path)
-  (str (current-scheme/host) uri-path))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define/contract (permalink-path year month day title filename pattern)
-  (string? string? string? string? string? string? . -> . path?)
-  (build-path (www-path)
-              (regexp-replaces pattern
-                               `([#rx"{year}" ,year]
-                                 [#rx"{month}" ,month]
-                                 [#rx"{day}" ,day]
-                                 [#rx"{title}" ,title]
-                                 [#rx"{filename}",filename]
-                                 [#rx"^/" ""]))))
-
-(module+ test
-  (parameterize ([top (find-system-path 'temp-dir)])
-    (define f (curry permalink-path
-                     "2012" "05" "31" "title-of-post" "file-name"))
-    (check-equal? (f "/{year}/{month}/{title}.html")
-                  (build-path (top) "2012/05/title-of-post.html"))
-    (check-equal? (f "/blog/{year}/{month}/{day}/{title}.html")
-                  (build-path (top) "blog/2012/05/31/title-of-post.html"))
-    (check-equal? (f "/blog/{year}/{month}/{day}/{title}/index.html")
-                  (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
-    (check-equal? (f "/blog/{year}/{month}/{day}/{filename}/index.html")
-                  (build-path (top) "blog/2012/05/31/file-name/index.html"))))
-
-;; If the path-string ends in "/index.html", return the path without
-;; the "index.html" suffix.
-(define/contract (post-path->link pp)
-  (path? . -> . string?)
-  (~> (match (path->string pp)
-        [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
-        [s s])
-      string->path
-      abs->rel/www))
-
-(module+ test
-  (parameterize ([top (find-system-path 'temp-dir)])
-    (check-equal?
-     (post-path->link (build-path (top) "blog/2012/05/31/title-of-post.html"))
-     "/blog/2012/05/31/title-of-post.html")
-    (check-equal?
-     (post-path->link (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
-     "/blog/2012/05/31/title-of-post/")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Parameters loaded from configuration file
-
-(define current-scheme/host (make-parameter #f))
-(define current-title (make-parameter #f))
-(define current-author (make-parameter #f))
-(define current-permalink (make-parameter #f))
-(define current-index-full? (make-parameter #f)) ;index pages: full posts?
-(define current-feed-full? (make-parameter #f))  ;feeds: full posts?
-(define current-show-tag-counts? (make-parameter #t))
-(define current-max-index-items (make-parameter 999))
-(define current-max-feed-items (make-parameter 999))
-(define current-decorate-feed-uris? (make-parameter #t))
-(define current-feed-image-bugs? (make-parameter #f))
-(define current-auto-embed-tweets? (make-parameter #t))
-(define current-racket-doc-link-code? (make-parameter #t))
-(define current-racket-doc-link-prose? (make-parameter #f))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
 
 (define post-file-px
   #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl)$")
-
-(struct post (title      ;string?
-              dest-path  ;path? - full pathname of local HTML file
-              uri-path   ;string? - path portion of URI, with leading /
-              date       ;string? - 8601 datetime format
-              tags       ;(listof string?)
-              blurb      ;(listof xexpr?) - the post summary
-              more?      ;boolean? - is `body` more than just `blurb`?
-              body       ;(listof xexpr?) - the full post xexprs, with
-                         ;any <!-- more --> line removed, but NOT
-                         ;syntax highlighted
-              ))
 
 ;; A function for `fold-files` to gather post source files.
 (define (read-post path type v)
@@ -234,7 +120,6 @@
   (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
   (check-not-exn (thunk (meta-data `((pre ,s)))))
   (check-not-exn (thunk (meta-data `((p () ,s))))))
-
 
 (define (tag-string->tags s)
   (regexp-split #px",\\s*" s))
@@ -384,32 +269,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (our-encode s)
-  ;; Extremely conservative.
-  ;;
-  ;; WARNING: Changing this will break blog post permalink pattens that
-  ;; use the {title} variable. Even if this could be improved, doing so
-  ;; would break backward compatability.
-  (~> (list->string (for/list ([c (in-string s)])
-                      (cond [(or (char-alphabetic? c)
-                                 (char-numeric? c)) c]
-                            [else #\-])))
-      (re* #px"-{2,}" "-")              ;only one hyphen in a row
-      (re #px"-{1,}$" "")))             ;no hyphen at end
-
-(define (re* s rx new)
-  (regexp-replace* rx s new))
-(define (re s rx new)
-  (regexp-replace rx s new))
-
-(module+ test
-  (check-equal? (our-encode "Foo? Bar. Baz.")
-                "Foo-Bar-Baz")
-  (check-equal? (our-encode "Here's a question--how many hyphens???")
-                "Here-s-a-question-how-many-hyphens"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (enhance-body xs)
   (~> xs
       syntax-highlight
@@ -533,231 +392,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (atom-feed-uri tag)
-  (str "/feeds/" tag ".atom.xml"))
-
-(define (write-atom-feed xs title tag of-uri-path file)
-  (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (str (post-date (first xs)) "Z")) ;; lie: not nec. UTC
-  (~>
-   `(feed
-     ([xmlns "http://www.w3.org/2005/Atom"]
-      [xml:lang "en"])
-     (title ([type "text"]) ,(str (current-title) ": " title))
-     (link ([rel "self"]
-            [href ,(full-uri (abs->rel/www file))]))
-     (link ([href ,(full-uri of-uri-path)]))
-     (id () ,(str "urn:"
-                 (our-encode (current-scheme/host))
-                 ":"
-                 (our-encode of-uri-path)))
-     ;; (etag () ???)
-     (updated () ,updated)
-     ,@(map (curry post->atom-feed-entry-xexpr tag)
-            (take<= xs (current-max-feed-items))))
-   xexpr->string/pretty
-   (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-   reverse
-   string-join
-   string->bytes/utf-8
-   (display-to-file* file #:exists 'replace)))
-
-(define (post->atom-feed-entry-xexpr tag x)
-  (match-define (post title dest-path uri-path date tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "Atom"))
-  `(entry
-    ()
-    (title ([type "text"]) ,title)
-    (link ([rel "alternate"]
-           [href ,item-uri]))
-    (id () ,(str "urn:"
-                 (our-encode (current-scheme/host))
-                 ":"
-                 (our-encode uri-path)))
-    (published () ,(str date "Z")) ;; lie: not necessarily UTC
-    (updated () ,(str date "Z"))   ;; lie: not necessarily UTC
-    (author (name ,(current-author)))
-    (content
-     ([type "html"])
-     ,(xexpr->string/pretty
-       `(html
-         ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
-         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
-                     [more? `(,@blurb
-                              (a ([href ,item-uri])
-                                 (em "Continue reading ...")))]
-                     [else blurb])
-               unlinkify-footnotes))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (rss-feed-uri tag)
-  (str "/feeds/" tag ".rss.xml"))
-
-(define (write-rss-feed xs title tag of-uri-path file)
-  (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (~> xs first post-date rfc-8601->822))
-  (~>
-   `(rss
-     ([version "2.0"])
-     (channel
-      (title ,(str (current-title) ": " title))
-      (description ,(str (current-title) ": " title))
-      (link ,(full-uri of-uri-path))
-      (lastBuildDate () ,updated)
-      (pubDate ,updated)
-      (ttl "1800")
-      ,@(map (curry post->rss-feed-entry-xexpr tag)
-             (take<= xs (current-max-feed-items)))))
-   xexpr->string/pretty
-   (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-   reverse
-   string-join
-   string->bytes/utf-8
-   (display-to-file* file #:exists 'replace)))
-
-(define (post->rss-feed-entry-xexpr tag x)
-  (match-define (post title dest-path uri-path date tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "RSS"))
-  `(item
-    ()
-    (title ,title)
-    (link ,item-uri)
-    (guid () ,(str "urn:"
-                   (our-encode (current-scheme/host))
-                   ":"
-                   (our-encode uri-path)))
-    (pubDate () ,(~> date rfc-8601->822))
-    (description
-     ,(xexpr->string/pretty
-       `(html
-         ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
-         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
-                     [more? `(,@blurb
-                              (a ([href ,item-uri])
-                                 (em "Continue reading ...")))]
-                     [else blurb])
-               unlinkify-footnotes))))))
-
-(define (rfc-8601->822 s)
-  (match s
-    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})"
-              (list _ year month day hour minute second))
-     (define MONTHS
-       #("Jan" "Feb" "Mar" "Apr" "May" "Jun"
-         "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
-     (define DAYS
-       #("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"))
-     (define tz-name (date*-time-zone-name (current-date)))
-     (define d (date* (string->number second)
-                      (string->number minute)
-                      (string->number hour)
-                      (string->number day)
-                      (string->number month)
-                      (string->number year)
-                      0 0 #f 0 0
-                      tz-name
-                      ))
-     (define weekday (~> d
-                         date->seconds
-                         seconds->date
-                         date-week-day
-                         DAYS))
-     (str weekday ", "
-          day " " (MONTHS (sub1 (string->number month))) " " year " "
-          hour ":" minute ":" second " " tz-name)]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (unlinkify-footnotes xs)
-  (map unlinkify-footnotes/xexpr xs))
-
-(define (unlinkify-footnotes/xexpr x)
-  (match x
-    ;; Footnote link to definition
-    [`(sup (a ([href ,href][name ,name]) ,text)) `(sup ,text)]
-    ;; Footnote definition return link
-    [`(a ([href ,href]) "↩") ""]
-    ;; All else
-    [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) ,es ...)
-     `(,tag ,(map list ks vs) ,@(unlinkify-footnotes es))]
-    [`(,(? symbol? tag) ,es ...)
-     `(,tag ,@(unlinkify-footnotes es))]
-    [_ x]))
-
-(module+ test
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    `(p "Blah blah" (sup (a ([href "x"][name "y"]) "1")) "."))
-   `(p "Blah blah" (sup "1") "."))
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    '(p "Blah" (em (sup (a ([href "x"][name "y"]) "1")) ".")))
-   `(p "Blah" (em (sup "1") ".")))
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    '(p (em "hi") "there"))
-   '(p (em "hi") "there"))
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    '(p ([class "foo"][style "x"]) "there"))
-   '(p ((class "foo") (style "x")) "there"))
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    '(p ([class "foo"]) "there"))
-   '(p ((class "foo")) "there"))
-  (check-equal?
-   (unlinkify-footnotes/xexpr
-    '(p () "there"))
-   '(p () "there")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Feed analytics without FeedBurner
-
-;; If you want readership stats, but you can no longer use
-;; FeedBurner.com (because Google shut down it and Google Reader):
-;; Then another way to get feed stats is to decorate the links with
-;; utm_xxx query parameters used by Google Analytics. (If Google shuts
-;; down GA, too, naturally we'll come up with something else for that,
-;; too.)
-(define (full-uri/decorated uri-path #:source source #:medium medium)
-  (str (full-uri uri-path)
-       (cond [(current-decorate-feed-uris?)
-              (str "?" "utm_source=" (our-encode source)
-                   "&" "utm_medium=" (our-encode medium))]
-             [else ""])))
-
-;; full-uri/decorated handles the case of someone starting with the
-;; feed and clicking through to the original web page. If you want to
-;; count people reading it in a feed reader but _not_ clicking through
-;; -- especially if you have the feed set to full posts not just
-;; above-the-fold blurbs -- then we need to do an image bug. It is
-;; also decorated with Google Analytics query params.
-(define (feed-image-bug-xexpr uri-path #:source source #:medium medium)
-  (cond [(current-feed-image-bugs?)
-         `((img ([src ,(str (current-scheme/host)
-                            "/img/1x1.gif"
-                            "?" "utm_source=" (our-encode source)
-                            "&" "utm_medium=" (our-encode medium)
-                            "&" "utm_campaign=" (uri-encode uri-path))]
-                 [height "1"]
-                 [width "1"])))]
-        [else '()]))
-
-(module+ test
-  (parameterize ([current-scheme/host "http://www.example.com"]
-                 [current-feed-image-bugs? #t])
-   (check-equal?
-    (full-uri/decorated "/path/to/thing" #:source "all" #:medium "RSS")
-    "http://www.example.com/path/to/thing?utm_source=all&utm_medium=RSS")
-   (check-equal?
-    (feed-image-bug-xexpr "/path/to/thing" #:source "all" #:medium "RSS")
-    '((img ([src "http://www.example.com/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
-           [height "1"]
-           [width "1"]))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define new-post-template
 #<<EOF
     Title: ~a
@@ -819,9 +453,6 @@ EOF
   (fold-files maybe-delete '() (www-path) #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (xexpr->string/pretty x)
-  (with-output-to-string (thunk (display-xexpr x))))
 
 (define (build-non-post-pages) ;; -> (listof string?)
   (fold-files write-non-post-page '() (src-path) #f))
