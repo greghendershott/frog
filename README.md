@@ -16,9 +16,9 @@
 
 Frog is a static web site generator written in [Racket][].
 
-You write content in [Markdown][]. You generate files. To deploy, you
-push them to a GitHub Pages repo (or copy them to Amazon S3, or
-whatever).
+You write content in [Markdown][] or [Scribble][]. You generate
+files. To deploy, you push them to a GitHub Pages repo (or copy them
+to Amazon S3, or whatever).
 
 Posts get a variety of automatic blog features.
 
@@ -228,6 +228,15 @@ feed-image-bugs? = true
 # <https://twitter.com/racketlang/status/332176422003163138>
 #
 auto-embed-tweets? = true
+
+# Try to automatically link symbols in Markdown ```racket fenced code
+# blocks, to Racket documentation?
+racket-doc-link-code? = true
+
+# Try to automatically Markdown of the form `symbol`[racket] to Racket
+# documentation? i.e. This is similar to the @racket[] form in
+# Scribble.
+racket-doc-link-prose? = true
 ```
 
 ## Creating blog posts
@@ -519,6 +528,18 @@ pre {
 > [SyntaxHighlighter][].
 
 
+# Scribble source files
+
+Sources for posts (and for non-post pages) may also be [Scribble][]
+`.srcbl` files.
+
+See the [example Scribble post][] and
+[example Srcibble non-post page][] for more information.
+
+> **NOTE**: `raco frog -n` creates `.md` files, only. You will need to
+> create the `.scrbl` file for a new post manually, following the
+> naming convention.
+
 # Bug reports? Feature requests?
 
 Please use [GitHub Issues][].
@@ -527,6 +548,7 @@ Please use [GitHub Issues][].
 [my blog]: http://www.greghendershott.com
 [Racket]: http://www.racket-lang.org
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
+[Scribble]: http://docs.racket-lang.org/scribble/index.html
 [Bootstrap]: http://twitter.github.com/bootstrap/index.html
 [responsive]: https://en.wikipedia.org/wiki/Responsive_web_design
 [Pygments]: http://pygments.org/
@@ -538,3 +560,5 @@ Please use [GitHub Issues][].
 [`widgets.rkt`]: https://github.com/greghendershott/frog/blob/master/frog/widgets.rkt
 [example page template]: https://github.com/greghendershott/frog/blob/master/example/_src/page-template.html
 [example post template]: https://github.com/greghendershott/frog/blob/master/example/_src/post-template.html
+[example Scribble post]: https://github.com/greghendershott/frog/blob/master/example/_src/posts/2013-06-19-a-scribble-post.scrbl
+[example Scribble non-post page]: https://github.com/greghendershott/frog/blob/master/example/_src/A-Non-Post-Scribble-Page.scrbl
