@@ -4,6 +4,8 @@
 
 Thanks to the following people for contributing pull requests!
 
+- [Jens Axel Søgaard](https://github.com/soegaard).
+
 - [Jose A. Ortega Ruiz](https://github.com/jaor).
 
 - [WillemDeGroef](https://github.com/WillemDeGroef).
