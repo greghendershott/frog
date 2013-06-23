@@ -50,7 +50,7 @@ auto-embed-tweets? = true
 # blocks, to Racket documentation?
 racket-doc-link-code? = true
 
-# Try to automatically Markdown of the form `symbol`[racket] to Racket
-# documentation? i.e. This is similar to the @racket[] form in
+# Try to automatically link Markdown of the form `symbol`[racket] to
+# Racket documentation? i.e. This is similar to the @racket[] form in
 # Scribble.
 racket-doc-link-prose? = true

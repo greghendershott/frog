@@ -233,8 +233,8 @@ auto-embed-tweets? = true
 # blocks, to Racket documentation?
 racket-doc-link-code? = true
 
-# Try to automatically Markdown of the form `symbol`[racket] to Racket
-# documentation? i.e. This is similar to the @racket[] form in
+# Try to automatically link Markdown of the form `symbol`[racket] to
+# Racket documentation? i.e. This is similar to the @racket[] form in
 # Scribble.
 racket-doc-link-prose? = true
 ```
@@ -534,7 +534,7 @@ Sources for posts (and for non-post pages) may also be [Scribble][]
 `.srcbl` files.
 
 See the [example Scribble post][] and
-[example Srcibble non-post page][] for more information.
+[example Scribble non-post page][] for more information.
 
 > **NOTE**: `raco frog -n` creates `.md` files, only. You will need to
 > create the `.scrbl` file for a new post manually, following the
