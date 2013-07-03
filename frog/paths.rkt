@@ -64,7 +64,7 @@
                                  [#rx"^/" ""]))))
 
 (module+ test
-  (parameterize ([top (find-system-path 'temp-dir)])
+  (parameterize ([top (find-system-path 'home-dir)])
     (define f (curry permalink-path
                      "2012" "05" "31" "title-of-post" "file-name"))
     (check-equal? (f "/{year}/{month}/{title}.html")
@@ -87,11 +87,10 @@
       abs->rel/www))
 
 (module+ test
-  (parameterize ([top (find-system-path 'temp-dir)])
+  (parameterize ([top (find-system-path 'home-dir)])
     (check-equal?
      (post-path->link (build-path (top) "blog/2012/05/31/title-of-post.html"))
      "/blog/2012/05/31/title-of-post.html")
     (check-equal?
      (post-path->link (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
      "/blog/2012/05/31/title-of-post/")))
-
