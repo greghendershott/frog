@@ -12,6 +12,8 @@
 
 <sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Frog image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)</em></sub>
 
+[![Build Status](https://travis-ci.org/greghendershott/frog.png?branch=master)](https://travis-ci.org/greghendershott/frog)
+
 # Overview
 
 Frog is a static web site generator written in [Racket][].
