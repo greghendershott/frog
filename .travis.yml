@@ -11,7 +11,7 @@ install:
 before_script:
 
 script:
- - /usr/racket/bin/raco pkg install markdown
+ - /usr/racket/bin/raco pkg install --deps search-auto markdown
  - cd frog
  - /usr/racket/bin/raco make frog.rkt
  - /usr/racket/bin/raco test -x .
