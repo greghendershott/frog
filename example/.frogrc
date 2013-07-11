@@ -25,9 +25,12 @@ index-full? = false
 feed-full? = true
 
 # How many items to include on index pages?
-max-index-items = 3
+# Older items in excess of this will still appear on an index page,
+# but abbreviated to only their title and date.
+max-index-items = 20
 
 # How many items to include in feeds?
+# Older items in excess of this will not appear in the feed at all.
 max-feed-items = 20
 
 # Decorate feed URIs with Google Analytics query parameters like
