@@ -1,4 +1,4 @@
-language: racket
+language: c
 
 env:
  - RACKET_VERSION=5.3.5
