@@ -554,7 +554,7 @@ Please use [GitHub Issues][].
 [Racket]: http://www.racket-lang.org
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
 [Scribble]: http://docs.racket-lang.org/scribble/index.html
-[Bootstrap]: http://twitter.github.com/bootstrap/index.html
+[Bootstrap]: http://getbootstrap.com/
 [responsive]: https://en.wikipedia.org/wiki/Responsive_web_design
 [Pygments]: http://pygments.org/
 [pygments.rb]: https://github.com/tmm1/pygments.rb
