@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Most of the <head> section you can leave alone.  Notice some
-         template variables like `title`, `description` etc. which you
-         could also use in other parts of this template if you
-         wish. -->
+    @;{ The at-exp reader for a template treats this as a comment.
+        Also, notice the use template variables like @title,
+        @description etc. }
     <meta charset="utf-8" />
     <title>@|title|</title>
     <meta name="description" content="@|description|">
@@ -45,9 +44,9 @@
         <div class="collapse navbar-collapse our-nav-collapse"
              role="navigation">
           <ul class="nav navbar-nav">
-            <!-- We can define Racket functions to "DRY". Here's one to
-                 emit HMTL for a nav item, adding class="active" iff
-                 this page's @|uri-path| is the same as the nav link. -->
+            @;{ We can define Racket functions to "DRY". Here's one to
+                emit HMTL for a nav item, adding class="active" iff
+                this page's @|uri-path| is the same as the nav link. }
             @(define (ni uri label [a-attribs ""])
               @list{
                 <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
@@ -59,32 +58,32 @@
     </header>
     <div class="container">
       <div class="row">
-        <!-- Remember that Twitter Bootstrap has a 12 cell model. The
-             col-md-N classes should add up to 12.  For instance 3
-             "col-md-4" divs, or 2 "col-md-6" divs. In this example
-             the main content is "col-md-9", plsu a "col-md-3" right
-             sidebar. -->
+        @;{ Remember that Twitter Bootstrap has a 12 cell model. The
+            col-md-N classes should add up to 12.  For instance 3
+            "col-md-4" divs, or 2 "col-md-6" divs. In this example
+            the main content is "col-md-9", plsu a "col-md-3" right
+            sidebar. }
         <!-- Main column -->
         <div id="content" class="col-md-9">
-          <!-- To put something only on the home page, check for
-               `uri-path` being "/index.html" -->
+          @;{ To put something only on the home page, check for
+              @uri-path being "/index.html" }
           @(when (string-ci=? uri-path "/index.html")
             @list{
               <h1>Welcome</h1>
               <p>Here is some text that only goes on the home page,
                 because we matched on <code>uri-path</code>
                 being <code>/index.html</code>.</p> })
-          <!-- Index pages for posts have non-#f `tag` -->
+          @;{ Index pages for posts have @tag that's not #f }
           @(when tag
             @list{<h1>Posts tagged <em>@|tag|</em></h1>})
-          <!-- The main page contents are in `contents` -->
+          @;{ The main page contents are in @contents }
           @|contents|
         </div>
         <!-- Right column -->
         <div id="right-sidebar" class="col-md-3">
-          <!-- `tags/feeds` is a list of tags and feeds -->
+          @;{ `tags/feeds` is a list of tags and feeds }
           @|tags/feeds|
-          <!-- Example of a Twitter follow button -->
+          @;{ Example of a Twitter follow button }
           @twitter-follow-button["racketlang" "Follow RacketLang"]
         </div>
       </div>
