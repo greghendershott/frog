@@ -123,7 +123,12 @@
   (check-not-exn (thunk (meta-data `((p () ,s))))))
 
 (define (tag-string->tags s)
-  (regexp-split #px",\\s*" s))
+  (~>> (regexp-split #px"," s)
+       (map string-trim)))
+
+(module+ test
+  (check-equal? (tag-string->tags " some, post ,   tags ")
+                '("some" "post" "tags")))
 
 (define (above-the-fold xs)
   (define-values (above below) (break more-xexpr? xs))
