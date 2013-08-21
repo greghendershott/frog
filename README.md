@@ -172,7 +172,7 @@ project/
 
 > **TIP**: The official Bootstrap files are at
 > <http://twitter.github.io/bootstrap/>. For alternative "themes", see
-> <http://http://bootswatch.com/>.
+> <http://bootswatch.com/>.
 
 > **TIP**: For examples of files you can use and rename to
 > `pygments.css`, see <https://github.com/richleland/pygments-css>.
