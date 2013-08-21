@@ -200,6 +200,7 @@
     'table-of-contents (cond [toc? (xexpr->string/pretty (toc-xexpr contents))]
                              [else ""])
     'tag tag
+    'tags-list-items (xexprs->string (tags-list-items))
     'tags/feeds (xexprs->string (tags/feeds))}))
 
 (define (xexprs->string xs)
@@ -214,13 +215,8 @@
                               ,@contents)))])]))
 
 (define (tags/feeds)
-  ;; Sort alphabetically by tag name. Use association list (can't sort
-  ;; a hash).
-  (define alist (~> (for/list ([(k v) (in-hash all-tags)])
-                      (cons k v))
-                    (sort string-ci<=? #:key car)))
   `((p "Tags:"
-       (ul ,@(for/list ([(k v) (in-dict alist)])
+       (ul ,@(for/list ([(k v) (in-dict (tags-alist))])
                `(li ,(tag->xexpr k)
                     nbsp
                     ,@(if (current-show-tag-counts?) `(,(format "(~a)" v)) '())
@@ -231,6 +227,17 @@
        " "
        (a ([href ,(atom-feed-uri "all")])
           (img ([src "/img/feed.png"])))))))
+
+(define (tags-list-items)
+  (for/list ([(k v) (in-dict (tags-alist))])
+               `(li ,(tag->xexpr k))))
+
+(define (tags-alist)
+  ;; Sort alphabetically by tag name. Use association list (can't sort
+  ;; a hash).
+  (~> (for/list ([(k v) (in-hash all-tags)])
+        (cons k v))
+      (sort string-ci<=? #:key car)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

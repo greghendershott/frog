@@ -376,6 +376,7 @@ the default template. Specifically:
 - `rss-feed-uri`: The full URI to the RSS feed
 - `tag`: If this an index page, `tag` is the name of the index (such
   as "All Posts") or ("Posts tagged foo"), else `tag` is `#f`.
+- `tags-list-items`: HTML with a `<li>` for every tag on the blog, suitable for putting in a `<ul>`. Each `<li>` has a link to that tag's index page.
 - `tags/feeds`: HTML that has, for each tag, a link to its index page
   and a link to its Atom feed.
 
