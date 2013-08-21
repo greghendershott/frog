@@ -34,12 +34,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define all-tags (make-hash)) ;; (hashof string? exact-positive-integer?)
+;; The tags found among all posts, and how many times.
+(define all-tags (make-hash)) ;(hash/c string? exact-positive-integer?)
 
 (define post-file-px
   #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl)$")
 
-;; A function for `fold-files` to gather post source files.
+;; A function to provide to `fold-files`.
 (define (read-post path type v)
   (cond
     [(eq? type 'file)
@@ -114,7 +115,7 @@
        ,more ...)
      (values title date (tag-string->tags tags) more)]
     [_ (raise-user-error 'meta-data
-                         "Post missing Title/Date/Tags meta-data")]))
+                         "A post must have Title/Date/Tags meta-data")]))
 
 (module+ test
   (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
