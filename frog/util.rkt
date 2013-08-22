@@ -1,6 +1,6 @@
 #lang rackjure
 
-(require markdown)
+(require markdown) ;only for `display-xexpr`
 
 (provide (all-defined-out))
 
