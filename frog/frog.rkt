@@ -18,6 +18,7 @@
          "post.rkt"
          "pygments.rkt"
          "scribble.rkt"
+         "take.rkt"
          "template.rkt"
          "watch-dir.rkt"
          "xexpr2text.rkt"
@@ -247,29 +248,46 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (write-index xs    ;(listof post?) -> any
-                     title ;string?
-                     tag   ;(or/c #f string?)
-                     feed  ;string?
-                     file) ;path?
+(define (write-index-pages xs    ;(listof post?) -> any
+                           title ;string?
+                           tag   ;(or/c #f string?)
+                           feed  ;string?
+                           file) ;path?
+  (define num-posts (length xs))
+  (define num-pages (ceiling (/ num-posts (current-posts-per-page))))
+  (for ([page-num (in-range num-pages)]
+        [page-posts (in-list (take-every xs (current-posts-per-page)))])
+    (write-index-page page-posts
+                      (str title " (page " (add1 page-num) ")")
+                      tag
+                      feed
+                      file
+                      page-num
+                      num-pages)))
+
+(define (write-index-page xs         ;(listof post?) -> any
+                          title      ;string?
+                          tag        ;(or/c #f string?)
+                          feed       ;string?
+                          base-file  ;path?
+                          page-num   ;exact-positive-integer?
+                          num-pages) ;exact-positive-integer?
+  (define file (file/page base-file page-num))
   (prn1 "Generating ~a" (abs->rel/top file))
-  (~> (for/list ([x (in-list xs)]
-                 [n (in-naturals)])
+  (~> (for/list ([x (in-list xs)])
         (match-define
          (post title dest-path uri-path date tags blurb more? body) x)
         `(article
           ([class "index-post"])
           (header (h2 (a ([href ,uri-path]) ,title))
                   ,(date+tags->xexpr date tags))
-          ,@(cond
-             [(< n (current-max-index-items))
-              `((div ([class "entry-content"])
-                     ,@(cond [(current-index-full?) (enhance-body body)]
-                             [more? `(,@(enhance-body blurb)
-                                      (a ([href ,uri-path])
-                                         (em "Continue reading ...")))]
-                             [else (enhance-body blurb)])))]
-             [else '()])))
+          (div ([class "entry-content"])
+               ,@(cond [(current-index-full?) (enhance-body body)]
+                       [more? `(,@(enhance-body blurb)
+                                (a ([href ,uri-path])
+                                   (em "Continue reading ...")))]
+                       [else (enhance-body blurb)]))))
+      (append `((footer ,(bootstrap-pagination base-file page-num num-pages))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
@@ -279,6 +297,32 @@
                     #:tag tag
                     #:toc-sidebar? tag) ;; no toc on home page
       (display-to-file* file #:exists 'replace)))
+
+(define (bootstrap-pagination base-file page-num num-pages)
+  `(ul ([class "pagination"])
+       ,(cond [(zero? page-num) `(li ([class "disabled"])
+                                     (a ([href "#"]) 'larr))]
+              [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
+                                        abs->rel/www)])
+                            'larr))])
+       ,@(for/list ([n (in-range num-pages)])
+           `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
+                (a ([href ,(~> (file/page base-file n) abs->rel/www)])
+                   ,(number->string (add1 n)))))
+       ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
+                                                  (a ([href "#"]) 'rarr))]
+              [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
+                                        abs->rel/www)])
+                            'rarr))]) ))
+
+(define (file/page base-file page-num)
+  (cond [(zero? page-num) base-file]
+        [else (~> base-file             ;add "-<page>" suffix
+                  (path-replace-suffix "")
+                  path->string
+                  (str "-" (add1 page-num))
+                  string->path
+                  (path-replace-suffix ".html"))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -538,11 +582,11 @@ EOF
     (define posts-this-tag (filter (curry post-has-tag? tag) posts))
     (define tag-index-path
       (build-path (www/tags-path) (str (our-encode tag) ".html")))
-    (write-index posts-this-tag
-                 (str "Posts tagged '" tag "'")
-                 tag
-                 (our-encode tag)
-                 tag-index-path)
+    (write-index-pages posts-this-tag
+                       (str "Posts tagged '" tag "'")
+                       tag
+                       (our-encode tag)
+                       tag-index-path)
     (write-atom-feed posts-this-tag
                      (str "Posts tagged '" tag "'")
                      tag
@@ -556,8 +600,8 @@ EOF
                     (build-path (www/feeds-path) (str (our-encode tag)
                                                       ".rss.xml"))))
   ;; Write the index page for all posts
-  (write-index posts (current-title) #f "all"
-               (build-path (www-path) "index.html"))
+  (write-index-pages posts (current-title) #f "all"
+                     (build-path (www-path) "index.html"))
   ;; Write Atom feed for all posts
   (write-atom-feed posts "All Posts" "all" "/index.html"
                    (build-path (www/feeds-path) "all.atom.xml"))
@@ -681,13 +725,13 @@ EOF
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
-                               [max-index-items 999]
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [auto-embed-tweets? #t]
                                [racket-doc-link-code? #t]
-                               [racket-doc-link-prose? #f])
+                               [racket-doc-link-prose? #f]
+                               [posts-per-page 2]) ;small, for testing
       ;; (clean)
       (build)
       (preview)
@@ -708,13 +752,13 @@ EOF
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
                                [feed-full? #f]
-                               [max-index-items 999]
                                [max-feed-items 999]
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [auto-embed-tweets? #t]
                                [racket-doc-link-code? #t]
-                               [racket-doc-link-prose? #f])
+                               [racket-doc-link-prose? #f]
+                               [posts-per-page 10])
       (command-line
        #:program "frog"
        #:once-each

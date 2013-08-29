@@ -2,7 +2,7 @@
 compiled/
 
 # Generated files under example/
-example/index.html
+example/index*.html
 example/About.html
 example/sitemap.txt
 example/blog/
