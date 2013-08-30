@@ -47,30 +47,14 @@ A: Frozen blog.
 
 ## Installing Frog
 
-Install Racket 5.3.4 or newer.
+1. Install [Racket 5.3.4 or newer](http://racket-lang.org/download/).
 
-Install Frog:
+2. Install Frog: `$ raco pkg install frog`.
 
-    $ raco pkg install frog
-
-> Frog depends on two other Racket projects:
->
-> 1. [#lang rackjure](https://github.com/greghendershott/rackjure)
->
-> 2. [Racket Markdown parser](https://github.com/greghendershott/markdown)
->
-> The `raco pkg install frog` should have asked to install them. If you
-> need to install them individually, use `raco pkg install rackjure` and
-> `raco pkg install markdown`.
-
-Install Pygments (optional, if you want syntax highlighting for fenced
-code blocks). On OS X and Linux:
-
-    $ sudo easy_install Pygments
-
-On Linux you might first need to install `easy_install`:
-
-    $ sudo apt-get install python-setuptools
+3. Optional: Install Pygments if you want syntax highlighting for
+   fenced code blocks: `$ sudo easy_install Pygments`. (If that fails
+   then install `easy_install` --`$ sudo apt-get install
+   python-setuptools` -- and try again.)
 
 ## Starting a new blog project
 
