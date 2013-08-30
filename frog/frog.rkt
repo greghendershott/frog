@@ -284,8 +284,8 @@
           (div ([class "entry-content"])
                ,@(cond [(current-index-full?) (enhance-body body)]
                        [more? `(,@(enhance-body blurb)
-                                (a ([href ,uri-path])
-                                   (em "Continue reading ...")))]
+                                (footer ([class "read-more"])
+                                 (a ([href ,uri-path]) hellip "more" hellip)))]
                        [else (enhance-body blurb)]))))
       (append `((footer ,(bootstrap-pagination base-file page-num num-pages))))
       (bodies->page #:title title
