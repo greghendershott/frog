@@ -154,9 +154,16 @@ project/
   ...
 ```
 
-> **TIP**: The official Bootstrap files are at
-> <http://twitter.github.io/bootstrap/>. For alternative "themes", see
-> <http://bootswatch.com/>.
+> **TIP**: The Bootstrap 3 files are [here][Bootstrap]. (Although the
+> Frog `/example` project has copies for example purposes, for your
+> own project you should get the official/latest from [Boostrap][].)
+
+> **TIP**: To design a Bootstrap 3 "theme", try
+> [Bootstrap Maigc](http://pikock.github.io/bootstrap-magic/).
+
+> (Although <http://bootswatch.com/> has some ready-made themes,
+> they're for Bootstrap 2.x, and to use them with Bootstrap 3 you'll
+> need to hand-tune the CSS.)
 
 > **TIP**: For examples of files you can use and rename to
 > `pygments.css`, see <https://github.com/richleland/pygments-css>.
