@@ -134,7 +134,8 @@ Here are the files created by Frog when you run `raco frog -b` to
 (re)build the blog:
 
 ```sh
-  index.html
+project/
+  index*.html
   sitemap.txt
   tags/
   feeds/
