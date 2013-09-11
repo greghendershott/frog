@@ -563,9 +563,12 @@ EOF
 (define (build)
   (start-pygments)
   ;; Read the posts and get (listof post?) with which to do more work.
-  ;; Sort the list by date, newest first.
+  ;; Sort the list by date.
   (define (post<=? a b)
-    (string<=? (post-date a) (post-date b)))
+    (cond [(current-index-newest-first?)
+           (string<=? (post-date a) (post-date b))]
+          [else
+           (string<=? (post-date b) (post-date a))]))
   (set! all-tags (make-hash))
   (define posts (~> (fold-files read-post '() (src/posts-path) #f)
                     (sort (negate post<=?))))
@@ -731,7 +734,8 @@ EOF
                                [auto-embed-tweets? #t]
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
-                               [posts-per-page 2]) ;small, for testing
+                               [posts-per-page 2] ;small, for testing
+                               [index-newest-first? #t])
       ;; (clean)
       (build)
       (preview)
@@ -758,7 +762,8 @@ EOF
                                [auto-embed-tweets? #t]
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
-                               [posts-per-page 10])
+                               [posts-per-page 10]
+                               [index-newest-first? #t])
       (command-line
        #:program "frog"
        #:once-each

@@ -18,3 +18,4 @@
 (define current-racket-doc-link-code? (make-parameter #t))
 (define current-racket-doc-link-prose? (make-parameter #f))
 (define current-posts-per-page (make-parameter 10))
+(define current-index-newest-first? (make-parameter #t))
