@@ -9,8 +9,9 @@
   (require rackunit))
 
 (define (xexprs->description xs [num 3])
-  (str (string-join (map (curryr xexpr->markdown " ") (take<= xs num))
-                    "")
+  (str (~> (string-join (map (curryr xexpr->markdown " ") (take<= xs num))
+                        "")
+           escape-double-quotes)
        "..."))
 
 (module+ test
@@ -37,7 +38,7 @@
     (memq s '(h1 h2 h3 h4 h5 h6 h7 h8 h9)))
   (define (block? s)
     (memq s '(p div li)))
-  (define (->s es)
+  (define (->s es) ;convert entities to string
     (apply str (map (curryr xexpr->markdown block-suffix) es)))
   (define (normalize x) ;; ensure xexpr has explicit attributes
     (match x
@@ -56,9 +57,7 @@
     ['mdash "--"]
     ['amp "&"]
     [(or 'lsquo 'rsquo) "'"]
-    ;; However use &auot; not "" because destined for an HTML
-    ;; attribute value that will be quoted.
-    [(or 'ldquo 'rdquo) "&quot;"]
+    [(or 'ldquo 'rdquo 'quot) "\""]
     [(? valid-char? c) (integer->char c)]
     [else ""])) ;; ignore others
 
@@ -84,3 +83,10 @@
                 "Hi.\nHi.\n\n")
   (check-equal? (xexpr->markdown '(p "Hi" #x20 "there"))
                 "Hi there"))
+
+(define (escape-double-quotes s)
+  (regexp-replace* #rx"\"" s "\\&quot;")) ;need to escape `&` in replace str
+
+(module+ test
+  (check-equal? (escape-double-quotes "A \"double quote\" in the string.")
+                "A &quot;double quote&quot; in the string."))
