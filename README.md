@@ -161,7 +161,7 @@ project/
 
 
 > **TIP**: To design a Bootstrap 3 "theme", try
-> [Bootstrap Maigc](http://pikock.github.io/bootstrap-magic/).
+> [Bootstrap Magic](http://pikock.github.io/bootstrap-magic/).
 
 
 > (Although <http://bootswatch.com/> has some ready-made themes,
