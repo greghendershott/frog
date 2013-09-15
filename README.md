@@ -155,9 +155,9 @@ project/
   ...
 ```
 
-> **TIP**: The Bootstrap 3 files are [here][Bootstrap]. (Although the
-> Frog `/example` project has copies for example purposes, for your
-> own project you should get the official/latest from [Boostrap][].)
+> **NOTE**: Although the Frog `/example` project has copies for
+> example purposes, for your own project you should get the
+> official/latest Bootstrap 3 files directly from [Bootstrap][].
 
 
 > **TIP**: To design a Bootstrap 3 "theme", try
@@ -169,8 +169,8 @@ project/
 > need to hand-tune the CSS.)
 
 
-> **TIP**: For examples of files you can use and rename to
-> `pygments.css`, see <https://github.com/richleland/pygments-css>.
+> **TIP**: For examples of `pygments.css` code highlighting styles see
+> <https://github.com/richleland/pygments-css>.
 
 
 ### Per-project configuration: .frogrc
