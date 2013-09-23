@@ -25,7 +25,7 @@
          "xexpr-map.rkt"
          "util.rkt"
          "verbosity.rkt"
-         ;; Remainder are just for the preview feature:
+         ;; Remainder are just for the serve/preview feature:
          web-server/servlet-env
          web-server/http
          web-server/dispatchers/dispatch)
@@ -654,32 +654,11 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (preview [port 3000])
-  ;; `serve/servlet` uses the `send-url` from `net/sendurl`, which
-  ;; (unlike the `send-url` from `external/browser`) doesn't prompt
-  ;; the user if no external browser preference is set. This can
-  ;; matter on some Linux distributions, e.g. Ubuntu which needs
-  ;; xdg-open or sensible-browser, but `net/snedurl` uses neither and
-  ;; doesn't even prompt the user. So check for this case here, and if
-  ;; no browser preference set yet, ask the user, like the `send-url`
-  ;; from `external/browser` would do.
-  (when (eq? 'unix (system-type 'os))
-    (unless (get-preference 'external-browser)
-      (define ask (dynamic-require 'browser/external 'update-browser-preference))
-      (ask #f)))
-  (serve/servlet (lambda (_) (next-dispatcher))
-                 #:servlet-path "/"
-                 #:extra-files-paths (list (www-path))
-                 #:port port
-                 #:launch-browser? #t
-                 ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (watch)
-  (build)
-  (define t
-    (watch-directory (build-path (top))
+(define (serve #:launch-browser? launch-browser?
+               #:watch? watch?
+               #:port port)
+  (define watcher-thread
+    (cond [watch? (watch-directory (build-path (top))
                      '(file)
                      (lambda (path what)
                        (match (path->string path)
@@ -689,10 +668,30 @@ EOF
                          [_ (unless (build-one path)
                               (build))
                             (displayln #"\007")])) ;beep (hopefully)
-                     #:rate 5))
-  (preview)
-  (kill-thread t)
-  (build))
+                     #:rate 5)]
+          [else (thread (thunk (sync never-evt)))]))
+  (when launch-browser?
+    (ensure-external-browser-preference))
+  (serve/servlet (lambda (_) (next-dispatcher))
+                 #:servlet-path "/"
+                 #:extra-files-paths (list (www-path))
+                 #:port port
+                 #:launch-browser? launch-browser?)
+  (kill-thread watcher-thread))
+
+(define (ensure-external-browser-preference)
+  ;; `serve/servlet` uses the `send-url` from `net/sendurl`, which
+  ;; (unlike the `send-url` from `external/browser`) doesn't prompt
+  ;; the user if no external browser preference is set. This can
+  ;; matter on some Linux distributions, e.g. Ubuntu which needs
+  ;; xdg-open or sensible-browser, but `net/sendurl` uses neither and
+  ;; doesn't even prompt the user. So check for this case here, and if
+  ;; no browser preference set yet, ask the user, like the `send-url`
+  ;; from `external/browser` would do.
+  (when (eq? 'unix (system-type 'os))
+    (unless (get-preference 'external-browser)
+      ((dynamic-require 'browser/external
+                        'update-browser-preference) #f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -738,7 +737,9 @@ EOF
                                [index-newest-first? #t])
       ;; (clean)
       (build)
-      (preview)
+      (serve #:launch-browser? #f
+             #:watch? #f
+             #:port 3000)
       ;; (watch)
       )))
 
@@ -764,6 +765,8 @@ EOF
                                [racket-doc-link-prose? #f]
                                [posts-per-page 10]
                                [index-newest-first? #t])
+      (define watch? #f)
+      (define port 3000)
       (command-line
        #:program "frog"
        #:once-each
@@ -772,30 +775,46 @@ EOF
          "Initialize current directory as a new Frog project, creating"
          "default files as a starting point.")
         (init-project)]
+       #:multi
        [("-n" "--new") title
         (""
          "Create a .md file for a new post based on today's date and <title>.")
         (new-post title)]
-       [("-m" "--make" "-b" "--build")
+       [("-b" "--build")
         (""
          "Generate files.")
         (build)]
-       [("-p" "--preview")
-        (""
-         "Run a local web server and start your browser on blog home page.")
-        (preview)]
        [("-c" "--clean")
         (""
          "Delete generated files.")
         (clean)]
+       #:once-each
        [("-w" "--watch")
         (""
          "(Experimental: Only rebuilds some files.)"
-         "1. Generate files."
-         "2. Run a local web server and start your browser."
-         "3. Watch for changed files, and generate again."
-         "   (You'll need to refresh the browser yourself.")
-        (watch)]
+         "Supply this flag before -s/--serve or -p/--preview."
+         "Watch for changed files, and generate again."
+         "(You'll need to refresh the browser yourself.")
+        (set! watch? #t)]
+       [("--port") number
+        (""
+         "The port number for -s/--serve or -p/--preview."
+         "Supply this flag before one of those flags."
+         "Default: 3000.")
+        (set! port (string->number number))]
+       #:once-any
+       [("-s" "--serve")
+        (""
+         "Run a local web server.")
+        (serve #:launch-browser? #f
+               #:watch? watch?
+               #:port port)]
+       [("-p" "--preview")
+        (""
+         "Run a local web server and start your browser on blog home page.")
+        (serve #:launch-browser? #t
+               #:watch? watch?
+               #:port port)]
        #:once-any
        [("-v" "--verbose") "Verbose. Put first."
         (current-verbosity 1)
