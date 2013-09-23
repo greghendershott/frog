@@ -676,6 +676,7 @@ EOF
                  #:servlet-path "/"
                  #:extra-files-paths (list (www-path))
                  #:port port
+                 #:listen-ip #f
                  #:launch-browser? launch-browser?)
   (kill-thread watcher-thread))
 
