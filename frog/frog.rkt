@@ -625,7 +625,7 @@ EOF
   (stop-pygments)
   (let* ([d (current-date)]
          [n (lambda (x) (~r (x d) #:min-width 2 #:pad-string "0"))])
-    (prn0 (~a (n date-hour) ":" (n date-minute) " Done generating files")))
+    (prn0 (~a "Done generating files at " (n date-hour) ":" (n date-minute))))
   (void))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
