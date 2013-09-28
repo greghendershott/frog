@@ -472,9 +472,9 @@ Title: ~a
 Date: ~a
 Tags: DRAFT
 
-_Replace this with your post text. Add one or more comma-separated
+Replace this with your post text. Add one or more comma-separated
 Tags above. The special tag `DRAFT` will prevent the post from being
-published._
+published.
 
 <!-- more -->
 
@@ -804,17 +804,17 @@ EOF
       (command-line
        #:program "frog"
        #:once-each
-       [("-i" "--init")
+       [("--init")
         (""
          "Initialize current directory as a new Frog project, creating"
          "default files as a starting point.")
         (init-project)]
        #:multi
-       [("-n" "--new" "--nm" "--new-markdown") title
+       [("-n" "--new") title
         (""
          "Create a .md file for a new post based on today's date and <title>.")
         (new-post title 'markdown)]
-       [("--ns" "--new-scribble") title
+       [("-N" "--new-scribble") title
         (""
          "Create a .scrbl file for a new post based on today's date and <title>.")
         (new-post title 'scribble)]
