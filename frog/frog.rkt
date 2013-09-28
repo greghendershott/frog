@@ -449,7 +449,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define new-post-template
+(define new-markdown-post-template
 #<<EOF
     Title: ~a
     Date: ~a
@@ -459,30 +459,55 @@ _Replace this with your post text. Add one or more comma-separated
 Tags above. The special tag `DRAFT` will prevent the post from being
 published._
 
+<!-- more -->
+
 EOF
 )
 
-(define (new-post title)
-  (parameterize ([date-display-format 'iso-8601])
-    (define d (current-date))
-    (define filename (str (~> (str (date->string d #f) ;omit time
-                                   "-"
-                                   (~> title string-downcase))
-                              our-encode)
-                          ".md"))
-    (define pathname (build-path (src/posts-path) filename))
-    (when (file-exists? pathname)
-      (raise-user-error 'new-post "~a already exists." pathname))
-    (display-to-file* (format new-post-template
-                              title
-                              (date->string d #t)) ;do includde time
-                      pathname
-                      #:exists 'error)
-    (displayln pathname)
-    ;; (define editor (getenv "EDITOR"))
-    ;; (when editor
-    ;;   (system (format "~a ~a &" editor (path->string pathname))))
-    ))
+(define new-scribble-post-template
+#<<EOF
+#lang scribble/manual
+
+Title: ~a
+Date: ~a
+Tags: DRAFT
+
+_Replace this with your post text. Add one or more comma-separated
+Tags above. The special tag `DRAFT` will prevent the post from being
+published._
+
+<!-- more -->
+
+EOF
+)
+
+(define (new-post title (type 'markdown))
+  (let ([extension (case type
+                     [(markdown) ".md"]
+                     [(scribble) ".scrbl"])]
+        [template  (case type
+                     [(markdown) new-markdown-post-template]
+                     [(scribble) new-scribble-post-template])])
+    (parameterize ([date-display-format 'iso-8601])
+      (define d (current-date))
+      (define filename (str (~> (str (date->string d #f) ;omit time
+                                     "-"
+                                     (~> title string-downcase))
+                                our-encode)
+                            extension))
+      (define pathname (build-path (src/posts-path) filename))
+      (when (file-exists? pathname)
+        (raise-user-error 'new-post "~a already exists." pathname))
+      (display-to-file* (format template
+                                title
+                                (date->string d #t)) ;do includde time
+                        pathname
+                        #:exists 'error)
+      (displayln pathname)
+      ;; (define editor (getenv "EDITOR"))
+      ;; (when editor
+      ;;   (system (format "~a ~a &" editor (path->string pathname))))
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -771,16 +796,20 @@ EOF
       (command-line
        #:program "frog"
        #:once-each
-       [("--init")
+       [("-i" "--init")
         (""
          "Initialize current directory as a new Frog project, creating"
          "default files as a starting point.")
         (init-project)]
        #:multi
-       [("-n" "--new") title
+       [("-n" "--new" "--nm" "--new-markdown") title
         (""
          "Create a .md file for a new post based on today's date and <title>.")
-        (new-post title)]
+        (new-post title 'markdown)]
+       [("--ns" "--new-scribble") title
+        (""
+         "Create a .scrbl file for a new post based on today's date and <title>.")
+        (new-post title 'scribble)]
        [("-b" "--build")
         (""
          "Generate files.")
