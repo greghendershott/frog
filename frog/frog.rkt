@@ -570,12 +570,13 @@ EOF
           [else
            (string<=? (post-date b) (post-date a))]))
   (set! all-tags (make-hash))
-  (define posts (~> (fold-files read-post '() (src/posts-path) #f)
+  (define posts (~> (fold-files* read-post '() (src/posts-path) #f)
                     (sort (negate post<=?))))
-  ;; Make lists for older and newer items. Just shift each direction
-  ;; and add #f to one end.
-  (define older (append (drop posts 1) (list #f)))
-  (define newer (cons #f (take posts (sub1 (length posts)))))
+  (define-values (older newer) ;; older/newer posts
+    (match posts
+      ['() (values '() '())]
+      [_   (values (append (drop posts 1) (list #f))
+                   (cons #f (take posts (sub1 (length posts)))))]))
   ;; Write the post pages
   (for-each write-post-page posts older newer)
   ;; For each tag, write an index page, Atom feed, RSS feed
@@ -610,7 +611,7 @@ EOF
                    (build-path (www/feeds-path) "all.atom.xml"))
   ;; Write RSS feed for all posts
   (write-rss-feed posts "All Posts" "all" "/index.html"
-                   (build-path (www/feeds-path) "all.rss.xml"))
+                  (build-path (www/feeds-path) "all.rss.xml"))
   ;; Generate non-post pages.
   (define pages (build-non-post-pages))
   ;; Write sitemap
@@ -627,6 +628,13 @@ EOF
          [n (lambda (x) (~r (x d) #:min-width 2 #:pad-string "0"))])
     (prn0 (~a "Done generating files at " (n date-hour) ":" (n date-minute))))
   (void))
+
+;; Like `fold-files`, but if `start-path` is not #f and does not exist,
+;; this returns `init-val` rather than abending with "path
+;; disappeared" error.
+(define (fold-files* proc init-val [start-path #f] [follow-links? #f])
+  (cond [(and start-path (not (file-exists? start-path))) init-val]
+        [else (fold-files proc init-val start-path follow-links?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

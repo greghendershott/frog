@@ -24,7 +24,10 @@
 
 (define (write-atom-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (str (post-date (first xs)) "Z")) ;; lie: not nec. UTC
+  (define updated
+    (match xs
+      ['() "N/A"]
+      [_   (str (post-date (first xs)) "Z")])) ;; lie: not nec. UTC
   (~>
    `(feed
      ([xmlns "http://www.w3.org/2005/Atom"]
@@ -82,7 +85,10 @@
 
 (define (write-rss-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/top file))
-  (define updated (~> xs first post-date rfc-8601->822))
+  (define updated
+    (match xs
+      ['() "N/A"]
+      [_   (~> xs first post-date rfc-8601->822)]))
   (~>
    `(rss
      ([version "2.0"])
