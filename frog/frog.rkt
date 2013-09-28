@@ -633,7 +633,7 @@ EOF
 ;; this returns `init-val` rather than abending with "path
 ;; disappeared" error.
 (define (fold-files* proc init-val [start-path #f] [follow-links? #f])
-  (cond [(and start-path (not (file-exists? start-path))) init-val]
+  (cond [(and start-path (not (directory-exists? start-path))) init-val]
         [else (fold-files proc init-val start-path follow-links?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
