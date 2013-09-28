@@ -3,6 +3,7 @@
 (require racket/list)
 
 (provide take<=
+         drop<=
          split-at<=
          take-every)
 
@@ -13,6 +14,24 @@
   (for/list ([x (in-list xs)]
              [_ (in-range n)])
     x))
+
+;; Like `drop`, but OK if list has fewer than `n` members.
+(define (drop<= xs n)
+  (for/list ([x (in-list xs)]
+             [i (in-naturals)]
+             #:when (>= i n))
+    x))
+
+(module+ test
+  (check-equal? (drop<= '(1 2 3) -1) '(1 2 3))
+  (check-equal? (drop<= '(1 2 3) 0)  '(1 2 3))
+  (check-equal? (drop<= '(1 2 3) 1)  '(2 3))
+  (check-equal? (drop<= '(1 2 3) 2)  '(3))
+  (check-equal? (drop<= '(1 2 3) 3)  '())
+  (check-equal? (drop<= '(1 2 3) 4)  '())
+  (check-equal? (drop<= '() -1)      '())
+  (check-equal? (drop<= '() 0)       '())
+  (check-equal? (drop<= '() 1)       '()))
 
 ;; Like `split-at`, but OK if list has fewer than `n` members.
 (define (split-at<= xs n)
