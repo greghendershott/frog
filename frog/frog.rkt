@@ -107,21 +107,29 @@
     [else v]))
 
 (define (meta-data xs)
+  (define (err x)
+    (raise-user-error 'error
+                      "Post must start with Title/Date/Tags, but found:\n~v"
+                      x))
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
-    [`((pre ,(pregexp px (list _ title date tags)))    ;Markdown
+    [`(,(or `(pre ,metas ...)           ;Markdown
+            `(p () ,metas ...))         ;Scribble
        ,more ...)
-     (values title date (tag-string->tags tags) more)]
-    [`((p () ,(pregexp px (list _ title date tags)))   ;Scribble
-       ,more ...)
-     (values title date (tag-string->tags tags) more)]
-    [_ (raise-user-error 'meta-data
-                         "A post must have Title/Date/Tags meta-data")]))
+     ;; In the meta-data we don't want HTML entities like &ndash; we
+     ;; want plain text.
+     (match (string-join (map xexpr->markdown metas))
+       [(pregexp px (list _ title date tags))
+        (values title date (tag-string->tags tags) more)]
+       [_ (err (first xs))])]
+    [(list x _ ...) (err x)]
+    [_ (err "")]))
 
 (module+ test
-  (define s "Title: title\nDate: date\nTags: DRAFT\n\n")
-  (check-not-exn (thunk (meta-data `((pre ,s)))))
-  (check-not-exn (thunk (meta-data `((p () ,s))))))
+  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")))))
+  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")))))
+  (check-exn exn? (thunk (meta-data '((pre "not meta data")))))
+  (check-exn exn? (thunk (meta-data '((p () "not meta data"))))))
 
 (define (tag-string->tags s)
   (~>> (regexp-split #px"," s)
