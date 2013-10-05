@@ -59,7 +59,7 @@
     [(or 'lsquo 'rsquo) "'"]
     [(or 'ldquo 'rdquo 'quot) "\""]
     [(? valid-char? c) (integer->char c)]
-    [else ""])) ;; ignore others
+    [_ ""])) ;; ignore others
 
 (module+ test
   (check-equal? (xexpr->markdown '(em "italic"))
