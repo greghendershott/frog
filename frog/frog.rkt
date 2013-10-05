@@ -145,9 +145,18 @@
 
 (define (more-xexpr? x)
   (match x
-    [`(p ,(pregexp "\\s*<!-- more -->\\s*")) #t]  ;from Markdown
-    [`(p () "<" "!" ndash " more " ndash ">") #t] ;from Scribble
+    [`(p ,(pregexp "\\s*<!--\\s*more\\s*-->\\s*")) #t]             ;Markdown
+    [`(p () "<" "!" ndash ,(pregexp "\\s*more\\s*") ndash ">") #t] ;Scribble
     [_ #f]))
+
+(module+ test
+  (check-true (more-xexpr? `(p   "<!--more-->")))
+  (check-true (more-xexpr? `(p " <!-- more -->")))
+  (check-true (more-xexpr? `(p "<!--  more  -->")))
+  (check-true (more-xexpr? `(p () "<" "!" ndash   "more"   ndash ">")))
+  (check-true (more-xexpr? `(p () "<" "!" ndash  " more "  ndash ">")))
+  (check-true (more-xexpr? `(p () "<" "!" ndash "  more  " ndash ">")))
+  (check-false (more-xexpr? "not more")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
