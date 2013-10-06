@@ -48,6 +48,8 @@ A: Frozen blog.
 
 2. Install Frog: `$ raco pkg install frog`.
 
+    > **NOTE** as of early Oct 2013: If you build Racket from HEAD, `raco pkg install frog` will give you an error due to a raco setup bug that should be fixed shortly.
+
 3. Optional: Install Pygments if you want syntax highlighting for
    fenced code blocks: `$ sudo easy_install Pygments`. (If that fails
    then install `easy_install` --`$ sudo apt-get install
