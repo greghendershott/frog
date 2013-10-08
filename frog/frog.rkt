@@ -798,7 +798,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (find-frog-root)
-  (find-parent-containing (current-directory) ".frogrc"))
+  (or (find-parent-containing (current-directory) ".frogrc")
+      (current-directory)))
 
 (module+ main
   (require "../info.rkt")
