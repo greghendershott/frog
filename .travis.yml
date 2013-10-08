@@ -12,7 +12,7 @@ install:
 before_script:
 
 script:
- - /usr/racket/bin/raco pkg install --deps search-auto markdown
+ - /usr/racket/bin/raco pkg install --deps search-auto markdown find-parent-dir
  - /usr/racket/bin/raco link frog  # for frog/widgets in templates.rkt
  - cd frog
  - /usr/racket/bin/raco make frog.rkt
