@@ -8,7 +8,7 @@
          net/url
          json
          racket/date
-         find-parent-dir
+         (only-in find-parent-dir find-parent-containing)
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
          "config.rkt"
