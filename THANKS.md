@@ -12,6 +12,8 @@ Thanks to the following people for contributing pull requests!
 
 - [voila](https://github.com/voila).
 
+- [Eric Hanchow](https://github.com/offby1).
+
 ## Issues
 
 Thanks to the following people for reporting bugs and feature
