@@ -8,6 +8,7 @@
          net/url
          json
          racket/date
+         find-parent-dir
          (only-in srfi/1 break)
          (for-syntax racket/syntax)
          "config.rkt"
@@ -796,10 +797,13 @@ EOF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (find-frog-root)
+  (find-parent-containing (current-directory) ".frogrc"))
+
 (module+ main
   (require "../info.rkt")
   (printf "Frog ~a\n" (#%info-lookup 'version))
-  (parameterize* ([top (current-directory)])
+  (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]

@@ -63,7 +63,7 @@
 
 (define (read-config p)
   (cond [(file-exists? p)
-         (prn0 "Using configuration ~a" p)
+         (prn0 "Using configuration ~a" (simplify-path p))
          (for/hasheq ([s (file->lines p)])
            (match s
              [(pregexp "^(.*)#?.*$" (list _ s))
