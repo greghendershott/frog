@@ -57,7 +57,7 @@ racket-doc-link-code? = true
 racket-doc-link-prose? = true
 
 # The URI for the index of blog posts. Defaults to /index.html but you
-# could change to e.g. /blog/index.html and use some other /index.html
-# for your site. This also effects the URI used in the Atom and RSS
-# feed files for posts.
-posts-index-uri = /blog/index.html
+# could change to e.g. /blog/index.html or /posts-index.html, and use
+# some other /index.html for your site. This also effects the URI used
+# in the Atom and RSS feed files for posts.
+posts-index-uri = /index.html
