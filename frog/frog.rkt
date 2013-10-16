@@ -248,7 +248,7 @@
                     " "
                     (a ([href ,(atom-feed-uri k)])
                        (img ([src "/img/feed.png"]))))))
-    (p (a ([href "/index.html"]) "All Posts")
+    (p (a ([href ,(current-posts-index-uri)]) "All Posts")
        " "
        (a ([href ,(atom-feed-uri "all")])
           (img ([src "/img/feed.png"])))))))
@@ -540,7 +540,7 @@ EOF
     (cond
      [(eq? type 'file)
       (define-values (base name must-be-dir?) (split-path path))
-      (cond [(equal? path (build-path (www-path) "index.html"))
+      (cond [(equal? path (reroot-path (current-posts-index-uri) (www-path)))
              (rm path)]
             [(equal? (build-path base) (build-path (www-path) "tags/"))
              (rm path)]
@@ -648,12 +648,12 @@ EOF
                                                       ".rss.xml"))))
   ;; Write the index page for all posts
   (write-index-pages posts (current-title) #f "all"
-                     (build-path (www-path) "index.html"))
+                     (reroot-path (current-posts-index-uri) (www-path)))
   ;; Write Atom feed for all posts
-  (write-atom-feed posts "All Posts" "all" "/index.html"
+  (write-atom-feed posts "All Posts" "all" (current-posts-index-uri)
                    (build-path (www/feeds-path) "all.atom.xml"))
   ;; Write RSS feed for all posts
-  (write-rss-feed posts "All Posts" "all" "/index.html"
+  (write-rss-feed posts "All Posts" "all" (current-posts-index-uri)
                   (build-path (www/feeds-path) "all.rss.xml"))
   ;; Generate non-post pages.
   (define pages (build-non-post-pages))
@@ -786,7 +786,8 @@ EOF
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
                                [posts-per-page 2] ;small, for testing
-                               [index-newest-first? #t])
+                               [index-newest-first? #t]
+                               [posts-index-uri "/index.html"])
       ;; (clean)
       (build)
       (serve #:launch-browser? #f
@@ -820,7 +821,8 @@ EOF
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
                                [posts-per-page 10]
-                               [index-newest-first? #t])
+                               [index-newest-first? #t]
+                               [posts-index-uri "/index.html"])
       (define watch? #f)
       (define port 3000)
       (command-line
