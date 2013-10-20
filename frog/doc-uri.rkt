@@ -70,10 +70,6 @@
   (check-equal? (sort (sym-mods 'printf) symbol<?)
                 '(lang/htdp-advanced lazy plai/gc2/mutator plai/mutator
                                      racket racket/base)
-                "this test may not be portable")
-  (check-equal? (sort (sym-mods 'rectangle) symbol<?)
-                '(2htdp/image htdp/image slideshow slideshow/pict
-                              teachpack/deinprogramm/image)
                 "this test may not be portable"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
