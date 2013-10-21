@@ -47,13 +47,16 @@ A: Frozen blog.
 1. Install [Racket 5.3.4 or newer](http://racket-lang.org/download/).
 
 2. Install Frog: `$ raco pkg install frog`.
-
-    > **NOTE:** If you build Racket from HEAD, make sure you pull after 2013-Oct-07 (to get commit 5eee140) and rebuild. Otherwise `raco pkg install frog` will error.
+   
+    > **NOTE:** If you build Racket from HEAD, make sure you pull after 2013-Oct-07 (to get commit `5eee140`) and rebuild. Otherwise `raco pkg install frog` will error.
 
 3. Optional: Install Pygments if you want syntax highlighting for
-   fenced code blocks: `$ sudo easy_install Pygments`. (If that fails
-   then install `easy_install` --`$ sudo apt-get install
-   python-setuptools` -- and try again.)
+   fenced code blocks: `$ sudo easy_install --upgrade Pygments`.
+   
+    > **NOTE:** If that fails, first install `easy_install` -- e.g. `$ sudo apt-get install python-setuptools` -- and try again.
+
+    > **NOTE:** Why `--upgrade`? You probably want the most recent version of Pygments because new languages are constantly being added. For example, Racket is supported starting in Pygments 1.6.
+
 
 ## Starting a new blog project
 
