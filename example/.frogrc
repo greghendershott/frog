@@ -7,6 +7,12 @@ author = The Unknown Author
 # Whether to show the count of posts next to each tag in sidebar
 show-tag-counts? = true
 
+# The directory where Frog should find .md or .scrbl files to process
+src-dir = _src
+
+# The directory where Frog should place its generated output.
+output-dir = .
+
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
 # Here's an example of the Jekyll "pretty" style:

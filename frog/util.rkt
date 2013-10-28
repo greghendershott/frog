@@ -32,7 +32,7 @@
 (define (our-encode s)
   ;; Extremely conservative.
   ;;
-  ;; WARNING: Changing this will break blog post permalink pattens that
+  ;; WARNING: Changing this will break blog post permalink patterns that
   ;; use the {title} variable. Even if this could be improved, doing so
   ;; would break backward compatability.
   (~> (list->string (for/list ([c (in-string s)])

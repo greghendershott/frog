@@ -10,16 +10,18 @@
 
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))
+(define current-src-dir (make-parameter #f))
+(define current-output-dir (make-parameter #f))
 
 ;; For interactive development
 (define-runtime-path example "../example/")
 
 ;; sources
-(define (src-path) (build-path (top) "_src"))
+(define (src-path) (build-path (top) (current-src-dir)))
 (define (src/posts-path) (build-path (src-path) "posts"))
 
 ;; destinations, from root of the generated web site on down
-(define (www-path) (build-path (top)))
+(define (www-path) (build-path (top) (current-output-dir)))
 (define (www/tags-path) (build-path (www-path) "tags"))
 (define (www/feeds-path) (build-path (www-path) "feeds"))
 (define (www/img-path) (build-path (www-path) "img"))
@@ -28,10 +30,20 @@
 ;; Ex: ~/project/css would become /css
 (define (abs->rel/www path)
   (let ([path (path->string path)]
-        [root (path->string (www-path))])
+        [root (path->string (top))])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
       [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
+
+;; Convert's dest-path's physical location for the file from the 
+;; toplevel to a domain-level uri.
+;; Ex: ~/build/tags/racket.html -> tags/racket.html
+(define (rel/www->uri path)
+  (let ([path (path->string path)]
+        [dest (path->string (www-path))])
+    (match path
+      [(pregexp (str "^" (regexp-quote dest) "(.+$)") (list _ x)) x]
+      [_ (raise-user-error 'rel/www->uri "dest: ~v path: ~v" dest path)])))
 
 ;; Convert from absolute local path to one relative to project top dir.
 ;; Ex: ~/project/css would become css
@@ -84,7 +96,7 @@
         [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
         [s s])
       string->path
-      abs->rel/www))
+      rel/www->uri))
 
 (module+ test
   (parameterize ([top (find-system-path 'home-dir)])
