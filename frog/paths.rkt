@@ -43,7 +43,7 @@
   (let ([path (simple-path-string path)]
         [dest (simple-path-string (www-path))])
     (match path
-      [(pregexp (str "^" (regexp-quote dest) "(.+$)") (list _ x)) (str "/" x)]
+      [(pregexp (str "^" (regexp-quote dest) "/?(.+$)") (list _ x)) (str "/" x)]
       [_ (raise-user-error 'rel/www->uri "dest: ~v path: ~v" dest path)])))
 
 ;; Convert from absolute local path to one relative to project top dir.

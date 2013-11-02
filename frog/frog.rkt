@@ -321,16 +321,16 @@
        ,(cond [(zero? page-num) `(li ([class "disabled"])
                                      (a ([href "#"]) 'larr))]
               [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
-                                        abs->rel/www)])
+                                        rel/www->uri)])
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
            `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www)])
+                (a ([href ,(~> (file/page base-file n) rel/www->uri)])
                    ,(number->string (add1 n)))))
        ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
                                                   (a ([href "#"]) 'rarr))]
               [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
-                                        abs->rel/www)])
+                                        rel/www->uri)])
                             'rarr))]) ))
 
 (define (file/page base-file page-num)
