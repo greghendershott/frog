@@ -50,6 +50,7 @@
      (match (path->string name)
        [(pregexp post-file-px (list _ dt nm))
         ;; Read either Markdown or Scribble file
+        (prn1 "Reading ~a" (abs->rel/top path))
         (define xs
           (match (path->string name)
             [(pregexp "\\.scrbl$")
@@ -68,12 +69,9 @@
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
-               (prn0 (str "Skipping ~a\n"
-                          "         because it has the tag, 'DRAFT'")
-                     (abs->rel/top path))
+               (prn0 "        Skipping because it has the tag, 'DRAFT'")
                v]
               [else
-               (prn1 "Reading ~a" (abs->rel/top path))
                ;; Add these tags to the set
                (for ([x tags])
                  (unless (equal? x "")
