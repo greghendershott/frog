@@ -112,7 +112,8 @@
                       x))
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
-    [`(,(or `(pre ,metas ...)           ;Markdown
+    [`(,(or `(pre () ,metas ...)        ;Markdown
+            `(pre ,metas ...)           ;Markdown
             `(p () ,metas ...))         ;Scribble
        ,more ...)
      ;; In the meta-data we don't want HTML entities like &ndash; we
@@ -145,6 +146,7 @@
 (define (more-xexpr? x)
   (match x
     [`(p ,(pregexp "\\s*<!--\\s*more\\s*-->\\s*")) #t]             ;Markdown
+    [`(!HTML-COMMENT () ,(pregexp "more")) #t]                     ;Markdown
     [`(p () "<" "!" ndash ,(pregexp "\\s*more\\s*") ndash ">") #t] ;Scribble
     [_ #f]))
 
