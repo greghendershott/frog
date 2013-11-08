@@ -13,12 +13,8 @@ install:
 before_script:
 
 script:
- # Note: Must duplicate `deps` from info.rkt here.
- - /usr/racket/bin/raco pkg install --deps search-auto markdown find-parent-dir
- - /usr/racket/bin/raco pkg install --link frog
- - /usr/racket/bin/raco link frog # for frog/widgets in templates.rkt
- - cd frog
- - /usr/racket/bin/raco make frog.rkt
- - /usr/racket/bin/raco test -x .
+ - cd ..   # Travis did a cd into the dir. Back up, for the next:
+ - /usr/racket/bin/raco pkg install --deps search-auto --link frog
+ - /usr/racket/bin/raco test -x -p frog
 
 after_script:
