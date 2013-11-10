@@ -44,12 +44,10 @@ A: Frozen blog.
 
 ## Installing Frog
 
-1. Install [Racket 5.3.4 or newer](http://racket-lang.org/download/).
+1. Install [Racket 5.3.5 or newer](http://racket-lang.org/download/).
 
 2. Install Frog: `$ raco pkg install frog`.
    
-    > **NOTE:** If you build Racket from HEAD, make sure you pull after 2013-Oct-07 (to get commit `5eee140`) and rebuild. Otherwise `raco pkg install frog` will error.
-
 3. Optional: Install Pygments if you want syntax highlighting for
    fenced code blocks: `$ sudo easy_install --upgrade Pygments`.
    
