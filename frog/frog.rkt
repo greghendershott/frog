@@ -69,7 +69,8 @@
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
-               (prn0 "        Skipping because it has the tag, 'DRAFT'")
+               (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
+                     (abs->rel/top path))
                v]
               [else
                ;; Add these tags to the set
