@@ -113,9 +113,10 @@
                       x))
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
-    [`(,(or `(pre () ,metas ...)        ;Markdown
-            `(pre ,metas ...)           ;Markdown
-            `(p () ,metas ...))         ;Scribble
+    [`(,(or `(pre () (code () ,metas ...)) ;Markdown
+            `(pre () ,metas ...)           ;Markdown
+            `(pre ,metas ...)              ;Markdown
+            `(p () ,metas ...))            ;Scribble
        ,more ...)
      ;; In the meta-data we don't want HTML entities like &ndash; we
      ;; want plain text.
@@ -127,6 +128,8 @@
     [_ (err "")]))
 
 (module+ test
+  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))))))
+  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")))))
   (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")))))
   (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")))))
   (check-exn exn? (thunk (meta-data '((pre "not meta data")))))
@@ -354,7 +357,8 @@
 (define (syntax-highlight xs)
   (for/list ([x xs])
     (match x
-      [`(pre ([class ,brush]) ,text)
+      [(or `(pre ([class ,brush]) (code () ,text))
+           `(pre ([class ,brush]) ,text))
        (match brush
          [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
           `(div ([class ,(str "brush: " lang)])
