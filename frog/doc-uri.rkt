@@ -77,14 +77,19 @@
 (define/contract (doc-uri/sym-in-mod id mod ext-root-uri)
   (symbol? symbol? (or/c #f string?) . -> . (or/c #f string?)) ;or exn
   (define tag (xref-binding->definition-tag xref (list mod id) #f))
-  (and tag
-       (let-values ([(path anchor)
-                     (xref-tag->path+anchor xref
-                                            tag
-                                            #:external-root-url ext-root-uri)])
-         (format "~a#~a" path anchor))))
+  (with-handlers ([exn:fail? (const #f)]) ;in case path has 'up
+    (and tag
+         (let-values ([(path anchor)
+                       (xref-tag->path+anchor xref
+                                              tag
+                                              #:external-root-url ext-root-uri)])
+           (format "~a#~a" path anchor)))))
 
 (module+ test
   (check-equal?
    (doc-uri/sym-in-mod 'write 'racket "/")
-   "/reference/Writing.html#(def._((quote._~23~25kernel)._write))"))
+   "/reference/Writing.html#(def._((quote._~23~25kernel)._write))")
+  (check-not-exn
+   (thunk
+    (doc-uri/sym-in-mod 'send-message 'aws/sqs
+                        "http://docs.racket-lang.org/"))))
