@@ -88,8 +88,4 @@
 (module+ test
   (check-equal?
    (doc-uri/sym-in-mod 'write 'racket "/")
-   "/reference/Writing.html#(def._((quote._~23~25kernel)._write))")
-  (check-not-exn
-   (thunk
-    (doc-uri/sym-in-mod 'send-message 'aws/sqs
-                        "http://docs.racket-lang.org/"))))
+   "/reference/Writing.html#(def._((quote._~23~25kernel)._write))"))
