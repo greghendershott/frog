@@ -166,7 +166,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-post-page p older newer)
-  (match-define (post title dest-path uri-path date tags blurb more? body) p)
+  (match-define (post title dest-path uri-path dt tags blurb more? body) p)
   (prn1 "Generating post ~a" (abs->rel/top dest-path))
   (~> (render-template
        (src-path)
@@ -174,7 +174,7 @@
        {'title title
         'uri-path uri-path
         'full-uri (full-uri uri-path)
-        'date+tags (xexpr->string (date+tags->xexpr date tags))
+        'date+tags (xexpr->string (date+tags->xexpr dt tags))
         'content (~> body enhance-body xexprs->string)
         'older-uri (and older (post-uri-path older))
         'newer-uri (and newer (post-uri-path newer))
