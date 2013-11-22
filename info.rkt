@@ -1,6 +1,6 @@
 #lang setup/infotab
-(define version "0.8")
+(define version "0.9")
 (define collection 'multi)
-(define deps '(("markdown" "0.7")
+(define deps '(("markdown" "0.9")
                "rackjure"
                "find-parent-dir"))

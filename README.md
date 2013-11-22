@@ -55,6 +55,23 @@ A: Frozen blog.
 
     > **NOTE:** Why `--upgrade`? You probably want the most recent version of Pygments because new languages are constantly being added. For example, Racket is supported starting in Pygments 1.6.
 
+## Updating Frog
+
+To update Frog and its dependencies, use the approach appropriate for
+your version of Racket.
+
+### Using Racket 6
+
+    raco pkg update --update-deps frog
+
+### Using Racket 5.3.5 or 5.3.6
+
+You need to remove Frog then install Frog again. (This is due to `raco
+pkg update` not working when a minimum required version of a package
+is specified.)
+
+    raco pkg remove frog
+    raco pkg install frog
 
 ## Starting a new blog project
 
@@ -351,6 +368,13 @@ language available -- Racket -- should you need it. However most of
 what you need to do will probably very simple, such as the occasional
 `if` or `when` test, or perhaps defining a helper function to minimize
 repetition.
+
+> **NOTE**: If you edit the templates, be careful not to use a Racket
+> function as a value (in a non-application); you'll get an error
+> because he template renderer can't convert a procedure to a
+> string. For example, if you mistakenly use `@date` instead of the
+> post template's predefined variable `@date+tags`, you're referring
+> to the `racket/date` function `date`, and you'll get such an error.
 
 ### Page template: `_src/page-template.html`
 
