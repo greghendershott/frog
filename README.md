@@ -371,7 +371,7 @@ repetition.
 
 > **NOTE**: If you edit the templates, be careful not to use a Racket
 > function as a value (in a non-application); you'll get an error
-> because he template renderer can't convert a procedure to a
+> because the template renderer can't convert a procedure to a
 > string. For example, if you mistakenly use `@date` instead of the
 > post template's predefined variable `@date+tags`, you're referring
 > to the `racket/date` function `date`, and you'll get such an error.
