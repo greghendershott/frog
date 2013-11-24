@@ -1,5 +1,5 @@
 #lang setup/infotab
-(define version "0.9")
+(define version "0.10")
 (define collection 'multi)
 (define deps '(("markdown" "0.9")
                "rackjure"
