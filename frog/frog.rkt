@@ -171,15 +171,15 @@
   (~> (render-template
        (src-path)
        "post-template.html"
-       {'title title
+       {'title (title->htmlstr title)
         'uri-path uri-path
         'full-uri (full-uri uri-path)
-        'date+tags (xexpr->string (date+tags->xexpr dt tags))
+        'date+tags (~>> (date+tags->xexpr dt tags) xexpr->string)
         'content (~> body enhance-body xexprs->string)
         'older-uri (and older (post-uri-path older))
         'newer-uri (and newer (post-uri-path newer))
-        'older-title (and older (post-title older))
-        'newer-title (and newer (post-title newer))})
+        'older-title (and older (title->htmlstr (post-title older)))
+        'newer-title (and newer (title->htmlstr (post-title newer)))})
       ;; bodies->page wants (listof xexpr?) so convert from string? to that
       string->xexpr
       list
@@ -188,6 +188,17 @@
                     #:uri-path uri-path
                     #:keywords tags)
       (display-to-file* dest-path #:exists 'replace)))
+
+(define (title->htmlstr t)
+  ;; `parse-markdown` returns (listof xexpr?). For simple "one-liner"
+  ;; markdown that's usually a list with just a single 'p element. In
+  ;; that case, discard the 'p and use its body element(s). If it
+  ;; parsed to something more complicated, the visual result will
+  ;; probably be unappealing, but at least handle that case here.
+  (define xs (match (parse-markdown t)
+               [`((p () ,xs ...)) xs]
+               [xs xs]))
+  (string-join (map xexpr->string xs) ""))
 
 (define (date+tags->xexpr date tags)
   (define dt (substring date 0 10)) ;; just YYYY-MM-DD
@@ -301,7 +312,8 @@
          (post title dest-path uri-path date tags blurb more? body) x)
         `(article
           ([class "index-post"])
-          (header (h2 (a ([href ,uri-path]) ,title))
+          (header (h2 (a ([href ,uri-path])
+                         ,@(parse-markdown title)))
                   ,(date+tags->xexpr date tags))
           (div ([class "entry-content"])
                ,@(cond [(current-index-full?) (enhance-body body)]
