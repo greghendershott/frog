@@ -403,7 +403,7 @@ the default template. Specifically:
 ### Post template: `_src/post-template.html`
 
 The `_src/post-template.html` template determines how blog posts are
-laid out, on page that are dedicated to one post. The default template
+laid out on pages that are dedicated to one post. The default template
 defines an `<article>` element.
 
 For pages that are blog posts, the result of `post-template.html`
@@ -423,10 +423,12 @@ can also be used for pages that are not blog post pages.)
 
 > **NOTE**: This template does _not_ control how a blog post is laid
 > out on an index page like `/index.html` or
-> `/tags/<some-tag>.html`. Why?  The main purpose of this template is
-> to specify things like Disqus comments, Tweet and +1 sharing
-> buttons, and older/newer links --- things that only make sense in
-> the context of pages dedicated to one blog post.
+> `/tags/<some-tag>.html`. For that, see `_src/index-template.rkt`.
+>
+> The main purpose of this template is to specify things like Disqus
+> comments, Tweet and +1 sharing buttons, and older/newer links ---
+> things that only make sense in the context of pages dedicated to one
+> blog post.
 
 Anything in the file that looks like `@variable` or `@|variable|` is a
 template variable supplied by Frog.  Most of these should be
@@ -436,12 +438,54 @@ the default template. Specifically:
 - `title`: The title of the post
 - `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
 - `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `date`: The date of the post
+- `tags`: The tags of the post
 - `date+tags`: The date and tags of the post
 - `content`: The content of the post
 - `older-uri`: The URI of the next older post, if any, or `#f`
 - `older-title`: The title of the next older post, if any, or `#f`
 - `newer-uri`: The URI of the next newer post, if any, or `#f`
 - `newer-title`: The title of the next newer post, if any, or `#f`
+
+### Index template: `_src/index-template.html`
+
+The `_src/index-template.html` template determines how blog posts are
+laid out on index pages.
+
+Typically it would be similar to your `_src/post-template.rkt`, but
+without some "footer" items like comments or previous/next post
+buttons.
+
+    +---------------------------+
+    | page-template             |
+    |                           |
+    |       +---------------+   |
+    |       | post-template |   |
+    |       +---------------+   |
+    |                           |
+    |       +---------------+   |
+    |       | post-template |   |
+    |       +---------------+   |
+    |                           |
+    |       +---------------+   |
+    |       | post-template |   |
+    |       +---------------+   |
+    |             . . .         |
+    |                           |
+    +---------------------------+
+
+Anything in the file that looks like `@variable` or `@|variable|` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template. Specifically:
+
+- `title`: The title of the post
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `date`: The date of the post
+- `tags`: The tags of the post
+- `date+tags`: The date and tags of the post
+- `content`: The content of the post
 
 ### Widgets
 

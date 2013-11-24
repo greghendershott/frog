@@ -1,12 +1,5 @@
 #lang racket/base
 
-(require racket/dict
-         racket/contract
-         web-server/templates
-         frog/widgets)
-
-(provide render-template)
-
 ;; Beware, cargo cults be here!
 ;;
 ;; The idea here is that we make some variables visible in the
@@ -23,18 +16,27 @@
 ;; works, but it does, following this Racket mailing list thread:
 ;; http://www.mail-archive.com/users@racket-lang.org/msg18108.html
 
-(define/contract (render-template dir filename dict)
-  (path? path-string? dict? . -> . string?)
-  (define template-namespace (make-empty-namespace))
-  (define (attach/require m) ; symbol? -> void
-    (namespace-attach-module (current-namespace) m template-namespace)
-    (parameterize [(current-namespace template-namespace)]
-      (namespace-require m)))
-  (attach/require 'web-server/templates)
-  (attach/require 'frog/widgets)
-  (for ([(k v) (in-dict dict)])
-    (namespace-set-variable-value! k v #f template-namespace))
-  (define to-eval
-    #`(include-template #,(datum->syntax #'render-template filename)))
-  (parameterize ([current-directory dir])
-    (eval to-eval template-namespace)))
+(module template "pre-base.rkt" ;; `date` in namespace... not want!
+  (require racket/dict
+           racket/contract
+           web-server/templates
+           frog/widgets)
+  (define/contract (render-template dir filename dict)
+    (path? path-string? dict? . -> . string?)
+    (define template-namespace (make-empty-namespace))
+    (define (attach/require m) ; symbol? -> void
+      (namespace-attach-module (current-namespace) m template-namespace)
+      (parameterize [(current-namespace template-namespace)]
+        (namespace-require m)))
+    (attach/require 'web-server/templates)
+    (attach/require 'frog/widgets)
+    (for ([(k v) (in-dict dict)])
+      (namespace-set-variable-value! k v #f template-namespace))
+    (define to-eval
+      #`(include-template #,(datum->syntax #'render-template filename)))
+    (parameterize ([current-directory dir])
+      (eval to-eval template-namespace)))
+  (provide render-template))
+
+(require 'template)
+(provide render-template)

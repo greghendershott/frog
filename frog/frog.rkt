@@ -166,7 +166,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (write-post-page p older newer)
-  (match-define (post title dest-path uri-path dt tags blurb more? body) p)
+  (match-define (post title dest-path uri-path date tags blurb more? body) p)
   (prn1 "Generating post ~a" (abs->rel/top dest-path))
   (~> (render-template
        (src-path)
@@ -174,7 +174,9 @@
        {'title (title->htmlstr title)
         'uri-path uri-path
         'full-uri (full-uri uri-path)
-        'date+tags (~>> (date+tags->xexpr dt tags) xexpr->string)
+        'date (~> date date->xexpr xexpr->string)
+        'tags (~> tags tags->xexpr xexpr->string)
+        'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
         'content (~> body enhance-body xexprs->string)
         'older-uri (and older (post-uri-path older))
         'newer-uri (and newer (post-uri-path newer))
@@ -201,13 +203,20 @@
   (string-join (map xexpr->string xs) ""))
 
 (define (date+tags->xexpr date tags)
-  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
   `(p ([class "date-and-tags"])
-      (time ([datetime ,dt]
-             [pubdate "true"]) ,dt)
+      ,(date->xexpr date)
       " :: "
-      ,@(add-between (map tag->xexpr tags)
-                     ", ")))
+      ,(tags->xexpr tags)))
+
+(define (date->xexpr date)
+  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
+  `(time ([datetime ,dt]
+          [pubdate "true"]) ,dt))
+
+(define (tags->xexpr tags)
+  `(span ([class "tags"])
+         ,@(add-between (map tag->xexpr tags)
+                        ", ")))
 
 (define (tag->xexpr s)
   `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
@@ -310,17 +319,32 @@
   (~> (for/list ([x (in-list xs)])
         (match-define
          (post title dest-path uri-path date tags blurb more? body) x)
-        `(article
-          ([class "index-post"])
-          (header (h2 (a ([href ,uri-path])
-                         ,@(parse-markdown title)))
-                  ,(date+tags->xexpr date tags))
-          (div ([class "entry-content"])
-               ,@(cond [(current-index-full?) (enhance-body body)]
-                       [more? `(,@(enhance-body blurb)
-                                (footer ([class "read-more"])
+        (define contents
+          (cond [(current-index-full?) (enhance-body body)]
+                [more? `(,@(enhance-body blurb)
+                         (footer ([class "read-more"])
                                  (a ([href ,uri-path]) hellip "more" hellip)))]
-                       [else (enhance-body blurb)]))))
+                [else (enhance-body blurb)]))
+        ;; For users of old versions of Frog: If project has no
+        ;; index-template.html, copy the one from example. Much like
+        ;; --init does, but just this one file.
+        (define tpl "index-template.html")
+        (define to (~> (build-path (src-path) tpl) simplify-path))
+        (unless (file-exists? to)
+          (define from (~> (build-path example "_src" tpl) simplify-path))
+          (prn0 "~a does not exist. Copying from ~a" to from)
+          (copy-file from to))
+        (~> (render-template
+             (src-path)
+             tpl
+             {'title (title->htmlstr title)
+              'uri-path uri-path
+              'full-uri (full-uri uri-path)
+              'date (~> date date->xexpr xexpr->string)
+              'tags (~> tags tags->xexpr xexpr->string)
+              'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
+              'content (~> contents xexprs->string)})
+            string->xexpr))
       (append `((footer ,(bootstrap-pagination base-file page-num num-pages))))
       (bodies->page #:title title
                     #:description title

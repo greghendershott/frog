@@ -11,7 +11,7 @@
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))
 
-;; For interactive development
+;; For interactive development and for --init feature.
 (define-runtime-path example "../example/")
 
 ;; sources
