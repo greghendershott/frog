@@ -840,7 +840,8 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (find-frog-root)
-  (or (find-parent-containing (current-directory) ".frogrc")
+  (or (let ([x (find-parent-containing (current-directory) ".frogrc")])
+        (and x (simplify-path x)))
       (current-directory)))
 
 (module+ main
