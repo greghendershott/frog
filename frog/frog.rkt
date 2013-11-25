@@ -920,6 +920,8 @@ EOF
                #:watch? watch?
                #:port port)]
        #:once-any
+       [("-S" "--silent") "Silent. Put first."
+        (current-verbosity -1)]
        [("-v" "--verbose") "Verbose. Put first."
         (current-verbosity 1)
         (prn1 "Verbose mode")]

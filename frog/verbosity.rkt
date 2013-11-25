@@ -4,7 +4,7 @@
 
 (provide current-verbosity prn0 prn1 prn2)
 
-
+;; Note: This may be set to -1 for silent mode.
 (define current-verbosity (make-parameter 0))
 
 (define (prn level fmt . vs)
