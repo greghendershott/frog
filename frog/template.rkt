@@ -1,4 +1,4 @@
-#lang racket/base
+#lang racket
 
 ;; Beware, cargo cults be here!
 ;;
@@ -16,27 +16,34 @@
 ;; works, but it does, following this Racket mailing list thread:
 ;; http://www.mail-archive.com/users@racket-lang.org/msg18108.html
 
-(module template "pre-base.rkt" ;; `date` in namespace... not want!
-  (require racket/dict
-           racket/contract
-           web-server/templates
-           frog/widgets)
-  (define/contract (render-template dir filename dict)
-    (path? path-string? dict? . -> . string?)
-    (define template-namespace (make-empty-namespace))
-    (define (attach/require m) ; symbol? -> void
-      (namespace-attach-module (current-namespace) m template-namespace)
-      (parameterize [(current-namespace template-namespace)]
-        (namespace-require m)))
-    (attach/require 'web-server/templates)
-    (attach/require 'frog/widgets)
-    (for ([(k v) (in-dict dict)])
-      (namespace-set-variable-value! k v #f template-namespace))
-    (define to-eval
-      #`(include-template #,(datum->syntax #'render-template filename)))
-    (parameterize ([current-directory dir])
-      (eval to-eval template-namespace)))
-  (provide render-template))
+(require web-server/templates
+         frog/widgets)
 
-(require 'template)
+;; The modules needed by the template. Note that these must
+;; be required above normally in this template.rkt module.
+(define mods '(racket
+               web-server/templates
+               frog/widgets))
+
+(define/contract (render-template dir filename dict)
+  (path? path-string? dict? . -> . string?)
+  (define orig-ns (current-namespace))
+  (parameterize ([current-namespace (make-base-empty-namespace)]
+                 [current-load-relative-directory dir])
+    ;; `namespace-attach-module` says the new namespace can reuse the
+    ;; module already imported into orig-ns. Faster.
+    (for-each (curry namespace-attach-module orig-ns) mods)
+    ;; Require the files into the namespace, too. In the case of
+    ;; racket, that's mandatory (sorta the #lang racket).  The others
+    ;; we could `require` in the eval form, but simplest to handle
+    ;; them here, too.
+    (for-each namespace-require mods)
+    ;; And finally, eval a form. The `let` introduces the variables
+    ;; from dict. `include/text` effectively evaluates the template as
+    ;; if it were written in #lang scribble/text.
+    (eval `(let (,@(for/list ([(k v) (in-dict dict)])
+                     (list k v)))
+             (include-template ,filename))
+          (current-namespace))))
+
 (provide render-template)
