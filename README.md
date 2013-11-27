@@ -369,12 +369,9 @@ what you need to do will probably very simple, such as the occasional
 `if` or `when` test, or perhaps defining a helper function to minimize
 repetition.
 
-> **NOTE**: If you edit the templates, be careful not to use a Racket
-> function as a value (in a non-application); you'll get an error
-> because the template renderer can't convert a procedure to a
-> string. For example, if you mistakenly use `@date` instead of the
-> post template's predefined variable `@date+tags`, you're referring
-> to the `racket/date` function `date`, and you'll get such an error.
+> **NOTE**: If you need to require another module in your template,
+> you must use `local-require`. Plain `require` won't work because the
+> template is not evaluated at a module level or top level.
 
 ### Page template: `_src/page-template.html`
 
@@ -438,9 +435,11 @@ the default template. Specifically:
 - `title`: The title of the post
 - `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
 - `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
-- `date`: The date of the post
-- `tags`: The tags of the post
-- `date+tags`: The date and tags of the post
+- `date-8601`: The post date as a string, "YYYY-MM-DD".
+- `date-struct`: The post date as a `racket/date` `date` struct.
+- `date`: HTML to show the date of the post in a `<time>` element.
+- `tags`: HTML to show the tags of the post as links.
+- `date+tags`: HTML to show the date and tags of the post.
 - `content`: The content of the post
 - `older-uri`: The URI of the next older post, if any, or `#f`
 - `older-title`: The title of the next older post, if any, or `#f`
@@ -482,10 +481,38 @@ the default template. Specifically:
 - `title`: The title of the post
 - `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
 - `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
-- `date`: The date of the post
-- `tags`: The tags of the post
-- `date+tags`: The date and tags of the post
+- `date-8601`: The post date as a string, "YYYY-MM-DD".
+- `date-struct`: The post date as a `racket/date` `date` struct.
+- `date`: HTML to show the date of the post in a `<time>` element.
+- `tags`: HTML to show the tags of the post as links.
+- `date+tags`: HTML to show the date and tags of the post.
 - `content`: The content of the post
+
+### Template Example
+
+Let's say you want to customize the date display format of your posts.
+Instead of the default ISO-8601 YYYY-MM-DD format, you want it to be
+the default of the `date->string` function from the `racket/date`
+module. Here is what you could do in your `index-template.rkt`:
+
+```html
+@(local-require racket/date)
+<article>
+  <header>
+    <h2><a href='@|uri-path|'>@|title|</a></h2>
+    <p class='date-and-tags'>
+      <time datetime='@|date-8601|' pubdate='true'>
+        @(date->string date-struct)
+      </time>
+      :: @|tags|</p>
+  </header>
+  @|content|
+</article>
+```
+
+> **NOTE**: If you need to require another module in your template,
+> you must use `local-require`. Plain `require` won't work because the
+> template is not evaluated at a module level or top level.
 
 ### Widgets
 

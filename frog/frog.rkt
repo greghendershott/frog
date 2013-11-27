@@ -174,6 +174,8 @@
        {'title (title->htmlstr title)
         'uri-path uri-path
         'full-uri (full-uri uri-path)
+        'date-8601 date
+        'date-struct (date->date-struct date)
         'date (~> date date->xexpr xexpr->string)
         'tags (~> tags tags->xexpr xexpr->string)
         'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
@@ -201,6 +203,13 @@
                [`((p () ,xs ...)) xs]
                [xs xs]))
   (string-join (map xexpr->string xs) ""))
+
+(define (date->date-struct YYYY-MM-DD-string)
+  (match YYYY-MM-DD-string
+    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})" (list _ y m d))
+     (date 0 0 0
+           (string->number d) (string->number m) (string->number y)
+           0 0 #f 0)]))
 
 (define (date+tags->xexpr date tags)
   `(p ([class "date-and-tags"])
@@ -340,6 +349,8 @@
              {'title (title->htmlstr title)
               'uri-path uri-path
               'full-uri (full-uri uri-path)
+              'date-8601 date
+              'date-struct (date->date-struct date)
               'date (~> date date->xexpr xexpr->string)
               'tags (~> tags tags->xexpr xexpr->string)
               'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
