@@ -455,23 +455,23 @@ Typically it would be similar to your `_src/post-template.rkt`, but
 without some "footer" items like comments or previous/next post
 buttons.
 
-    +---------------------------+
-    | page-template             |
-    |                           |
-    |       +---------------+   |
-    |       | post-template |   |
-    |       +---------------+   |
-    |                           |
-    |       +---------------+   |
-    |       | post-template |   |
-    |       +---------------+   |
-    |                           |
-    |       +---------------+   |
-    |       | post-template |   |
-    |       +---------------+   |
-    |             . . .         |
-    |                           |
-    +---------------------------+
+    +----------------------------+
+    | page-template              |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |              . . .         |
+    |                            |
+    +----------------------------+
 
 Anything in the file that looks like `@variable` or `@|variable|` is a
 template variable supplied by Frog.  Most of these should be
