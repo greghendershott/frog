@@ -360,7 +360,7 @@
       (bodies->page #:title title
                     #:description title
                     #:feed feed
-                    #:uri-path (abs->rel/www file)
+                    #:uri-path (rel/www->uri file)
                     #:keywords (cond [tag (list tag)]
                                      [else (hash-keys all-tags)])
                     #:tag tag
@@ -372,16 +372,16 @@
        ,(cond [(zero? page-num) `(li ([class "disabled"])
                                      (a ([href "#"]) 'larr))]
               [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
-                                        abs->rel/www)])
+                                        rel/www->uri)])
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
            `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www)])
+                (a ([href ,(~> (file/page base-file n) rel/www->uri)])
                    ,(number->string (add1 n)))))
        ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
                                                   (a ([href "#"]) 'rarr))]
               [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
-                                        abs->rel/www)])
+                                        rel/www->uri)])
                             'rarr))]) ))
 
 (define (file/page base-file page-num)
@@ -623,7 +623,7 @@ EOF
                              (path-replace-suffix ".html")
                              abs->rel/www
                              explode-path
-                             cddr)))) ;lop off the "/" and "_src" parts
+                             cddr)))) ;lop off the "/" and (src-path) parts
     (define xs
       (~> (match (path->string name)
             [(pregexp "\\.scrbl$")
@@ -643,7 +643,7 @@ EOF
                (path-replace-suffix "")
                file-name-from-path
                path->string)]))
-    (define uri-path (abs->rel/www dest-path))
+    (define uri-path (rel/www->uri dest-path))
     (prn1 "Generating non-post ~a" (abs->rel/top dest-path))
     (~> xs
         (bodies->page #:title title
@@ -861,6 +861,8 @@ EOF
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
+                               [src-dir "_src"]
+                               [output-dir "."]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [show-tag-counts? #t]
