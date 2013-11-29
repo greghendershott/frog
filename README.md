@@ -346,7 +346,7 @@ example, `_src/About.md` will be `/About.html` in the site.
 
 > **NOTE**: Non-post pages are _not_ included in any automatically
 > generated index pages or feeds. You can manually add them to the nav
-> bar by editing that porition of `page-template.html`.
+> bar by editing that portion of `page-template.html`.
 
 ## sitemap.txt
 
@@ -365,9 +365,9 @@ Racket code.
 
 In contrast to most templating systems, you have a full programming
 language available -- Racket -- should you need it. However most of
-what you need to do will probably very simple, such as the occasional
-`if` or `when` test, or perhaps defining a helper function to minimize
-repetition.
+what you need to do will probably be very simple, such as the
+occasional `if` or `when` test, or perhaps defining a helper function
+to minimize repetition.
 
 > **NOTE**: If you need to require another module in your template,
 > you must use `local-require`. Plain `require` won't work because the
