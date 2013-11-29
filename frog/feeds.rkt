@@ -74,7 +74,7 @@
          ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
                      [more? `(,@blurb
                               (a ([href ,item-uri])
-                                 (em "Continue reading ...")))]
+                                 (em "More" hellip)))]
                      [else blurb])
                unlinkify-footnotes))))))
 
@@ -127,7 +127,7 @@
          ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
                      [more? `(,@blurb
                               (a ([href ,item-uri])
-                                 (em "Continue reading ...")))]
+                                 (em "More" hellip)))]
                      [else blurb])
                unlinkify-footnotes))))))
 
