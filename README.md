@@ -125,7 +125,7 @@ expects:
 project/
   # Files provided by you:
   .frogrc       # see next section of README for details
-  _src/
+  _src/         # default. see `source-dir` in .frogrc
     page-template.html  # lets you define the page layout
     post-template.html  # lets you define the <article> layout
     posts/
@@ -154,7 +154,7 @@ Here are the files created by Frog when you run `raco frog -b` to
 (re)build the blog:
 
 ```sh
-project/
+project/        # default. see `output-dir` in .frogrc
   index*.html
   sitemap.txt
   tags/
@@ -255,6 +255,28 @@ racket-doc-link-code? = true
 # Racket documentation? i.e. This is similar to the @racket[] form in
 # Scribble.
 racket-doc-link-prose? = true
+
+# The source directory. Defaults to "_src".
+#
+# If you deploy to GitHub pages then it is simplest to keep this under
+# the repo/project top directory.
+#
+# This may be an absolute or relative path. If relative, it's relative
+# to the project top directory, i.e. to where this .frogrc file is
+# located.
+source-dir = _src
+
+# The output directory where generated HTML and other files should go.
+#
+# If you deploy to e.g. GitHub pages then it is simplest to put the
+# output in the repo/project top directory, which is why this defaults
+# to ".".  But you may change it if you prefer to copy the output
+# files to their final destination.
+#
+# This may be an absolute or relative path. If relative, it's relative
+# to the project top directory, i.e. to where this .frogrc file is
+# located.
+output-dir = .
 ```
 
 ## Creating blog posts

@@ -20,3 +20,5 @@
 (define current-posts-per-page (make-parameter 10))
 (define current-index-newest-first? (make-parameter #t))
 (define current-posts-index-uri (make-parameter "/index.html"))
+(define current-source-dir (make-parameter "_src"))
+(define current-output-dir (make-parameter "."))

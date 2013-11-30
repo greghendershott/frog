@@ -23,7 +23,7 @@
   (str "/feeds/" tag ".atom.xml"))
 
 (define (write-atom-feed xs title tag of-uri-path file)
-  (prn1 "Generating ~a" (abs->rel/top file))
+  (prn1 "Generating ~a" (abs->rel/www file))
   (define updated
     (match xs
       ['() "N/A"]
@@ -84,7 +84,7 @@
   (str "/feeds/" tag ".rss.xml"))
 
 (define (write-rss-feed xs title tag of-uri-path file)
-  (prn1 "Generating ~a" (abs->rel/top file))
+  (prn1 "Generating ~a" (abs->rel/www file))
   (define updated
     (match xs
       ['() "N/A"]

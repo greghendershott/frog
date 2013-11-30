@@ -50,7 +50,7 @@
      (match (path->string name)
        [(pregexp post-file-px (list _ dt nm))
         ;; Read either Markdown or Scribble file
-        (prn1 "Reading ~a" (abs->rel/top path))
+        (prn1 "Reading ~a" (abs->rel/src path))
         (define xs
           (match (path->string name)
             [(pregexp "\\.scrbl$")
@@ -70,7 +70,7 @@
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
                (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
-                     (abs->rel/top path))
+                     (abs->rel/src path))
                v]
               [else
                ;; Add these tags to the set
@@ -101,7 +101,7 @@
                      v)])]
        [_ (prn2 (str "Skipping ~a\n"
                      "         Not named ~a")
-                (abs->rel/top path)
+                (abs->rel/src path)
                 post-file-px)
           v])]
     [else v]))
@@ -167,7 +167,7 @@
 
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri-path date tags blurb more? body) p)
-  (prn1 "Generating post ~a" (abs->rel/top dest-path))
+  (prn1 "Generating post ~a" (abs->rel/www dest-path))
   (~> (render-template
        (src-path)
        "post-template.html"
@@ -324,7 +324,7 @@
                           page-num   ;exact-positive-integer?
                           num-pages) ;exact-positive-integer?
   (define file (file/page base-file page-num))
-  (prn1 "Generating ~a" (abs->rel/top file))
+  (prn1 "Generating ~a" (abs->rel/www file))
   (~> (for/list ([x (in-list xs)])
         (match-define
          (post title dest-path uri-path date tags blurb more? body) x)
@@ -588,7 +588,7 @@ EOF
   (define (maybe-delete path type v)
     (define (rm p)
       (delete-file p)
-      (prn0 "Deleted ~a" (abs->rel/top p)))
+      (prn0 "Deleted ~a" (abs->rel/www p)))
     (cond
      [(eq? type 'file)
       (define-values (base name must-be-dir?) (split-path path))
@@ -615,15 +615,12 @@ EOF
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
          (not (regexp-match? post-file-px (path->string name))))
-    (prn1 "Reading non-post ~a" (abs->rel/top path))
+    (prn1 "Reading non-post ~a" (abs->rel/src path))
     (define dest-path
       (build-path (www-path)
-                  (apply build-path
-                         (~> path
-                             (path-replace-suffix ".html")
-                             abs->rel/www
-                             explode-path
-                             cddr)))) ;lop off the "/" and "_src" parts
+                  (~> path
+                      (path-replace-suffix ".html")
+                      abs->rel/src)))
     (define xs
       (~> (match (path->string name)
             [(pregexp "\\.scrbl$")
@@ -644,7 +641,7 @@ EOF
                file-name-from-path
                path->string)]))
     (define uri-path (abs->rel/www dest-path))
-    (prn1 "Generating non-post ~a" (abs->rel/top dest-path))
+    (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
     (~> xs
         (bodies->page #:title title
                       #:description (xexprs->description xs)
@@ -761,7 +758,7 @@ EOF
                #:watch? watch?
                #:port port)
   (define watcher-thread
-    (cond [watch? (watch-directory (build-path (top))
+    (cond [watch? (watch-directory (build-path (src-path))
                      '(file)
                      (lambda (path what)
                        (match (path->string path)
@@ -839,7 +836,9 @@ EOF
                                [racket-doc-link-prose? #f]
                                [posts-per-page 2] ;small, for testing
                                [index-newest-first? #t]
-                               [posts-index-uri "/index.html"])
+                               [posts-index-uri "/index.html"]
+                               [source-dir "_src"]
+                               [output-dir "."])
       ;; (clean)
       (build)
       (serve #:launch-browser? #t
@@ -875,7 +874,9 @@ EOF
                                [racket-doc-link-prose? #f]
                                [posts-per-page 10]
                                [index-newest-first? #t]
-                               [posts-index-uri "/index.html"])
+                               [posts-index-uri "/index.html"]
+                               [source-dir "_src"]
+                               [output-dir "."])
       (define watch? #f)
       (define port 3000)
       (command-line
