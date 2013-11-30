@@ -842,7 +842,7 @@ EOF
                                [posts-index-uri "/index.html"])
       ;; (clean)
       (build)
-      (serve #:launch-browser? #f
+      (serve #:launch-browser? #t
              #:watch? #f
              #:port 3000)
       ;; (watch)
