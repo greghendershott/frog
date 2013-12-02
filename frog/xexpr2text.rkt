@@ -53,7 +53,7 @@
     [`(,(? block?)   ,_ ,es ...) (str (->s es) block-suffix)]
     [`(,(? symbol?)  ,_ ,es ...) (str (->s es))]
     [(? string? s) s]
-    ['ndash "--"]
+    ['ndash "-"]
     ['mdash "--"]
     ['amp "&"]
     [(or 'lsquo 'rsquo) "'"]
