@@ -67,7 +67,7 @@
              (with-input-from-file path #:mode 'text
                                    (thunk (read-markdown footnote-prefix)))]))
         ;; Split to the meta-data and the body
-        (define-values (title date tags body) (meta-data xs))
+        (define-values (title date tags body) (post-meta-data xs))
         (cond [(member "DRAFT" tags)
                (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
                      (abs->rel/src path))
@@ -106,34 +106,41 @@
           v])]
     [else v]))
 
-(define (meta-data xs)
-  (define (err x)
-    (raise-user-error 'error
-                      "Post must start with Title/Date/Tags, but found:\n~v"
-                      x))
-  (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
+(define (meta-data xs) ;; -> (list/c (dict/c symbol? string?) more)
   (match xs
     [`(,(or `(pre () (code () ,metas ...)) ;Markdown
             `(pre () ,metas ...)           ;Markdown
             `(pre ,metas ...)              ;Markdown
             `(p () ,metas ...))            ;Scribble
        ,more ...)
-     ;; In the meta-data we don't want HTML entities like &ndash; we
-     ;; want plain text.
-     (match (string-join (map xexpr->markdown metas))
-       [(pregexp px (list _ title date tags))
-        (values title date (tag-string->tags tags) more)]
-       [_ (err (first xs))])]
-    [(list x _ ...) (err x)]
-    [_ (err "")]))
+     (list (~>> (for/list ([x (in-list (~>> (map xexpr->markdown metas)
+                                            string-join
+                                            (regexp-split #rx"\n")))])
+                  (match x
+                    [(pregexp "^(.+?):\\s*(.*?)$" (list _ k v))
+                     (cons (~> k string-downcase string->symbol) v)]
+                    [_ #f]))
+                (filter values))
+           more)]
+    [xs `(() ,xs)]))
+
+(define (post-meta-data xs)
+  (match-define (list d more) (meta-data xs))
+  (define date ('date d))
+  (define tags ('tags d))
+  (define title ('title d))
+  (unless (and date tags title)
+    (raise-user-error 'error
+                      "Post must start with Title/Date/Tags"))
+  (values title date (tag-string->tags tags) more))
 
 (module+ test
-  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))))))
-  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")))))
-  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")))))
-  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")))))
-  (check-exn exn? (thunk (meta-data '((pre "not meta data")))))
-  (check-exn exn? (thunk (meta-data '((p () "not meta data"))))))
+  (check-not-exn (thunk (post-meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))))))
+  (check-not-exn (thunk (post-meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")))))
+  (check-not-exn (thunk (post-meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")))))
+  (check-not-exn (thunk (post-meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")))))
+  (check-exn exn? (thunk (post-meta-data '((pre "not meta data")))))
+  (check-exn exn? (thunk (post-meta-data '((p () "not meta data"))))))
 
 (define (tag-string->tags s)
   (~>> (regexp-split #px"," s)
@@ -356,7 +363,9 @@
               'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
               'content (~> contents xexprs->string)})
             string->xexpr))
-      (append `((footer ,(bootstrap-pagination base-file page-num num-pages))))
+      (append `((footer () ,(bootstrap-pagination base-file
+                                                  page-num
+                                                  num-pages))))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
@@ -607,48 +616,135 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build-non-post-pages) ;; -> (listof string?)
-  (fold-files write-non-post-page '() (src-path) #f))
+  (fold-files write-non-post '() (src-path) #f))
 
-(define (write-non-post-page path type v)
+(define (write-non-post path type v)
   (define-values (base name must-be-dir?) (split-path path))
   (cond
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
          (not (regexp-match? post-file-px (path->string name))))
     (prn1 "Reading non-post ~a" (abs->rel/src path))
-    (define dest-path
-      (build-path (www-path)
-                  (~> path
-                      (path-replace-suffix ".html")
-                      abs->rel/src)))
-    (define xs
+    (define xs*
       (~> (match (path->string name)
             [(pregexp "\\.scrbl$")
-             (define img-dest (path-replace-suffix dest-path ""))
+             (define img-dest (build-path (www-path)
+                                          (~> path
+                                              abs->rel/src
+                                              (path-replace-suffix ""))))
              (read-scribble-file path
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (abs->rel/www img-dest))]
-            [_ (with-input-from-file path #:mode 'text read-markdown)])
+            [_ ;; markdown
+             (with-input-from-file path #:mode 'text read-markdown)])
           enhance-body))
-    (define title
-      (match xs
-        ;; First h1 header, if any
-        [(list-no-order `(h1 (,_ ...) ... ,els ...) _ ...)
-         (string-join (map xexpr->markdown els) "")]
-        ;; Else name of the source file
-        [_ (~> path
-               (path-replace-suffix "")
-               file-name-from-path
-               path->string)]))
-    (define uri-path (abs->rel/www dest-path))
-    (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
-    (~> xs
-        (bodies->page #:title title
-                      #:description (xexprs->description xs)
-                      #:uri-path uri-path)
-        (display-to-file* dest-path #:exists 'replace))
-    (cons uri-path v)]
+    (match-define (list meta xs) (meta-data xs*))
+    (define multi? ('multi-page meta))
+    (cond [multi?
+           (define subdir (build-path (www-path)
+                                      (~> path
+                                          abs->rel/src
+                                          (path-replace-suffix ""))))
+           (define xss (h1-sections xs))
+           (define num-pages (length xss))
+           (define titles
+             (for/list ([xs xss]
+                        [n num-pages])
+               (cond [(zero? n)
+                      (or ('title meta)
+                          (~> path (path-replace-suffix "")
+                              file-name-from-path path->string))]
+                     [else
+                      (match xs
+                        [`((h1 (,_ ...) ,es ...) ,_ ...)
+                         (string-join (map xexpr->markdown es) "")])])))
+           ;; The first page is subdir/index.html. The remainder get
+           ;; their name from a slug of their title.
+           (define dest-paths
+             (for/list ([title titles]
+                        [n num-pages])
+               (build-path subdir
+                           (str (if (zero? n) "index" (our-encode title))
+                                ".html"))))
+           (define uri-paths (map abs->rel/www dest-paths))
+           (define-values (prevs nexts)
+             (match uri-paths
+               ['() (values '() '())]
+               [_   (values (cons #f (take uri-paths
+                                           (sub1 (length uri-paths))))
+                            (append (drop uri-paths 1) (list #f)))]))
+           (for/fold ([v v])
+               ([xs xss]
+                [title titles]
+                [n num-pages]
+                [dest-path dest-paths]
+                [uri-path uri-paths]
+                [prev prevs]
+                [next nexts])
+             (define prev/next
+               `(ul ([class "pager"])
+                    ,@(if prev
+                          `((li ([class "previous"]) (a ([href ,prev]) larr)))
+                          `())
+                    ,@(if next
+                          `((li ([class "next"]) (a ([href ,next]) rarr)))
+                          `())))
+             (prn1 "Generating non-post ~a" uri-path)
+             (~> xs
+                 (append `((footer () ,prev/next)))
+                 (bodies->page #:title title
+                               #:description (xexprs->description xs)
+                               #:uri-path uri-path)
+                 (display-to-file* dest-path #:exists 'replace))
+             (cons uri-path v))]
+          [else
+           (define title
+             (match xs
+               [`((h1 (,_ ...) ,es ...) ,_ ...)
+                (string-join (map xexpr->markdown es) "")]
+               [_ (~> path (path-replace-suffix "")
+                      file-name-from-path path->string)]))
+           (define dest-path
+             (build-path (www-path)
+                         (~> path
+                             abs->rel/src
+                             (path-replace-suffix ".html"))))
+           (define uri-path (abs->rel/www dest-path))
+           (prn1 "Generating non-post ~a" uri-path)
+           (~> xs
+               (bodies->page #:title title
+                             #:description (xexprs->description xs)
+                             #:uri-path uri-path)
+               (display-to-file* dest-path #:exists 'replace))
+           (cons uri-path v)])]
    [else v]))
+
+(define (h1-sections xs)
+  (let loop ([xs xs])
+    (match xs
+      ;; Stuff before the first h1, if any
+      [(list (and (not `(h1 ,_ ...)) ys) ..1
+             more ...)
+       (cons (list* ys) (loop more))]
+      ;; h1 up to the next h1, if any
+      [(list (and      `(h1 ,_ ...) head)
+             (and (not `(h1 ,_ ...)) ys) ...
+             more ...)
+       (cons (list* head ys) (loop more))]
+      ;; [(cons this more)
+      ;;  (cons this (loop more))]
+      ['() '()])))
+
+(module+ test
+  (define xs '("0" "1"
+               (h1 () "s1") "a" "b" "c"
+               (h1 () "s2") "d" "e" "f"
+               (h1 () "s3") "x" "y" "z"))
+  (check-equal? (h1-sections xs)
+                '(("0" "1")
+                  ((h1 () "s1") "a" "b" "c")
+                  ((h1 () "s2") "d" "e" "f")
+                  ((h1 () "s3") "x" "y" "z"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
