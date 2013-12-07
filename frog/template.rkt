@@ -39,8 +39,7 @@
     ;; them here, too.
     (for-each namespace-require mods)
     ;; And finally, eval a form. The `let` introduces the variables
-    ;; from dict. `include/text` effectively evaluates the template as
-    ;; if it were written in #lang scribble/text.
+    ;; from `dict`.
     (eval `(let (,@(for/list ([(k v) (in-dict dict)])
                      (list k v)))
              (include-template ,filename))
