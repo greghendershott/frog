@@ -845,7 +845,8 @@ EOF
                 [(pregexp "\\.(md|markdown)$")
                  (start-pygments)
                  (build-non-post-pages)
-                 (stop-pygments)]
+                 (stop-pygments)
+                 #t]
                 [_ #f])]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
