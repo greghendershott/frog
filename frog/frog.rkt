@@ -664,7 +664,9 @@ EOF
              (for/list ([title titles]
                         [n num-pages])
                (build-path subdir
-                           (str (if (zero? n) "index" (our-encode title))
+                           (str (if (zero? n)
+                                    "index"
+                                    (~> title string-downcase our-encode))
                                 ".html"))))
            (define uri-paths (map abs->rel/www dest-paths))
            (define-values (prevs nexts)
