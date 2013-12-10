@@ -591,7 +591,7 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: This doesn't delete generic HTML files generated from
-;; Markdown files, it only deletes those genereated from post files
+;; Markdown files, it only deletes those generated from post files
 ;; (of a certain name format).
 (define (clean)
   (define (maybe-delete path type v)
