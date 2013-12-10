@@ -623,7 +623,7 @@ EOF
   (cond
    [(and (eq? type 'file)
          (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
-         (not (regexp-match? post-file-px (path->string name))))
+         (not (equal? base (src/posts-path))))
     (prn1 "Reading non-post ~a" (abs->rel/src path))
     (define xs*
       (~> (match (path->string name)
