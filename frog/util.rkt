@@ -40,7 +40,8 @@
                                  (char-numeric? c)) c]
                             [else #\-])))
       (re* #px"-{2,}" "-")              ;only one hyphen in a row
-      (re #px"-{1,}$" "")))             ;no hyphen at end
+      (re #px"^-{1,}" "")               ;no hyphens at start
+      (re #px"-{1,}$" "")))             ;no hyphens at end
 
 (define (re* s rx new)
   (regexp-replace* rx s new))
@@ -52,5 +53,6 @@
   (check-equal? (our-encode "Foo? Bar. Baz.")
                 "Foo-Bar-Baz")
   (check-equal? (our-encode "Here's a question--how many hyphens???")
-                "Here-s-a-question-how-many-hyphens"))
-
+                "Here-s-a-question-how-many-hyphens")
+  (check-equal? (our-encode "`match` called \"amazing\" by all.")
+                "match-called-amazing-by-all"))
