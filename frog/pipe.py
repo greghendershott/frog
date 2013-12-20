@@ -25,6 +25,8 @@ from pygments.formatters import HtmlFormatter
 formatter = HtmlFormatter(linenos=True, cssclass="source", encoding="utf-8")
 lexer = ""
 code = ""
+sys.stdout.write("ready\n")
+sys.stdout.flush
 while 1:
     line_raw = sys.stdin.readline()
     if not line_raw:
