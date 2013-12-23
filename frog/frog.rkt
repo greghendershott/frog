@@ -854,9 +854,17 @@ EOF
         (and x (simplify-path x)))
       (current-directory)))
 
+(define-runtime-path info.rkt "../info.rkt")
+(define (frog-version)
+  ;; Because (require "../info.rkt") (#%info-lookup version) errors in
+  ;; some cases with Racket 6, resort to regexp-ing info.rkt as text.
+  (match (file->string info.rkt)
+    [(pregexp "^#lang setup/infotab\n\\(define version \"([^\"]+)\""
+              (list _ v))
+     v]))
+
 (module+ main
-  (require "../info.rkt")
-  (printf "Frog ~a\n" (#%info-lookup 'version))
+  (printf "Frog ~a\n" (frog-version))
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
