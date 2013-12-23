@@ -16,8 +16,5 @@ script:
  - cd ..   # Travis did a cd into the dir. Back up, for the next:
  - /usr/racket/bin/raco pkg install --deps search-auto --link frog
  - /usr/racket/bin/raco test -x -p frog
- # For Racket 6, this should exit non-zero if any packages have
- # undeclared dependencies.
- - /usr/racket/bin/raco setup
 
 after_script:
