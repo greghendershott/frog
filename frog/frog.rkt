@@ -167,6 +167,8 @@
 
 (define (write-post-page p older newer)
   (match-define (post title dest-path uri-path date tags blurb more? body) p)
+  (define older-uri (and older (post-uri-path older)))
+  (define newer-uri (and newer (post-uri-path newer)))
   (prn1 "Generating post ~a" (abs->rel/www dest-path))
   (~> (render-template
        (src-path)
@@ -180,8 +182,8 @@
         'tags (~> tags tags->xexpr xexpr->string)
         'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
         'content (~> body enhance-body xexprs->string)
-        'older-uri (and older (post-uri-path older))
-        'newer-uri (and newer (post-uri-path newer))
+        'older-uri older-uri
+        'newer-uri newer-uri
         'older-title (and older (title->htmlstr (post-title older)))
         'newer-title (and newer (title->htmlstr (post-title newer)))})
       ;; bodies->page wants (listof xexpr?) so convert from string? to that
@@ -190,7 +192,9 @@
       (bodies->page #:title title
                     #:description (xexprs->description blurb)
                     #:uri-path uri-path
-                    #:keywords tags)
+                    #:keywords tags
+                    #:rel-next older-uri
+                    #:rel-prev newer-uri)
       (display-to-file* dest-path #:exists 'replace)))
 
 (define (title->htmlstr t)
@@ -236,13 +240,15 @@
 ;;
 ;; Put the body elements in a master page template.
 
-(define (bodies->page contents                   ;(listof xexpr?)
-                      #:title title              ;string?
-                      #:description description  ;string?
-                      #:uri-path uri-path        ;string?
-                      #:feed [feed "all"]        ;string?
-                      #:keywords [keywords '()]  ;listof string?
-                      #:tag [tag #f]             ;(or/c string? #f)
+(define (bodies->page contents                         ;(listof xexpr?)
+                      #:title title                    ;string?
+                      #:description description        ;string?
+                      #:uri-path uri-path              ;string?
+                      #:feed [feed "all"]              ;string?
+                      #:keywords [keywords '()]        ;listof string?
+                      #:tag [tag #f]                   ;(or/c string? #f)
+                      #:rel-prev [rel-prev #f]         ;(or/c string? #f)
+                      #:rel-next [rel-next #f]         ;(or/c string? #f)
                       #:toc-sidebar? [toc? #t])
   (render-template
    (src-path)
@@ -258,6 +264,8 @@
     'table-of-contents (cond [toc? (xexpr->string/pretty (toc-xexpr contents))]
                              [else ""])
     'tag tag
+    'rel-prev rel-prev
+    'rel-next rel-next
     'tags-list-items (xexprs->string (tags-list-items))
     'tags/feeds (xexprs->string (tags/feeds))}))
 

@@ -12,6 +12,8 @@
     <meta name="viewport"    content="width=device-width, initial-scale=1.0">
     <link rel="icon"      href="/favicon.ico">
     <link rel="canonical" href="@|full-uri|">
+    @(when rel-next @list{<link rel="next" href="@|rel-next|">})
+    @(when rel-prev @list{<link rel="prev" href="@|rel-prev|">})
     <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/pygments.css">

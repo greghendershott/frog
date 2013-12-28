@@ -418,6 +418,8 @@ the default template. Specifically:
 - `tags-list-items`: HTML with a `<li>` for every tag on the blog, suitable for putting in a `<ul>`. Each `<li>` has a link to that tag's index page.
 - `tags/feeds`: HTML that has, for each tag, a link to its index page
   and a link to its Atom feed.
+- `rel-prev`: `@(when rel-prev @list{<link rel="next" href="@|rel-next|">})`
+- `rel-next`: `@(when rel-next @list{<link rel="prev" href="@|rel-prev|">})`
 
 ### Post template: `_src/post-template.html`
 
