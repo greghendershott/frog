@@ -52,6 +52,8 @@
      (old-exit-handler v))))
 
 (define (pygmentize code lang) ;; string? string? -> (listof xexpr?)
+  (define (default code)
+    `((pre () (code () ,code))))
   (cond [(running?)
          (displayln lang pyg-out)
          (displayln code pyg-out)
@@ -65,5 +67,5 @@
                             cddr)]
              [(? string? v) (loop (str s v "\n"))]
              [_ (copy-port pyg-err (current-output-port)) ;echo error msg
-                `((pre ,code))]))]
-        [else `((pre () (code () ,code)))]))
+                (default code)]))]
+        [else (default code)]))
