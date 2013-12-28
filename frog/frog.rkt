@@ -661,7 +661,6 @@ EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build)
-  (start-pygments)
   ;; Read the posts and get (listof post?) with which to do more work.
   ;; Sort the list by date.
   (define (post<=? a b)
@@ -723,7 +722,6 @@ EOF
     (thunk (for ([x (in-list (map full-uri
                                   (append (map post-uri-path posts) pages)))])
              (displayln x))))
-  (stop-pygments)
   (let* ([d (current-date)]
          [n (lambda (x) (~r (x d) #:min-width 2 #:pad-string "0"))])
     (prn0 (~a "Done generating files at " (n date-hour) ":" (n date-minute))))
@@ -748,16 +746,11 @@ EOF
   (define-values (base name dir?) (split-path path))
   (cond [(equal? (str base) ;a post md file?
                  (str (src/posts-path) "/"))
-         (start-pygments)
          (match (read-post path 'file '())
            [(list p) (write-post-page p p p) #t]
-           [_ #f])
-         (stop-pygments)]
+           [_ #f])]
         [else (match name
-                [(pregexp "\\.(md|markdown)$")
-                 (start-pygments)
-                 (build-non-post-pages)
-                 (stop-pygments)]
+                [(pregexp "\\.(md|markdown)$") (build-non-post-pages)]
                 [_ #f])]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

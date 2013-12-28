@@ -19,11 +19,14 @@
 import sys
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 from pygments.formatters import HtmlFormatter
 
 formatter = HtmlFormatter(linenos=True, cssclass="source", encoding="utf-8")
 lexer = ""
 code = ""
+sys.stdout.write("ready\n")
+sys.stdout.flush
 while 1:
     line_raw = sys.stdin.readline()
     if not line_raw:
@@ -41,7 +44,10 @@ while 1:
         code = ""
     elif lexer == "":
         # Starting another lex. First line is the lexer name.
-        lexer = get_lexer_by_name(line, encoding="guess")
+        try:
+            lexer = get_lexer_by_name(line, encoding="guess")
+        except ClassNotFound:
+            lexer = get_lexer_by_name("text", encoding="guess")
     else:
         # Accumulate more code
         # Use `line_raw`: Do want trailing space, \n, \r
