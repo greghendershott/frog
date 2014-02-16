@@ -64,8 +64,7 @@
              ;; Footnote prefix is date & name w/o ext
              ;; e.g. "2010-01-02-a-name"
              (define footnote-prefix (~> (str dt "-" nm) string->symbol))
-             (with-input-from-file path #:mode 'text
-                                   (thunk (read-markdown footnote-prefix)))]))
+             (parse-markdown path footnote-prefix)]))
         ;; Split to the meta-data and the body
         (define-values (title date tags body) (meta-data xs))
         (cond [(member "DRAFT" tags)
@@ -636,7 +635,7 @@ EOF
              (read-scribble-file path
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (abs->rel/www img-dest))]
-            [_ (with-input-from-file path #:mode 'text read-markdown)])
+            [_ (parse-markdown path)])
           enhance-body))
     (define title
       (match xs
