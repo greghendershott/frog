@@ -890,7 +890,7 @@ EOF
       (command-line
        #:program "frog"
        #:once-each
-       [("--init")
+       [("-i" "--init")
         (""
          "Initialize current directory as a new Frog project, creating"
          "default files as a starting point.")
