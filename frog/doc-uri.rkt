@@ -6,7 +6,8 @@
 
 (require setup/xref
          scribble/xref
-         scribble/manual-struct)
+         scribble/manual-struct
+         "verbosity.rkt")
 
 (module+ test
   (require rackunit))
@@ -56,12 +57,14 @@
     (lambda (sym)
       (unless cache
         (set! cache (make-hasheq))
+        (prn2 "Building Racket documetation cache...")
         (for ([x (in-list (xref-index xref))])
           (match x
             [(entry words content tag (exported-index-desc name from-libs))
              (hash-set! cache name (append (hash-ref cache name '())
                                            (filter symbol? from-libs)))]
-            [_ (void)])))
+            [_ (void)]))
+        (prn2 "...~a items" (hash-count cache)))
       (hash-ref cache sym #f))))
 
 (module+ test
