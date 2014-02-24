@@ -25,11 +25,13 @@
                web-server/templates
                frog/widgets))
 
-(define/contract (render-template dir filename dict)
-  (path? path-string? dict? . -> . string?)
+;; Create a namespace in which to evaluate templates, attach and
+;; require the desired modules, and keep reusing it (faster).
+
+(define (create-template-namespace)
   (define orig-ns (current-namespace))
-  (parameterize ([current-namespace (make-base-empty-namespace)]
-                 [current-load-relative-directory dir])
+  (define ns (make-base-empty-namespace))
+  (parameterize ([current-namespace ns])
     ;; `namespace-attach-module` says the new namespace can reuse the
     ;; module already imported into orig-ns. Faster.
     (for-each (curry namespace-attach-module orig-ns) mods)
@@ -37,10 +39,18 @@
     ;; racket, that's mandatory (sorta the #lang racket).  The others
     ;; we could `require` in the eval form, but simplest to handle
     ;; them here, too.
-    (for-each namespace-require mods)
-    ;; And finally, eval a form. The `let` introduces the variables
-    ;; from dict. `include/text` effectively evaluates the template as
-    ;; if it were written in #lang scribble/text.
+    (for-each namespace-require mods))
+  ns)
+
+(define template-namespace (create-template-namespace))
+
+(define/contract (render-template dir filename dict)
+  (path? path-string? dict? . -> . string?)
+  (parameterize ([current-namespace template-namespace]
+                 [current-load-relative-directory dir])
+    ;; val a form. The `let` introduces the variables from
+    ;; dict. `include/text` effectively evaluates the template as if
+    ;; it were written in #lang scribble/text.
     (eval `(let (,@(for/list ([(k v) (in-dict dict)])
                      (list k v)))
              (include-template ,filename))
