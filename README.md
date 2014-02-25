@@ -1,13 +1,8 @@
 # Frog
 
-<a href="http://www.flickr.com/photos/doug88888/4717363945/" title="Happy Green frog by @Doug88888, on Flickr"><img src="http://farm5.staticflickr.com/4070/4717363945_b73afd78a9.jpg" width="300" height="300" alt="Happy Green frog"></a>
-<br />
-[<img src="https://raw.github.com/dcurtis/markdown-mark/master/png/48x30-solid.png">][Markdown]
-[<img src="http://getbootstrap.com/2.3.2/assets/ico/favicon.png">][Bootstrap]
-[<img src="http://racket-lang.org/logo.png" width="30" height="30">][Racket]
-[<img src="http://pygments.org/media/icon.png" width="40" height="40">][Pygments]
+<p><a href="http://www.flickr.com/photos/doug88888/4717363945/" title="Happy Green frog by @Doug88888, on Flickr"><img src="http://farm5.staticflickr.com/4070/4717363945_b73afd78a9.jpg" width="300" height="300" alt="Happy Green frog"></a></p>
 
-<sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Frog image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)</em></sub>
+<p><sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Frog image by @Goug8888</a>, used under Creative Commons license [Attribution-NonCommercial-ShareAlike 2.0 Generic](http://creativecommons.org/licenses/by-nc-sa/2.0/)</em></sub></p>
 
 [![Build Status](https://travis-ci.org/greghendershott/frog.png?branch=master)](https://travis-ci.org/greghendershott/frog)
 
