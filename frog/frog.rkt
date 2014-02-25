@@ -40,7 +40,7 @@
 (define all-tags (make-hash)) ;(hash/c string? exact-positive-integer?)
 
 (define post-file-px
-  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl)$")
+  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl|html)$")
 
 ;; A function to provide to `fold-files`.
 (define (read-post path type v)
@@ -60,6 +60,8 @@
              (read-scribble-file path
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (abs->rel/www img-dest))]
+            [(pregexp "\\.html$")
+             (read-html-file path)]
             [_
              ;; Footnote prefix is date & name w/o ext
              ;; e.g. "2010-01-02-a-name"
@@ -161,6 +163,16 @@
   (check-true (more-xexpr? `(p () "<" "!" ndash  " more "  ndash ">")))
   (check-true (more-xexpr? `(p () "<" "!" ndash "  more  " ndash ">")))
   (check-false (more-xexpr? "not more")))
+
+(define (read-html-file path)
+  (match (file->string path)
+    [(pregexp "^(\\s{4}Title:.*?\n\\s{4}Date:.*?\n\\s{4}Tags:.*?\n+)\\s*(.*)$"
+              (list _ md html))
+     (append (parse-markdown md)
+             (~>> (with-input-from-string html read-html-as-xml)
+                  (element #f #f 'x '())
+                  xml->xexpr
+                  cddr))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -558,7 +570,7 @@ published.
 EOF
 )
 
-(define (new-post title (type 'markdown))
+(define (new-post title [type 'markdown])
   (let ([extension (case type
                      [(markdown) ".md"]
                      [(scribble) ".scrbl"])]
