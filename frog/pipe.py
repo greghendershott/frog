@@ -25,6 +25,7 @@ from pygments.formatters import HtmlFormatter
 formatter = HtmlFormatter(linenos=True, cssclass="source", encoding="utf-8")
 lexer = ""
 code = ""
+py_version = sys.version_info.major
 sys.stdout.write("ready\n")
 sys.stdout.flush
 while 1:
@@ -36,8 +37,11 @@ while 1:
     if line == '__EXIT__':
         break
     elif line == '__END__':
-        # Lex input finished. Lex it.
-        sys.stdout.write(highlight(code, lexer, formatter))
+        # Lex input finished. Lex it.        
+        if py_version >= 3:
+          sys.stdout.write(highlight(code, lexer, formatter).decode("utf-8"))
+        else:
+          sys.stdout.write(highlight(code, lexer, formatter))
         sys.stdout.write('\n__END__\n')
         sys.stdout.flush
         lexer = ""
