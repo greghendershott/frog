@@ -313,7 +313,7 @@ contain these three lines:
 
 Everything from here to the end is your post's contents.
 
-If you put `<--! more -->` on a line, that is the "above-the-fold"
+If you put `<!-- more -->` on a line, that is the "above-the-fold"
 marker. Contents above the line are the "summary" for index pages and
 Atom feeds.
 
