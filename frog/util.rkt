@@ -24,9 +24,6 @@
     (define-values (base name dir?)(split-path path))
     (make-directory* base)))
 
-(define (xexpr->string/pretty x)
-  (with-output-to-string (thunk (display-xexpr x))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (our-encode s)

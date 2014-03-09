@@ -1,6 +1,6 @@
 #lang rackjure
 
-(require xml
+(require (only-in xml xml->xexpr xexpr?)
          (only-in html read-html-as-xml)
          "xexpr-map.rkt"
          "util.rkt")

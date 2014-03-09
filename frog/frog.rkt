@@ -2,7 +2,7 @@
 
 (require markdown ;; dependency 2 of 2
          racket/runtime-path
-         xml
+         (except-in xml xexpr->string) ;use markdown's version instead
          (only-in html read-html-as-xml)
          net/uri-codec
          net/url
@@ -272,7 +272,7 @@
     'atom-feed-uri (atom-feed-uri feed)
     'rss-feed-uri (rss-feed-uri feed)
     'keywords (string-join keywords ", ")
-    'table-of-contents (cond [toc? (xexpr->string/pretty (toc-xexpr contents))]
+    'table-of-contents (cond [toc? (xexpr->string (toc-xexpr contents))]
                              [else ""])
     'tag tag
     'rel-prev rel-prev
@@ -281,7 +281,7 @@
     'tags/feeds (xexprs->string (tags/feeds))}))
 
 (define (xexprs->string xs)
-  (string-join (map xexpr->string/pretty xs) "\n"))
+  (string-join (map xexpr->string xs) "\n"))
 
 (define (toc-xexpr xs)
   (match (toc xs)

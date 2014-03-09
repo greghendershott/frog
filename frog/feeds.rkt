@@ -2,6 +2,7 @@
 
 (require racket/date
          net/uri-codec
+         (only-in markdown xexpr->string)
          "params.rkt"
          "paths.rkt"
          "post.rkt"
@@ -44,7 +45,7 @@
      (updated () ,updated)
      ,@(map (curry post->atom-feed-entry-xexpr tag)
             (take<= xs (current-max-feed-items))))
-   xexpr->string/pretty
+   xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
    string-join
@@ -68,7 +69,7 @@
     (author (name ,(current-author)))
     (content
      ([type "html"])
-     ,(xexpr->string/pretty
+     ,(xexpr->string
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
          ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
@@ -101,7 +102,7 @@
       (ttl "1800")
       ,@(map (curry post->rss-feed-entry-xexpr tag)
              (take<= xs (current-max-feed-items)))))
-   xexpr->string/pretty
+   xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
    string-join
@@ -121,7 +122,7 @@
                    (our-encode uri-path)))
     (pubDate () ,(~> date rfc-8601->822))
     (description
-     ,(xexpr->string/pretty
+     ,(xexpr->string
        `(html
          ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
          ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
