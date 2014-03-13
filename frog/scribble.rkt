@@ -77,3 +77,22 @@
           [`(h7 ,x ...) `(h5 ,@x)]
           [x x])))
      x)))
+
+;; regression test for https://github.com/greghendershott/frog/issues/75
+(module+ test
+  (require rackunit)
+  (define s #<<EOF
+#lang scribble/manual
+@hyperlink["https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47" "Aur"]
+EOF
+)
+
+  (define path (make-temporary-file))
+  (with-output-to-file path #:exists 'replace (λ () (display s)))
+  (check-equal?
+   (read-scribble-file path
+                       #:img-local-path (find-system-path 'temp-dir)
+                       #:img-uri-prefix "/")
+   '((p ()
+        (a ((href "https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47")) "Aur"))))
+  (delete-file path))
