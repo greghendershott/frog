@@ -8,7 +8,7 @@ env:
 
 before_install:
 # Note: Important to pipe this to `bash` not to `sh`.
-- curl -L https://github.com/greghendershott/travis-racket/releases/download/v0.5/install-racket.sh | bash
+- curl -L https://github.com/greghendershott/travis-racket/releases/download/v0.6/install-racket.sh | bash
 
 install:
 
