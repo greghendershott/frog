@@ -7,7 +7,7 @@
                "scribble-lib"
                "srfi-lite-lib"
                "web-server-lib"
-               ("markdown" "0.14")
+               ("markdown" "0.15")
                "rackjure"
                "find-parent-dir"))
 (define build-deps '("at-exp-lib"

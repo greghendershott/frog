@@ -1,8 +1,7 @@
 #lang rackjure
 
 (require racket/runtime-path
-         xml
-         (prefix-in h: html)
+         "html.rkt"
          "verbosity.rkt")
 
 (provide pygmentize)
@@ -60,11 +59,7 @@
          (displayln "__END__" pyg-out)
          (let loop ([s ""])
            (match (read-line pyg-in 'any)
-             ["__END__" (~> (open-input-string s)
-                            (h:read-html-as-xml)
-                            ((lambda (xs) (make-element #f #f '*root '() xs)))
-                            xml->xexpr
-                            cddr)]
+             ["__END__" (with-input-from-string s read-html-as-xexprs)]
              [(? string? v) (loop (str s v "\n"))]
              [_ (copy-port pyg-err (current-output-port)) ;echo error msg
                 (default code)]))]

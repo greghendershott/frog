@@ -3,7 +3,6 @@
 (require markdown ;; dependency 2 of 2
          racket/runtime-path
          (except-in xml xexpr->string) ;use markdown's version instead
-         (only-in html read-html-as-xml)
          net/uri-codec
          net/url
          json
@@ -14,6 +13,7 @@
          "config.rkt"
          "doc-uri.rkt"
          "feeds.rkt"
+         "html.rkt"
          "params.rkt"
          "paths.rkt"
          "post.rkt"
@@ -49,7 +49,7 @@
      (define-values (base name must-be-dir?) (split-path path))
      (match (path->string name)
        [(pregexp post-file-px (list _ dt nm))
-        ;; Read either Markdown or Scribble file
+        ;; Read Markdown, Scribble, or HTML(ish) file
         (prn1 "Reading ~a" (abs->rel/src path))
         (define xs
           (match (path->string name)
@@ -169,9 +169,7 @@
     [(pregexp "^(\\s{4}Title:.*?\n\\s{4}Date:.*?\n\\s{4}Tags:.*?\n+)\\s*(.*)$"
               (list _ md html))
      (append (parse-markdown md)
-             (~>> (with-input-from-string html read-html-as-xml)
-                  (element #f #f 'x '())
-                  xml->xexpr
+             (~>> (with-input-from-string html read-html-as-xexprs)
                   cddr))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -526,11 +524,9 @@
                              "&align=center")))
          (define js (call/input-url oembed-url get-pure-port read-json))
          (define html ('html js))
-         (cond [html (~>> (with-input-from-string html read-html-as-xml)
-                          (element #f #f
-                                   'div `(,(attribute #f #f
-                                                      'class "embed-tweet")))
-                          xml->xexpr)]
+         (pp html)
+         (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
+                          (append '(div ([class "embed-tweet"]))))]
                [else x])]
         [_ x])))
   (cond [(current-auto-embed-tweets?) (do-it xs)]

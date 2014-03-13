@@ -1,7 +1,7 @@
 #lang rackjure
 
-(require (only-in xml xml->xexpr xexpr?)
-         (only-in html read-html-as-xml)
+(require (only-in xml xexpr?)
+         "html.rkt"
          "xexpr-map.rkt"
          "util.rkt")
 
@@ -36,10 +36,9 @@
   ;; Extract the part we care about -- the elements in the "main" div
   ;; after the "versionbox" div.  (The `match` might be too fragile
   ;; way to do this.)
-  (match (~> (with-input-from-file (build-path dir "frog.html")
-               read-html-as-xml)
-             second
-             xml->xexpr)
+  (match (~> (build-path dir "frog.html")
+             (with-input-from-file read-html-as-xexprs)
+             cadr)
     [`(html
        ()
        (head ,_ ...)
