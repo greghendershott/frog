@@ -47,6 +47,46 @@
         <div id="disqus_thread"></div>
         })
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; LiveFyre
+;;
+
+(define (livefyre site-id)
+  @list{
+        <div id="livefyre-comments"></div>
+        <script type="text/javascript" src="//zor.livefyre.com/wjs/v3.0/javascripts/livefyre.js"></script>
+        <script type="text/javascript">
+        (function () {
+            var articleId = fyre.conv.load.makeArticleId(null);
+            fyre.conv.load({}, [{
+                el: 'livefyre-comments',
+                network: "livefyre.com",
+                siteId: "@|site-id|",
+                articleId: articleId,
+                signed: false,
+                collectionMeta: {
+                    articleId: articleId,
+                    url: fyre.conv.load.makeCollectionUrl(),
+                }
+            }], function() {});
+        }());
+        </script>})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; IntenseDebate
+;;
+
+(define (intense-debate id-account)
+  @list{
+        <script type="text/javascript">
+        var idcomments_acct = '@|id-account|';
+        var idcomments_post_id;
+        var idcomments_post_url;
+        </script>
+        <span id="IDCommentsPostTitle" style="display:none"></span>
+        <script type='text/javascript' src='//www.intensedebate.com/js/genericCommentWrapperV2.js'></script>})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
