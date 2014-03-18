@@ -199,6 +199,16 @@ scheme/host = http://www.example.com
 title = My Awesome Blog
 author = The Unknown Author
 
+# What editor to launch with --edit. $EDITOR means to use $EDITOR from
+# the environment
+editor = $EDITOR
+
+# The command to run, in case you need to customize how the editor is
+# called. For example, {editor} {filename} will call:
+# (system "$EDITOR 2012-01-01-a-blog-post.md")
+# See the test submodule in paths.rkt for more examples
+editor-command = {editor} {filename}
+
 # Whether to show the count of posts next to each tag in sidebar
 show-tag-counts? = false
 
