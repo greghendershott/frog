@@ -14,6 +14,8 @@ Thanks to the following people for contributing pull requests!
 
 - [Eric Hanchow](https://github.com/offby1).
 
+- [William J. Bowman](https://github.com/bluephoenix47)
+
 ## Issues
 
 Thanks to the following people for reporting bugs and feature
@@ -24,4 +26,5 @@ requests!
   try Frog instead of a more-obvious alternative. Having an early user
   like that was a great motivation.
 
-- [Rommel M. Martinez](https://github.com/ebzzry).
+- [Rommel M. Martinez](https://github.com/ebzzry), for using Frog on a
+  project with 600+ migrated blog posts.
