@@ -7,6 +7,8 @@
 (define current-scheme/host (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
+(define current-editor (make-parameter #f))
+(define current-editor-command (make-parameter #f))
 (define current-permalink (make-parameter #f))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?

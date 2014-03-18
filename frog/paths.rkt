@@ -159,3 +159,25 @@
     (check-equal?
      (post-path->link (build-path (top) "blog/2012/05/31/title-of-post/index.html"))
      "/blog/2012/05/31/title-of-post/")))
+
+;; I'm not really sure where to put this so ...
+(define/contract (editor-command-string editor filename pattern)
+  (string? string? string? . -> . string?)
+  (regexp-replaces pattern
+                   `([#rx"{editor}" ,editor]
+                     [#rx"{filename}",filename])))
+
+(module+ test
+  (parameterize ([top (find-system-path 'home-dir)])
+    (define f (curry editor-command-string
+                     "vim" "2012-05-31-title-of-post.md"))
+    (check-equal? (f "{editor} {filename}")
+                  "vim 2012-05-31-title-of-post.md")
+    (check-equal? (f "emacsclient /tmp/draft.md")
+                  "emacsclient /tmp/draft.md")
+    (check-equal? (f "exec {editor} {filename} >/dev/null 2>&1 &")
+                  "exec vim 2012-05-31-title-of-post.md >/dev/null 2>&1 &")
+    (check-equal? (f "exo-open --launch TerminalEmulator '{editor} {filename}'")
+                  "exo-open --launch TerminalEmulator 'vim 2012-05-31-title-of-post.md'")))
+
+

@@ -566,6 +566,8 @@ published.
 EOF
 )
 
+(define enable-editor (make-parameter #f))
+
 (define (new-post title [type 'markdown])
   (let ([extension (case type
                      [(markdown) ".md"]
@@ -589,10 +591,12 @@ EOF
                         pathname
                         #:exists 'error)
       (displayln pathname)
-      ;; (define editor (getenv "EDITOR"))
-      ;; (when editor
-      ;;   (system (format "~a ~a &" editor (path->string pathname))))
-      )))
+      (when (enable-editor)
+        (system (editor-command-string 
+                  (regexp-replaces (current-editor)
+                                   `([#rx"\\$EDITOR" ,(getenv "EDITOR")]))
+                  (path->string pathname) 
+                  (current-editor-command)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -832,6 +836,8 @@ EOF
                               ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [editor "$EDITOR"]
+                               [editor-command "{editor} {filename}"]
                                [show-tag-counts? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
@@ -878,6 +884,8 @@ EOF
                               ([scheme/host "http://www.example.com"]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
+                               [editor "$EDITOR"]
+                               [editor-command "{editor} {filename}"]
                                [show-tag-counts? #t]
                                [permalink "/{year}/{month}/{title}.html"]
                                [index-full? #f]
@@ -903,6 +911,11 @@ EOF
          "Initialize current directory as a new Frog project, creating"
          "default files as a starting point.")
         (init-project)]
+       [("--edit") 
+        (""
+         "Opens the file created by -n or -N in editor as specified in .frogrc"
+         "Supply this flag before one of those flags.")
+        (enable-editor #t)]
        #:multi
        [("-n" "--new") title
         (""
