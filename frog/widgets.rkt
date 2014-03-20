@@ -17,7 +17,7 @@
 ;; normal Racket code like `format`. However for longer bits of HTML
 ;; and/or JavaScript it can be clearer to use at-exps, as the examples
 ;; here use.
-;; 
+;;
 ;; Pull requests welcome! If you've customized your template files
 ;; with something you'd like to share, please fork, add to this file,
 ;; and submit a pull request.
@@ -169,7 +169,7 @@
             }(document,"script","twitter-wjs");
           </script>
           }))
-  
+
 ;; See https://dev.twitter.com/docs/embedded-timelines for instructions
 ;; how to create a timeline and get its "widget ID".
 (define (twitter-timeline user
@@ -236,3 +236,29 @@
            data-dnt="true">
           "Tweet"</a>
           })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Gittip
+;;
+
+(define (gittip-receiving username)
+  @list{
+        <script data-gittip-username="@|username|" src="//gttp.co/v1.js">
+        })
+
+(define (gittip-button username)
+  @list{
+        <script data-gittip-username="@|username|"
+        data-gittip-widget="button" src="//gttp.co/v1.js"></script>
+        })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Gist
+;;
+
+(define (gist username id)
+  @list{
+        <script src="//gist.github.com/@|username|/@|id|.js"></script>
+       })
