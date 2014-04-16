@@ -524,7 +524,6 @@
                              "&align=center")))
          (define js (call/input-url oembed-url get-pure-port read-json))
          (define html ('html js))
-         (pp html)
          (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
                           (append '(div ([class "embed-tweet"]))))]
                [else x])]
