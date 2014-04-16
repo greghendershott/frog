@@ -52,26 +52,62 @@
   (cond [(relative-path? out) (build-path* (top) out)]
         [else                 (build-path*       out)]))
 
+(module+ test
+  (check-equal? (parameterize ([top "/projects/blog"]
+                               [current-output-dir "."])
+                  (www-path))
+                (path->directory-path
+                 (build-path "/" "projects" "blog")))
+  (check-equal? (parameterize ([top "/projects/blog"]
+                               [current-output-dir "../build/stuff"])
+                  (www-path))
+                (path->directory-path
+                 (build-path "/" "projects" "build" "stuff"))))
+
 (define (www/tags-path) (build-path* (www-path) "tags"))
 (define (www/feeds-path) (build-path* (www-path) "feeds"))
 (define (www/img-path) (build-path* (www-path) "img"))
 
+(define (www/index-pathname)
+  ;; Handle current-post-index-uri being any of /path/index.html,
+  ;; \path\index.html, or c:\path\index.html
+  (build-path (www-path)
+              (~> (current-posts-index-uri)
+                  string->path
+                  path->relative-path)))
+
+(define (path->relative-path p) ;; path? -> path?
+  (cond [(relative-path? p) p]
+        [else (apply build-path
+                     ;; remove leading / \ or C:\
+                     (~> p explode-path cdr))]))
+
 (module+ test
- (check-equal? (parameterize ([top "/projects/blog"]
-                              [current-output-dir "."])
-                 (www-path))
-               (path->directory-path
-                (build-path "/" "projects" "blog")))
- (check-equal? (parameterize ([top "/projects/blog"]
-                              [current-output-dir "../build/stuff"])
-                 (www-path))
-               (path->directory-path
-                (build-path "/" "projects" "build" "stuff"))))
+  (parameterize ([top "/projects/blog"]
+                 [current-output-dir "../build/stuff"])
+    ;; absolute
+    (check-equal? (parameterize ([current-posts-index-uri "/index.html"])
+                    (www/index-pathname))
+                  (build-path "/" "projects" "build" "stuff"
+                              "index.html"))
+    (check-equal? (parameterize ([current-posts-index-uri "/foo/bar.html"])
+                    (www/index-pathname))
+                  (build-path "/" "projects" "build" "stuff"
+                              "foo" "bar.html"))
+    ;; relative
+    (check-equal? (parameterize ([current-posts-index-uri "index.html"])
+                    (www/index-pathname))
+                  (build-path "/" "projects" "build" "stuff"
+                              "index.html"))
+    (check-equal? (parameterize ([current-posts-index-uri "foo/bar.html"])
+                    (www/index-pathname))
+                  (build-path "/" "projects" "build" "stuff"
+                              "foo" "bar.html"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Convert an absolute local path to a path string relative to
-;; (www-path). For example,what the URI path should be.
+;; (www-path). For example, what the URI path should be.
 ;;
 ;; Ex: if project top is /project/blog and the output dir is ../build,
 ;; then given "/project/build/css" this should return "/css".
@@ -92,7 +128,7 @@
                   (abs->rel/www (string->path "/projects/build/css")))
                 "/css"))
 
-;; Convert an absolute local path to a path string realtive to
+;; Convert an absolute local path to a path string relative to
 ;; (src-path).
 (define (abs->rel/src path) ;; path? -> string?
   (let ([path (path->string path)]

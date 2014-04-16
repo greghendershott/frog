@@ -713,8 +713,7 @@ EOF
                     (build-path (www/feeds-path) (str (our-encode tag)
                                                       ".rss.xml"))))
   ;; Write the index page for all posts
-  (write-index-pages posts (current-title) #f "all"
-                     (reroot-path (current-posts-index-uri) (www-path)))
+  (write-index-pages posts (current-title) #f "all" (www/index-pathname))
   ;; Write Atom feed for all posts
   (write-atom-feed posts "All Posts" "all" (current-posts-index-uri)
                    (build-path (www/feeds-path) "all.atom.xml"))
