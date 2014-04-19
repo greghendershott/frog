@@ -28,12 +28,8 @@ simpler and faster.
 The only non-Racket part is optionally using [Pygments][] to do syntax
 highlighting.
 
-Q: "Frog"?
+Q: "Frog"?  
 A: Frozen blog.
-
-> **NOTE:** This has been tested on Mac OS/X and Ubuntu; I'm using it for
-> [my blog][]. CAVEAT: It has _not_ yet been tested on Windows--it's
-> likely that the path handling isn't exactly right.
 
 # Quick Start
 
