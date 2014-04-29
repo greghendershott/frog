@@ -158,7 +158,11 @@
                          DAYS))
      (str weekday ", "
           day " " (MONTHS (sub1 (string->number month))) " " year " "
-          hour ":" minute ":" second " " tz-name)]))
+          hour ":" minute ":" second " " tz-name)]
+    [other
+     (raise-argument-error
+      'rfc-8601->822
+      "date in ISO 8601 (YYYY-MM-DDThh:mm:ss) format" 0 s)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
