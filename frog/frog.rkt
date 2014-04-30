@@ -68,7 +68,7 @@
              (define footnote-prefix (~> (str dt "-" nm) string->symbol))
              (parse-markdown path footnote-prefix)]))
         ;; Split to the meta-data and the body
-        (define-values (title date tags body) (meta-data xs))
+        (define-values (title date tags body) (meta-data xs name))
         (cond [(member "DRAFT" tags)
                (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
                      (abs->rel/src path))
@@ -107,11 +107,14 @@
           v])]
     [else v]))
 
-(define (meta-data xs)
+;; (listof xexpr?) path? -> (values string? string? string? (listof xexpr?))
+(define (meta-data xs path)
   (define (err x)
-    (raise-user-error 'error
-                      "Post must start with Title/Date/Tags, but found:\n~v"
-                      x))
+    (raise-user-error
+     'error
+     "Post file ~a.\nMust start with Title/Date/Tags, but found:\n~v"
+     path
+     x))
   (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
   (match xs
     [`(,(or `(pre () (code () ,metas ...)) ;Markdown
@@ -129,12 +132,13 @@
     [_ (err "")]))
 
 (module+ test
-  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))))))
-  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")))))
-  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")))))
-  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")))))
-  (check-exn exn? (thunk (meta-data '((pre "not meta data")))))
-  (check-exn exn? (thunk (meta-data '((p () "not meta data"))))))
+  (define p (string->path "/"))
+  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
+  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
+  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
+  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
+  (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
+  (check-exn exn? (thunk (meta-data '((p () "not meta data")) p))))
 
 (define (tag-string->tags s)
   (~>> (regexp-split #px"," s)
