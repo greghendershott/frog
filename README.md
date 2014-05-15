@@ -31,6 +31,8 @@ highlighting.
 Q: "Frog"?  
 A: Frozen blog.
 
+[MIT license](https://github.com/greghendershott/frog/blob/master/frog/LICENSE).
+
 # Quick Start
 
 ## Installing Frog
