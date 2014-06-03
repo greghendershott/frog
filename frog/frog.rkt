@@ -61,45 +61,54 @@
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (abs->rel/www img-dest))]
             [(pregexp "\\.html$")
-             (read-html-file path)]
+             (define same.scrbl (path-replace-suffix path ".scrbl"))
+             (cond [(file-exists? same.scrbl)
+                    (prn0 "Skipping ~a on the assumption it is a DrRacket preview file for ~a."
+                          (abs->rel/src path)
+                          (abs->rel/src same.scrbl))
+                    #f]
+                   [else (read-html-file path)])]
             [_
              ;; Footnote prefix is date & name w/o ext
              ;; e.g. "2010-01-02-a-name"
              (define footnote-prefix (~> (str dt "-" nm) string->symbol))
              (parse-markdown path footnote-prefix)]))
-        ;; Split to the meta-data and the body
-        (define-values (title date tags body) (meta-data xs name))
-        (cond [(member "DRAFT" tags)
-               (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
-                     (abs->rel/src path))
-               v]
-              [else
-               ;; Add these tags to the set
-               (for ([x tags])
-                 (unless (equal? x "")
-                   (hash-set! all-tags x (add1 (hash-ref all-tags x 0)))))
-               ;; Split out the blurb (may be less than the entire body)
-               (define-values (blurb more?) (above-the-fold body))
-               ;; Make the destination HTML pathname
-               (define year (substring date 0 4))
-               (define month (substring date 5 7))
-               (define day (substring date 8 10))
-               (define dest-path
-                 (permalink-path year month day
-                                 (~> title string-downcase our-encode)
-                                 (match (path->string name)
-                                   [(pregexp post-file-px (list _ _ s)) s])
-                                 (current-permalink)))
-               ;; And return our result
-               (cons (post title
-                           dest-path
-                           (post-path->link dest-path)
-                           date
-                           tags
-                           blurb
-                           more?
-                           (filter (negate more-xexpr?) body))
-                     v)])]
+        (cond
+         [xs
+          ;; Split to the meta-data and the body
+          (define-values (title date tags body) (meta-data xs name))
+          (cond [(member "DRAFT" tags)
+                 (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
+                       (abs->rel/src path))
+                 v]
+                [else
+                 ;; Add these tags to the set
+                 (for ([x tags])
+                   (unless (equal? x "")
+                     (hash-set! all-tags x (add1 (hash-ref all-tags x 0)))))
+                 ;; Split out the blurb (may be less than the entire body)
+                 (define-values (blurb more?) (above-the-fold body))
+                 ;; Make the destination HTML pathname
+                 (define year (substring date 0 4))
+                 (define month (substring date 5 7))
+                 (define day (substring date 8 10))
+                 (define dest-path
+                   (permalink-path year month day
+                                   (~> title string-downcase our-encode)
+                                   (match (path->string name)
+                                     [(pregexp post-file-px (list _ _ s)) s])
+                                   (current-permalink)))
+                 ;; And return our result
+                 (cons (post title
+                             dest-path
+                             (post-path->link dest-path)
+                             date
+                             tags
+                             blurb
+                             more?
+                             (filter (negate more-xexpr?) body))
+                       v)])]
+         [else v])]
        [_ (prn2 (str "Skipping ~a\n"
                      "         Not named ~a")
                 (abs->rel/src path)
