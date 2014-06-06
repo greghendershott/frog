@@ -5,7 +5,7 @@
          (only-in markdown xexpr->string)
          "params.rkt"
          "paths.rkt"
-         "post.rkt"
+         "post-struct.rkt"
          "take.rkt"
          "util.rkt"
          "verbosity.rkt")
@@ -53,7 +53,7 @@
    (display-to-file* file #:exists 'replace)))
 
 (define (post->atom-feed-entry-xexpr tag x)
-  (match-define (post title dest-path uri-path date tags blurb more? body) x)
+  (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
   (define item-uri (full-uri/decorated uri-path #:source tag #:medium "Atom"))
   `(entry
     ()
@@ -69,15 +69,13 @@
     (author (name ,(current-author)))
     (content
      ([type "html"])
-     ,(xexpr->string
-       `(html
-         ,@(feed-image-bug-xexpr uri-path #:source tag #:medium "Atom")
-         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
-                     [more? `(,@blurb
-                              (a ([href ,item-uri])
-                                 (em "More" hellip)))]
-                     [else blurb])
-               unlinkify-footnotes))))))
+     "<html>"
+     ,(cond [(current-feed-full?) body] ;don't enhance-body
+            [more? (string-append blurb
+                                  (xexpr->string `(a ([href ,item-uri])
+                                                   (em "More" hellip))))]
+            [else blurb])
+     "</html>")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -110,7 +108,7 @@
    (display-to-file* file #:exists 'replace)))
 
 (define (post->rss-feed-entry-xexpr tag x)
-  (match-define (post title dest-path uri-path date tags blurb more? body) x)
+  (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
   (define item-uri (full-uri/decorated uri-path #:source tag #:medium "RSS"))
   `(item
     ()
@@ -122,15 +120,13 @@
                    (our-encode uri-path)))
     (pubDate () ,(~> date rfc-8601->822))
     (description
-     ,(xexpr->string
-       `(html
-         ,@(feed-image-bug-xexpr uri-path #:source tag  #:medium "RSS")
-         ,@(~> (cond [(current-feed-full?) body] ;don't enhance-body
-                     [more? `(,@blurb
-                              (a ([href ,item-uri])
-                                 (em "More" hellip)))]
-                     [else blurb])
-               unlinkify-footnotes))))))
+     "<html>"
+     ,(cond [(current-feed-full?) body] ;don't enhance-body
+            [more? (string-append blurb
+                                  (xexpr->string `(a ([href ,item-uri])
+                                                   (em "More" hellip))))]
+            [else blurb])
+     "</html>")))
 
 (define (rfc-8601->822 s)
   (match s

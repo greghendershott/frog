@@ -1,6 +1,6 @@
 #lang rackjure
 
-(require xml "take.rkt")
+(require xml)
 
 (provide xexprs->description
          xexpr->markdown)
@@ -8,29 +8,31 @@
 (module+ test
   (require rackunit))
 
-(define (xexprs->description xs [num 3])
-  (str (~> (string-join (map (curryr xexpr->markdown " ") (take<= xs num))
-                        "")
-           escape-double-quotes)
-       "..."))
+(define (xexprs->description xs [max-len 255])
+  (define s (~> (string-join (map (curryr xexpr->markdown " ") xs) "")
+                kill-newlines))
+  (define len (string-length s))
+  (define sub (substring s 0 (min max-len len)))
+  (define esc (escape-double-quotes sub))
+  (cond [(< len (string-length sub)) esc]
+        [else (str esc "...")]))
+
+(define (substring* s from upto)
+  (substring s from (min upto (string-length s))))
 
 (module+ test
   (check-equal?
    (xexprs->description '((h1 ([class "foo"]) "A heading")
                           (p "A " (em "paragraph") " of some stuff.")
-                          (p "A " (em "paragraph") " of some stuff.")
-                          (p "A " (em "paragraph") " of some stuff.")
                           (p "A " (em "paragraph") " of some stuff."))
-                        3)
-   "A heading: A _paragraph_ of some stuff. A _paragraph_ of some stuff. ...")
+                        50)
+   "A heading: A _paragraph_ of some stuff. A _paragra...")
   (check-equal?
    (xexprs->description '((h1 ([class "foo"]) "A heading")
-                          (p "A " (em "paragraph") " of some stuff.")
                           (img ([src "blah"]))
-                          (p "A " (em "paragraph") " of some stuff.")
-                          (p "A " (em "paragraph") " of some stuff."))
-                        3)
-   "A heading: A _paragraph_ of some stuff. ..."))
+                          (p "A " (em "paragraph") " of \"some\" stuff."))
+                        50)
+   "A heading: A _paragraph_ of &quot;some&quot; stuff...."))
 
 ;; Not full markdown, just a "lite" variant for human readers only.
 (define (xexpr->markdown x [block-suffix ""])
@@ -90,3 +92,17 @@
 (module+ test
   (check-equal? (escape-double-quotes "A \"double quote\" in the string.")
                 "A &quot;double quote&quot; in the string."))
+
+(define (kill-newlines s)
+  (~> (regexp-replace* "\n+" s " ")
+      (string-trim #:left? #t
+                   #:right? #t
+                   #:repeat? #t)))
+
+(module+ test
+  (check-equal? (kill-newlines "\nHi.\n")
+                "Hi.")
+  (check-equal? (kill-newlines "\nHi\nthere.\n")
+                "Hi there.")
+  (check-equal? (kill-newlines "\nPara\n1.\n\nPara\n2.\n")
+                "Para 1. Para 2."))

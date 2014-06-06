@@ -1,6 +1,7 @@
 #lang rackjure
 
-(require markdown) ;only for `display-xexpr`
+(require (only-in markdown display-xexpr)
+         "verbosity.rkt")
 
 (provide (all-defined-out))
 
@@ -15,6 +16,11 @@
   (make-directories-if-needed path)
   (display-to-file v path #:exists exists #:mode mode))
 
+;; Like write-to-file, but makes directories if needed.
+(define (write-to-file* v path #:exists exists #:mode [mode 'binary])
+  (make-directories-if-needed path)
+  (write-to-file v path #:exists exists #:mode mode))
+
 (define (copy-file* from to [exists-ok? #f])
   (make-directories-if-needed to)
   (copy-file from to exists-ok?))
@@ -23,6 +29,13 @@
   (with-handlers ([exn:fail? (const (void))])
     (define-values (base name dir?)(split-path path))
     (make-directory* base)))
+
+;; Like delete-file, but (a) doesn't abend if file doesn't exit, and
+;; (b) does a prn1 "Deleted X" message.
+(define (delete-file* path [f values])
+  (when (file-exists? path)
+    (delete-file path)
+    (prn1 "Deleted ~a" (f path))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

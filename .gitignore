@@ -2,6 +2,7 @@
 compiled/
 
 # Generated files under example/
+example/.frog/
 example/index*.html
 example/About.html
 example/sitemap.txt

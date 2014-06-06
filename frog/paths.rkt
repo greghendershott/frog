@@ -44,6 +44,22 @@
                 (path->directory-path
                  (build-path "/" "projects" "source"))))
 
+;; some specific source files
+(define (post-template.html)
+  (build-path (src-path) "post-template.html"))
+
+(define (page-template.html)
+  (build-path (src-path) "page-template.html"))
+
+(define (index-template.html)
+  (build-path (src-path) "index-template.html"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Intermediate file directory
+
+(define (obj-path)
+  (build-path (top) ".frog"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Output directories
 
@@ -112,8 +128,8 @@
 ;; Ex: if project top is /project/blog and the output dir is ../build,
 ;; then given "/project/build/css" this should return "/css".
 (define (abs->rel/www path) ;; path? -> string?
-  (let ([path (path->string path)]
-        [root (path->string (www-path))])
+  (let ([path (~> path simplify-path path->string)]
+        [root (~> (www-path) path->string)])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
       [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
@@ -131,8 +147,8 @@
 ;; Convert an absolute local path to a path string relative to
 ;; (src-path).
 (define (abs->rel/src path) ;; path? -> string?
-  (let ([path (path->string path)]
-        [root (path->string (src-path))])
+  (let ([path (~> path simplify-path path->string)]
+        [root (~> (src-path) path->string)])
     (match path
       [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
       [_ (raise-user-error 'abs->rel/src "root: ~v path: ~v" root path)])))
@@ -146,6 +162,23 @@
                                [current-source-dir "../blog-source"])
                   (abs->rel/src (string->path "/projects/blog-source/foo.md")))
                 "foo.md"))
+
+;; Convert an absolute local path to a path string relative to
+;; (top) i.e. the project root dir.
+(define (abs->rel/top path) ;; path? -> string?
+  (let ([path (~> path simplify-path path->string)]
+        [root (~> (top) build-path* path->string)])
+    (match path
+      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
+      [_ (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
+
+(module+ test
+  (check-equal? (parameterize ([top "/projects/blog"])
+                  (abs->rel/top (string->path "/projects/blog/foo.md")))
+                "foo.md")
+  (check-equal? (parameterize ([top "/projects/blog"])
+                  (abs->rel/top (string->path "/projects/blog/source/foo.md")))
+                "source/foo.md"))
 
 ;; Given a uri-path, prepend the scheme & host to make a full URI.
 (define (full-uri uri-path)

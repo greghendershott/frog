@@ -1,749 +1,283 @@
-#lang rackjure  ;; dependency 1 of 2
+#lang rackjure
 
-(require markdown ;; dependency 2 of 2
+(require markdown
          racket/runtime-path
          (except-in xml xexpr->string) ;use markdown's version instead
-         net/uri-codec
-         net/url
-         json
-         racket/date
          (only-in find-parent-dir find-parent-containing)
-         (only-in srfi/1 break)
          (for-syntax racket/syntax)
+         "bodies-page.rkt"
          "config.rkt"
-         "doc-uri.rkt"
-         "feeds.rkt"
-         "html.rkt"
+         "new-post.rkt"
+         "non-posts.rkt"
          "params.rkt"
          "paths.rkt"
-         "post.rkt"
-         "pygments.rkt"
-         "scribble.rkt"
+         "post-struct.rkt"
+         "posts.rkt"
+         "serialize-posts.rkt"
+         "stale.rkt"
+         "tags.rkt"
          "take.rkt"
-         "template.rkt"
          "watch-dir.rkt"
-         "xexpr2text.rkt"
-         "xexpr-map.rkt"
          "util.rkt"
          "verbosity.rkt"
+         "xexpr2text.rkt"
          ;; Remainder are just for the serve/preview feature:
          web-server/servlet-env
          web-server/http
          web-server/dispatchers/dispatch)
 
-(module+ test
-  (require rackunit))
+(module+ main
+  (printf "Frog ~a\n" (frog-version))
+  (parameterize* ([top (find-frog-root)])
+    (parameterize-from-config (build-path (top) ".frogrc")
+                              ([scheme/host "http://www.example.com"]
+                               [title "Untitled Site"]
+                               [author "The Unknown Author"]
+                               [editor "$EDITOR"]
+                               [editor-command "{editor} {filename}"]
+                               [show-tag-counts? #t]
+                               [permalink "/{year}/{month}/{title}.html"]
+                               [index-full? #f]
+                               [feed-full? #f]
+                               [max-feed-items 999]
+                               [decorate-feed-uris? #t]
+                               [feed-image-bugs? #f]
+                               [auto-embed-tweets? #t]
+                               [racket-doc-link-code? #t]
+                               [racket-doc-link-prose? #f]
+                               [posts-per-page 10]
+                               [index-newest-first? #t]
+                               [posts-index-uri "/index.html"]
+                               [source-dir "_src"]
+                               [output-dir "."])
+      (define watch? #f)
+      (define port 3000)
+      (command-line
+       #:program "frog"
+       #:once-each
+       [("--init")
+        (""
+         "Initialize current directory as a new Frog project, creating"
+         "default files as a starting point.")
+        (init-project)]
+       [("--edit")
+        (""
+         "Opens the file created by -n or -N in editor as specified in .frogrc"
+         "Supply this flag before one of those flags.")
+        (enable-editor? #t)]
+       #:multi
+       [("-n" "--new") title
+        (""
+         "Create a .md file for a new post based on today's date and <title>.")
+        (new-post title 'markdown)]
+       [("-N" "--new-scribble") title
+        (""
+         "Create a .scrbl file for a new post based on today's date and <title>.")
+        (new-post title 'scribble)]
+       [("-b" "--build")
+        (""
+         "Generate files.")
+        (build)]
+       [("-c" "--clean")
+        (""
+         "Delete generated files.")
+        (clean)]
+       #:once-each
+       [("-w" "--watch")
+        (""
+         "(Experimental: Only rebuilds some files.)"
+         "Supply this flag before -s/--serve or -p/--preview."
+         "Watch for changed files, and generate again."
+         "(You'll need to refresh the browser yourself.")
+        (set! watch? #t)]
+       [("--port") number
+        (""
+         "The port number for -s/--serve or -p/--preview."
+         "Supply this flag before one of those flags."
+         "Default: 3000.")
+        (set! port (string->number number))]
+       #:once-any
+       [("-s" "--serve")
+        (""
+         "Run a local web server.")
+        (serve #:launch-browser? #f
+               #:watch? watch?
+               #:port port)]
+       [("-p" "--preview")
+        (""
+         "Run a local web server and start your browser on blog home page.")
+        (serve #:launch-browser? #t
+               #:watch? watch?
+               #:port port)]
+       #:once-any
+       [("-S" "--silent") "Silent. Put first."
+        (current-verbosity -1)]
+       [("-v" "--verbose") "Verbose. Put first."
+        (current-verbosity 1)
+        (prn1 "Verbose mode")]
+       [("-V" "--very-verbose") "Very verbose. Put first."
+        (current-verbosity 2)
+        (prn2 "Very verbose mode")]))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (find-frog-root)
+  (or (let ([x (find-parent-containing (current-directory) ".frogrc")])
+        (and x (simplify-path x)))
+      (current-directory)))
 
-;; The tags found among all posts, and how many times.
-(define all-tags (make-hash)) ;(hash/c string? exact-positive-integer?)
-
-(define post-file-px
-  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl|html)$")
-
-;; A function to provide to `fold-files`.
-(define (read-post path type v)
-  (let/ec return
-    (unless (eq? type 'file)
-      (return v))
-    (define-values (base name must-be-dir?) (split-path path))
-    (match (path->string name)
-      [(pregexp post-file-px (list _ dt nm))
-       ;; Read Markdown, Scribble, or HTML(ish) file
-       (prn1 "Reading ~a" (abs->rel/src path))
-       (define xs
-         (match (path->string name)
-           [(pregexp "\\.scrbl$")
-            (define img-dest (build-path (www/img-path)
-                                         "posts"
-                                         (str dt "-" nm)))
-            (read-scribble-file path
-                                #:img-local-path img-dest
-                                #:img-uri-prefix (abs->rel/www img-dest))]
-           [(pregexp "\\.html$")
-            (define same.scrbl (path-replace-suffix path ".scrbl"))
-            (when (file-exists? same.scrbl)
-              (prn0 "Skipping ~a on the assumption it is a DrRacket preview file for ~a."
-                    (abs->rel/src path)
-                    (abs->rel/src same.scrbl))
-              (return v))
-            (read-html-file path)]
-           [(pregexp "\\.(?:md|markdown)$")
-            ;; Footnote prefix is date & name w/o ext
-            ;; e.g. "2010-01-02-a-name"
-            (define footnote-prefix (~> (str dt "-" nm) string->symbol))
-            (parse-markdown path footnote-prefix)]))
-       ;; Split to the meta-data and the body
-       (define-values (title date tags body) (meta-data xs name))
-       (when (member "DRAFT" tags)
-         (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
-               (abs->rel/src path))
-         (return v))
-       ;; Add these tags to the set
-       (for ([x tags])
-         (unless (equal? x "")
-           (hash-set! all-tags x (add1 (hash-ref all-tags x 0)))))
-       ;; Split out the blurb (may be less than the entire body)
-       (define-values (blurb more?) (above-the-fold body))
-       ;; Make the destination HTML pathname
-       (define year (substring date 0 4))
-       (define month (substring date 5 7))
-       (define day (substring date 8 10))
-       (define dest-path
-         (permalink-path year month day
-                         (~> title string-downcase our-encode)
-                         (match (path->string name)
-                           [(pregexp post-file-px (list _ _ s)) s])
-                         (current-permalink)))
-       ;; And return our result
-       (cons (post title
-                   dest-path
-                   (post-path->link dest-path)
-                   date
-                   tags
-                   blurb
-                   more?
-                   (filter (negate more-xexpr?) body))
-             v)]
-      [_ (prn2 (str "Skipping ~a\n"
-                    "         Not named ~a")
-               (abs->rel/src path)
-               post-file-px)
-         v])))
-
-;; (listof xexpr?) path? -> (values string? string? string? (listof xexpr?))
-(define (meta-data xs path)
-  (define (err x)
-    (raise-user-error
-     'error
-     "Post file ~a.\nMust start with Title/Date/Tags, but found:\n~v"
-     path
-     x))
-  (define px "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$")
-  (match xs
-    [`(,(or `(pre () (code () ,metas ...)) ;Markdown
-            `(pre () ,metas ...)           ;Markdown
-            `(pre ,metas ...)              ;Markdown
-            `(p () ,metas ...))            ;Scribble
-       ,more ...)
-     ;; In the meta-data we don't want HTML entities like &ndash; we
-     ;; want plain text.
-     (match (string-join (map xexpr->markdown metas))
-       [(pregexp px (list _ title date tags))
-        (values title date (tag-string->tags tags) more)]
-       [_ (err (first xs))])]
-    [(list x _ ...) (err x)]
-    [_ (err "")]))
-
-(module+ test
-  (define p (string->path "/"))
-  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
-  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
-  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
-  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
-  (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
-  (check-exn exn? (thunk (meta-data '((p () "not meta data")) p))))
-
-(define (tag-string->tags s)
-  (~>> (regexp-split #px"," s)
-       (map string-trim)))
-
-(module+ test
-  (check-equal? (tag-string->tags " some, post ,   tags ")
-                '("some" "post" "tags")))
-
-(define (above-the-fold xs)
-  (define-values (above below) (break more-xexpr? xs))
-  (values above (not (empty? below))))
-
-(define (more-xexpr? x)
-  (match x
-    [`(p ,(pregexp "\\s*<!--\\s*more\\s*-->\\s*")) #t]             ;Markdown
-    [`(!HTML-COMMENT () ,(pregexp "more")) #t]                     ;Markdown
-    [`(p () "<" "!" ndash ,(pregexp "\\s*more\\s*") ndash ">") #t] ;Scribble
-    [_ #f]))
-
-(module+ test
-  (check-true (more-xexpr? `(p   "<!--more-->")))
-  (check-true (more-xexpr? `(p " <!-- more -->")))
-  (check-true (more-xexpr? `(p "<!--  more  -->")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash   "more"   ndash ">")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash  " more "  ndash ">")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash "  more  " ndash ">")))
-  (check-false (more-xexpr? "not more")))
-
-(define (read-html-file path)
-  (match (file->string path)
-    [(pregexp "^(\\s{4}Title:.*?\n\\s{4}Date:.*?\n\\s{4}Tags:.*?\n+)\\s*(.*)$"
-              (list _ md html))
-     (append (parse-markdown md)
-             (~>> (with-input-from-string html read-html-as-xexprs)
-                  cddr))]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (write-post-page p older newer)
-  (match-define (post title dest-path uri-path date tags blurb more? body) p)
-  (define older-uri (and older (post-uri-path older)))
-  (define newer-uri (and newer (post-uri-path newer)))
-  (prn1 "Generating post ~a" (abs->rel/www dest-path))
-  (~> (render-template
-       (src-path)
-       "post-template.html"
-       {'title (title->htmlstr title)
-        'uri-path uri-path
-        'full-uri (full-uri uri-path)
-        'date-8601 date
-        'date-struct (date->date-struct date)
-        'date (~> date date->xexpr xexpr->string)
-        'tags (~> tags tags->xexpr xexpr->string)
-        'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
-        'content (~> body enhance-body xexprs->string)
-        'older-uri older-uri
-        'newer-uri newer-uri
-        'older-title (and older (title->htmlstr (post-title older)))
-        'newer-title (and newer (title->htmlstr (post-title newer)))})
-      ;; bodies->page wants (listof xexpr?) so convert from string? to that
-      string->xexpr
-      list
-      (bodies->page #:title title
-                    #:description (xexprs->description blurb)
-                    #:uri-path uri-path
-                    #:keywords tags
-                    #:rel-next older-uri
-                    #:rel-prev newer-uri)
-      (display-to-file* dest-path #:exists 'replace)))
-
-(define (title->htmlstr t)
-  ;; `parse-markdown` returns (listof xexpr?). For simple "one-liner"
-  ;; markdown that's usually a list with just a single 'p element. In
-  ;; that case, discard the 'p and use its body element(s). If it
-  ;; parsed to something more complicated, the visual result will
-  ;; probably be unappealing, but at least handle that case here.
-  (define xs (match (parse-markdown t)
-               [`((p () ,xs ...)) xs]
-               [xs xs]))
-  (string-join (map xexpr->string xs) ""))
-
-(define (date->date-struct YYYY-MM-DD-string)
-  (match YYYY-MM-DD-string
-    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})" (list _ y m d))
-     (date 0 0 0
-           (string->number d) (string->number m) (string->number y)
-           0 0 #f 0)]))
-
-(define (date+tags->xexpr date tags)
-  `(p ([class "date-and-tags"])
-      ,(date->xexpr date)
-      " :: "
-      ,(tags->xexpr tags)))
-
-(define (date->xexpr date)
-  (define dt (substring date 0 10)) ;; just YYYY-MM-DD
-  `(time ([datetime ,dt]
-          [pubdate "true"]) ,dt))
-
-(define (tags->xexpr tags)
-  `(span ([class "tags"])
-         ,@(add-between (map tag->xexpr tags)
-                        ", ")))
-
-(define (tag->xexpr s)
-  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; bodies->page
-;;
-;; Put the body elements in a master page template.
-
-(define (bodies->page contents                         ;(listof xexpr?)
-                      #:title title                    ;string?
-                      #:description description        ;string?
-                      #:uri-path uri-path              ;string?
-                      #:feed [feed "all"]              ;string?
-                      #:keywords [keywords '()]        ;listof string?
-                      #:tag [tag #f]                   ;(or/c string? #f)
-                      #:rel-prev [rel-prev #f]         ;(or/c string? #f)
-                      #:rel-next [rel-next #f]         ;(or/c string? #f)
-                      #:toc-sidebar? [toc? #t])
-  (render-template
-   (src-path)
-   "page-template.html"
-   {'contents (xexprs->string contents)
-    'title title
-    'description description
-    'uri-path uri-path
-    'full-uri (full-uri uri-path)
-    'atom-feed-uri (atom-feed-uri feed)
-    'rss-feed-uri (rss-feed-uri feed)
-    'keywords (string-join keywords ", ")
-    'table-of-contents (cond [toc? (xexpr->string (toc-xexpr contents))]
-                             [else ""])
-    'tag tag
-    'rel-prev rel-prev
-    'rel-next rel-next
-    'tags-list-items (xexprs->string (tags-list-items))
-    'tags/feeds (xexprs->string (tags/feeds))}))
-
-(define (xexprs->string xs)
-  (string-join (map xexpr->string xs) "\n"))
-
-(define (toc-xexpr xs)
-  (match (toc xs)
-    [`(div ([class "toc"]) (ol ,contents ...))
-     (cond [(empty? contents) ""]
-           [else `(div (p "On this page:"
-                          (ol ([class "nav nav-list bs-docs-sidenav"])
-                              ,@contents)))])]))
-
-(define (tags/feeds)
-  `((p "Tags:"
-       (ul ,@(for/list ([(k v) (in-dict (tags-alist))])
-               `(li ,(tag->xexpr k)
-                    nbsp
-                    ,@(if (current-show-tag-counts?) `(,(format "(~a)" v)) '())
-                    " "
-                    (a ([href ,(atom-feed-uri k)])
-                       (img ([src "/img/feed.png"]))))))
-    (p (a ([href ,(current-posts-index-uri)]) "All Posts")
-       " "
-       (a ([href ,(atom-feed-uri "all")])
-          (img ([src "/img/feed.png"])))))))
-
-(define (tags-list-items)
-  (for/list ([(k v) (in-dict (tags-alist))])
-               `(li ,(tag->xexpr k))))
-
-(define (tags-alist)
-  ;; Sort alphabetically by tag name. Use association list (can't sort
-  ;; a hash).
-  (~> (for/list ([(k v) (in-hash all-tags)])
-        (cons k v))
-      (sort string-ci<=? #:key car)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (write-index-pages xs    ;(listof post?) -> any
-                           title ;string?
-                           tag   ;(or/c #f string?)
-                           feed  ;string?
-                           file) ;path?
-  (define num-posts (length xs))
-  (define num-pages (ceiling (/ num-posts (current-posts-per-page))))
-  (for ([page-num (in-range num-pages)]
-        [page-posts (in-list (take-every xs (current-posts-per-page)))])
-    (write-index-page page-posts
-                      (str title " (page " (add1 page-num) ")")
-                      tag
-                      feed
-                      file
-                      page-num
-                      num-pages)))
-
-(define (write-index-page xs         ;(listof post?) -> any
-                          title      ;string?
-                          tag        ;(or/c #f string?)
-                          feed       ;string?
-                          base-file  ;path?
-                          page-num   ;exact-positive-integer?
-                          num-pages) ;exact-positive-integer?
-  (define file (file/page base-file page-num))
-  (prn1 "Generating ~a" (abs->rel/www file))
-  (~> (for/list ([x (in-list xs)])
-        (match-define
-         (post title dest-path uri-path date tags blurb more? body) x)
-        (define contents
-          (cond [(current-index-full?) (enhance-body body)]
-                [more? `(,@(enhance-body blurb)
-                         (footer ([class "read-more"])
-                                 (a ([href ,uri-path]) hellip "more" hellip)))]
-                [else (enhance-body blurb)]))
-        ;; For users of old versions of Frog: If project has no
-        ;; index-template.html, copy the one from example. Much like
-        ;; --init does, but just this one file.
-        (define tpl "index-template.html")
-        (define to (~> (build-path (src-path) tpl) simplify-path))
-        (unless (file-exists? to)
-          (define from (~> (build-path example "_src" tpl) simplify-path))
-          (prn0 "~a does not exist. Copying from ~a" to from)
-          (copy-file from to))
-        (~> (render-template
-             (src-path)
-             tpl
-             {'title (title->htmlstr title)
-              'uri-path uri-path
-              'full-uri (full-uri uri-path)
-              'date-8601 date
-              'date-struct (date->date-struct date)
-              'date (~> date date->xexpr xexpr->string)
-              'tags (~> tags tags->xexpr xexpr->string)
-              'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
-              'content (~> contents xexprs->string)})
-            string->xexpr))
-      (append `((footer ,(bootstrap-pagination base-file page-num num-pages))))
-      (bodies->page #:title title
-                    #:description title
-                    #:feed feed
-                    #:uri-path (abs->rel/www file)
-                    #:keywords (cond [tag (list tag)]
-                                     [else (hash-keys all-tags)])
-                    #:tag tag
-                    #:toc-sidebar? tag) ;; no toc on home page
-      (display-to-file* file #:exists 'replace)))
-
-(define (bootstrap-pagination base-file page-num num-pages)
-  `(ul ([class "pagination"])
-       ,(cond [(zero? page-num) `(li ([class "disabled"])
-                                     (a ([href "#"]) 'larr))]
-              [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
-                                        abs->rel/www)])
-                            'larr))])
-       ,@(for/list ([n (in-range num-pages)])
-           `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www)])
-                   ,(number->string (add1 n)))))
-       ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
-                                                  (a ([href "#"]) 'rarr))]
-              [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
-                                        abs->rel/www)])
-                            'rarr))]) ))
-
-(define (file/page base-file page-num)
-  (cond [(zero? page-num) base-file]
-        [else (~> base-file             ;add "-<page>" suffix
-                  (path-replace-suffix "")
-                  path->string
-                  (str "-" (add1 page-num))
-                  string->path
-                  (path-replace-suffix ".html"))]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (enhance-body xs)
-  (~> xs
-      syntax-highlight
-      add-racket-doc-links
-      auto-embed-tweets))
-
-(define (syntax-highlight xs)
-  (for/list ([x xs])
-    (match x
-      [(or `(pre ([class ,brush]) (code () ,text))
-           `(pre ([class ,brush]) ,text))
-       (match brush
-         [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-          `(div ([class ,(str "brush: " lang)])
-                ,@(pygmentize text lang))]
-         [_ `(pre ,text)])]
-      [_ x])))
-
-(define (->racket-doc-links xs)
-  (define (not-empty-string s)
-    (not (and (string? s)
-              (string=? s ""))))
-  (define a-string
-    (string-join (for/list ([x (in-list xs)])
-                   (match x
-                     [(? integer?) (make-string 1 (integer->char x))]
-                     [(? string?) x]
-                     [_ ""]))
-                 ""))
-  (filter
-   not-empty-string
-   (add-between
-    (for/list ([s (in-list (regexp-split #rx" " a-string))])
-      (match (doc-uri (string->symbol s))
-        [(? string? uri) `(a ([href ,uri] [style "color: inherit"]) ,s)]
-        [_ s]))
-    " ")))
-
-(module+ test
-  (check-equal?
-   (->racket-doc-links '("printf "))
-   '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
-     " "))
-  (check-equal?
-   (->racket-doc-links '("symbol-" ">" "string"))
-   '((a ([href "http://docs.racket-lang.org/reference/symbols.html#(def._((quote._~23~25kernel)._symbol-~3estring))"]
-         [style "color: inherit"])
-        "symbol->string")))
-  (check-equal?
-   (->racket-doc-links '("printf displayln"))
-   '((a ([href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))"]
-         [style "color: inherit"])
-        "printf")
-     " "
-     (a ([href "http://docs.racket-lang.org/reference/Writing.html#(def._((lib._racket/private/misc..rkt)._displayln))"]
-         [style "color: inherit"])
-        "displayln"))))
-
-(define (add-racket-doc-links xs)
-  (for/list ([x (in-list xs)])
-    (xexpr-map (lambda (x parents)
-                 ;; Not necessarily (tag () "string"). For example it
-                 ;; won't be (tag () "number->symbol"), it will be
-                 ;; (tag () "number-" ">" "symbol").
-                 (list
-                  (match* (parents x)
-                    ;; Markdown `symbol`[racket] becomes xexpr like
-                    ;; (code ([class "brush: racket"]) "symbol")
-                    [(_
-                      `(code ([class "brush: racket"]) ,xs ...))
-                     (if (current-racket-doc-link-prose?)
-                         `(code () ,@(->racket-doc-links xs))
-                         x)]
-                    ;; Only spans from Pygments lexed as Racket
-                    [(`((pre ,_ ...)
-                        (div ,_ ...)
-                        (td ,_ ...)
-                        (tr ,_ ...)
-                        (tbody ,_ ...)
-                        (table ,_ ...)
-                        (div ([class "brush: racket"]) ,_ ...))
-                      `(span ([class ,c]) ,xs ...))
-                     (if (current-racket-doc-link-code?)
-                         `(span ([class ,c]) ,@(->racket-doc-links xs))
-                         x)]
-                    [(_ x) x])))
-               x)))
-
-;; This intentionally only works for an <a> element that's nested
-;; alone in a <p>. (In Markdown source this means for example an
-;; <http://auto-link> alone with blank lines above and below.) Why?
-;; The embedded tweet is a block element.
-(define (auto-embed-tweets xs)
-  (define (do-it xs)
-    (for/list ([x xs])
-      (match x
-        [`(p ,_ ...
-             (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
-                                 (list uri))])
-                ,_ ...))
-         ;; Note: Although v1.0 API stopped working June 2013,
-         ;; /statuses/oembed is an exception. See
-         ;; <https://dev.twitter.com/docs/faq#17750>. That's good
-         ;; because v1.1 requires authentication, which would
-         ;; complicate this (we would sometimes need to launch a
-         ;; browser to do an OAuth flow, yada yada yada).
-         (define oembed-url
-           (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
-                             "url=" (uri-encode uri)
-                             "&align=center")))
-         (define js (call/input-url oembed-url get-pure-port read-json))
-         (define html ('html js))
-         (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
-                          (append '(div ([class "embed-tweet"]))))]
-               [else x])]
-        [_ x])))
-  (cond [(current-auto-embed-tweets?) (do-it xs)]
-        [else xs]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define new-markdown-post-template
-#<<EOF
-    Title: ~a
-    Date: ~a
-    Tags: DRAFT
-
-_Replace this with your post text. Add one or more comma-separated
-Tags above. The special tag `DRAFT` will prevent the post from being
-published._
-
-<!-- more -->
-
-EOF
-)
-
-(define new-scribble-post-template
-#<<EOF
-#lang scribble/manual
-
-Title: ~a
-Date: ~a
-Tags: DRAFT
-
-Replace this with your post text. Add one or more comma-separated
-Tags above. The special tag `DRAFT` will prevent the post from being
-published.
-
-<!-- more -->
-
-EOF
-)
-
-(define enable-editor (make-parameter #f))
-
-(define (new-post title [type 'markdown])
-  (let ([extension (case type
-                     [(markdown) ".md"]
-                     [(scribble) ".scrbl"])]
-        [template  (case type
-                     [(markdown) new-markdown-post-template]
-                     [(scribble) new-scribble-post-template])])
-    (parameterize ([date-display-format 'iso-8601])
-      (define d (current-date))
-      (define filename (str (~> (str (date->string d #f) ;omit time
-                                     "-"
-                                     (~> title string-downcase))
-                                our-encode)
-                            extension))
-      (define pathname (build-path (src/posts-path) filename))
-      (when (file-exists? pathname)
-        (raise-user-error 'new-post "~a already exists." pathname))
-      (display-to-file* (format template
-                                title
-                                (date->string d #t)) ;do includde time
-                        pathname
-                        #:exists 'error)
-      (displayln pathname)
-      (when (enable-editor)
-        (system (editor-command-string 
-                  (regexp-replaces (current-editor)
-                                   `([#rx"\\$EDITOR" ,(getenv "EDITOR")]))
-                  (path->string pathname) 
-                  (current-editor-command)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Note: This doesn't delete generic HTML files generated from
-;; Markdown files, it only deletes those genereated from post files
-;; (of a certain name format).
-(define (clean)
-  (define (maybe-delete path type v)
-    (define (rm p)
-      (delete-file p)
-      (prn0 "Deleted ~a" (abs->rel/www p)))
-    (cond
-     [(eq? type 'file)
-      (define-values (base name must-be-dir?) (split-path path))
-      (cond [(equal? path (reroot-path (current-posts-index-uri) (www-path)))
-             (rm path)]
-            [(equal? (build-path base) (build-path (www-path) "tags/"))
-             (rm path)]
-            [(equal? (build-path base) (build-path (www-path) "feeds/"))
-             (rm path)]
-            [else (match (path->string path)
-                    [(pregexp "\\d{4}/\\d{2}/.+?\\.html$")
-                     (rm path)]
-                    [_ (void)])])]))
-  (fold-files maybe-delete '() (www-path) #f))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (build-non-post-pages) ;; -> (listof string?)
-  (fold-files write-non-post-page '() (src-path) #f))
-
-(define (write-non-post-page path type v)
-  (define-values (base name must-be-dir?) (split-path path))
-  (cond
-   [(and (eq? type 'file)
-         (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
-         (not (regexp-match? post-file-px (path->string name))))
-    (prn1 "Reading non-post ~a" (abs->rel/src path))
-    (define dest-path
-      (build-path (www-path)
-                  (~> path
-                      (path-replace-suffix ".html")
-                      abs->rel/src)))
-    (define xs
-      (~> (match (path->string name)
-            [(pregexp "\\.scrbl$")
-             (define img-dest (path-replace-suffix dest-path ""))
-             (read-scribble-file path
-                                 #:img-local-path img-dest
-                                 #:img-uri-prefix (abs->rel/www img-dest))]
-            [_ (parse-markdown path)])
-          enhance-body))
-    (define title
-      (match xs
-        ;; First h1 header, if any
-        [(list-no-order `(h1 (,_ ...) ... ,els ...) _ ...)
-         (string-join (map xexpr->markdown els) "")]
-        ;; Else name of the source file
-        [_ (~> path
-               (path-replace-suffix "")
-               file-name-from-path
-               path->string)]))
-    (define uri-path (abs->rel/www dest-path))
-    (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
-    (~> xs
-        (bodies->page #:title title
-                      #:description (xexprs->description xs)
-                      #:uri-path uri-path)
-        (display-to-file* dest-path #:exists 'replace))
-    (cons uri-path v)]
-   [else v]))
+(define-runtime-path info.rkt "../info.rkt")
+(define (frog-version)
+  ;; Because (require "../info.rkt") (#%info-lookup version) errors in
+  ;; some cases with Racket 6, resort to regexp-ing info.rkt as text.
+  (match (file->string info.rkt #:mode 'text)
+    [(pregexp "^#lang setup/infotab\n\\(define version \"([^\"]+)\""
+              (list _ v))
+     v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (build)
-  ;; Read the posts and get (listof post?) with which to do more work.
-  ;; Sort the list by date.
-  (define (post<=? a b)
-    (cond [(current-index-newest-first?)
-           (string<=? (post-date a) (post-date b))]
-          [else
-           (string<=? (post-date b) (post-date a))]))
-  (set! all-tags (make-hash))
-  (define posts (~> (fold-files* read-post '() (src/posts-path) #f)
-                    (sort (negate post<=?))))
-  (define-values (older newer) ;; older/newer posts
-    (match posts
-      ['() (values '() '())]
-      [_   (values (append (drop posts 1) (list #f))
-                   (cons #f (take posts (sub1 (length posts)))))]))
-  ;; Write the post pages
-  (for-each write-post-page posts older newer)
-  ;; For each tag, write an index page, Atom feed, RSS feed
-  (define (post-has-tag? tag post)
-    (member tag (post-tags post)))
-  (for ([(tag _) (in-hash all-tags)])
-    (define posts-this-tag (filter (curry post-has-tag? tag) posts))
-    (define tag-index-path
-      (build-path (www/tags-path) (str (our-encode tag) ".html")))
-    (write-index-pages posts-this-tag
-                       (str "Posts tagged '" tag "'")
-                       tag
-                       (our-encode tag)
-                       tag-index-path)
-    (write-atom-feed posts-this-tag
-                     (str "Posts tagged '" tag "'")
-                     tag
-                     (abs->rel/www tag-index-path)
-                     (build-path (www/feeds-path) (str (our-encode tag)
-                                                       ".atom.xml")))
-    (write-rss-feed posts-this-tag
-                    (str "Posts tagged '" tag "'")
-                    tag
-                    (abs->rel/www tag-index-path)
-                    (build-path (www/feeds-path) (str (our-encode tag)
-                                                      ".rss.xml"))))
-  ;; Write the index page for all posts
-  (write-index-pages posts (current-title) #f "all" (www/index-pathname))
-  ;; Write Atom feed for all posts
-  (write-atom-feed posts "All Posts" "all" (current-posts-index-uri)
-                   (build-path (www/feeds-path) "all.atom.xml"))
-  ;; Write RSS feed for all posts
-  (write-rss-feed posts "All Posts" "all" (current-posts-index-uri)
-                  (build-path (www/feeds-path) "all.rss.xml"))
-  ;; Generate non-post pages.
-  (define pages (build-non-post-pages))
-  ;; Write sitemap
-  ;; One gotcha: What about other "sub-sites", for example GitHub project
-  ;; pages?  How to include them in sitemap.txt?
+  ;; [0] Build `old-posts`, `new-posts`, and `sorted-posts`.
+  ;;
+  ;; We use a file that's a serialization of (hash/c path? post?)
+  ;; where the hash key is the source file pathname. The file is the
+  ;; state from our last build. Read this into `old-posts`. Will be an
+  ;; empty hash if file doesn't exist (yet).
+  (define old-posts (deserialize-posts))
+  ;; Now let's traverse the source files to build `new-posts`.
+  (define (on-file path type new-posts)
+    (define-values (_ name __) (split-path path))
+    (when (and (eq? type 'file)
+               (regexp-match? post-file-px name))
+      (define old-post (hash-ref old-posts path #f))
+      (cond [;; If the post exists in `old-posts` and its modified
+             ;; time isn't older than the source file, just reuse the
+             ;; old parse of the source -- but reset the `older` and
+             ;; `newer` fields to #f.
+             (and old-post
+                  (>= (post-modified old-post)
+                      (file-or-directory-modify-seconds path)))
+             (prn2 "Needn't read: ~a" (abs->rel/src path))
+             (hash-set! new-posts path
+                        (struct-copy post old-post
+                                     [older #f]
+                                     [newer #f]))]
+            ;; Else do the relatively expensive work of read-post
+            ;; (parsing for markdown + Pygments + doc links, or
+            ;; Scribble evaluation).
+            [else (define new-post (read-post path))
+                  (when new-post
+                    (hash-set! new-posts path new-post))]))
+      new-posts)
+  (define new-posts
+    (fold-files* on-file (make-hash) (src/posts-path) #f))
+  ;; Make hashes of tags -> posts, old and new.
+  (define old-tags (posts->tags old-posts))
+  (define new-tags (posts->tags new-posts))
+  (all-tags new-tags)
+  ;; Make a list of the post source paths, sorted by post date.
+  ;; (This is needed by index pages, which list posts ordered by date.)
+  (define sorted-posts-src-paths
+    (map post-src-path (sort (hash-values new-posts)
+                             (negate post-date<=?))))
+  ;; Update the `older` and `newer` fields for each post in new-posts.
+  ;; These act like pointers in a doubly-linked list, except they are
+  ;; source file paths not pointers, and #f is equivalent to NULL.
+  ;; (Because this mutates new-posts, later when we compare it to
+  ;; old-posts, any changes will count... therefore trigger rebuilding
+  ;; those posts... therefore ensure previous/next post links in
+  ;; post-template.html get updated.)
+  (let loop ([xs sorted-posts-src-paths])
+    (match xs
+      [(list this next more ...)
+       (hash-set! new-posts this
+                  (struct-copy post (hash-ref new-posts this)
+                               [older next]))
+       (hash-set! new-posts next
+                  (struct-copy post (hash-ref new-posts next)
+                               [newer this]))
+       (loop (cons next more))]
+      [_ (void)]))   ;older & newer were intialized to #f; leave as-is
+
+  ;; Great, now we're ready to use `old-post` and `new-posts` to
+  ;; determine what needs to be built -- and more importantly, what
+  ;; does NOT need to be built.
+  ;;
+  ;; [1] Posts
+  ;;
+  ;; (a) Delete obsolete output files. When post-dest-path has
+  ;; changed, delete the old post-dest-path.
+  (for ([(path old-post) (in-hash old-posts)])
+    (define new-post (hash-ref new-posts path #f))
+    (unless (and new-post
+                 (equal? (post-dest-path new-post) (post-dest-path old-post)))
+      (delete-file* (post-dest-path old-post) abs->rel/www)))
+  ;; (b) Write output files, as necessary.
+  (for ([(path post) (in-hash new-posts)])
+    (define file-modified file-or-directory-modify-seconds) ;brevity
+    (when (or ;; Target doesn't exist
+              (not (file-exists? (post-dest-path post)))
+              ;; Target is older than its dependents
+              (let ([secs (file-modified (post-dest-path post))])
+                (or (< secs (post-modified post))
+                    (< secs (file-modified (post-template.html)))
+                    (< secs (file-modified (page-template.html)))))
+              ;; Post isn't in old-posts or differs from version in
+              ;; old-posts (includes case of older/newer links
+              ;; changing).
+              (not (equal? post (hash-ref old-posts path #f))))
+      (write-post-page post
+                       (hash-ref new-posts (post-older post) #f)
+                       (hash-ref new-posts (post-newer post) #f))))
+
+  ;; [2] Tags: Output to index pages and feed files
+  ;; 
+  ;; (a) Delete obsolete output files, for tags no longer in use.
+  (for ([tag (in-list (hash-keys old-tags))])
+    (unless (hash-has-key? new-tags tag)
+      (delete-file* (index-path-for-tag tag) abs->rel/www)
+      ;; ^ FIXME. Also delete multi-page index files
+      (delete-file* (atom-path-for-tag tag) abs->rel/www)
+      (delete-file* (rss-path-for-tag tag) abs->rel/www)
+      (prn0 "Deleted index pages and feeds for tag no longer used: `~a`" tag)))
+  ;; (b) Write output files, as necessary.
+  (define (stale/templates? . paths)
+    (for/or ([path (in-list paths)])
+      (stale? path
+              (page-template.html) (post-template.html) (index-template.html))))
+  (for ([(tag paths) (in-hash new-tags)])
+    (define enc-tag (our-encode tag))
+    (when (or (not (equal? paths (hash-ref old-tags tag #f)))
+              (stale/templates? (index-path-for-tag tag)
+                                (atom-path-for-tag tag)
+                                (rss-path-for-tag tag)))
+      (define (post-has-tag? tag post)
+        (or (equal? tag "all")
+            (member tag (post-tags post))))
+      (define posts-this-tag
+        (filter values
+                (for/list ([src (in-list sorted-posts-src-paths)])
+                  (define post (hash-ref new-posts src))
+                  (and (post-has-tag? tag post) post))))
+      (write-stuff-for-tag tag posts-this-tag)))
+
+  ;; [3] Save `new-posts` (to be used as the `old-posts` for our next
+  ;;     build).
+  (serialize-posts new-posts)
+
+  ;; [4] Non-post pages.
+  (define non-post-pages (build-non-post-pages))
+  
+  ;; [5] sitemap.txt, populated from new-posts and non-post-pages.
+  ;;     (Generating this is cheap, so just always do it.)
   (prn1 "Generating sitemap.txt")
-  (with-output-to-file (build-path (www-path) "sitemap.txt")
-    #:exists 'replace
-    (thunk (for ([x (in-list (map full-uri
-                                  (append (map post-uri-path posts) pages)))])
-             (displayln x))))
-  (let* ([d (current-date)]
-         [n (lambda (x) (~r (x d) #:min-width 2 #:pad-string "0"))])
-    (prn0 (~a "Done generating files at " (n date-hour) ":" (n date-minute))))
-  (void))
+  (with-output-to-file (build-path (www-path) "sitemap.txt") #:exists 'replace
+    (thunk
+     (for-each displayln
+               (map full-uri
+                    (append (map post-uri-path (hash-values new-posts))
+                            non-post-pages))))))
+
+;;----------------------------------------------------------------------------
 
 ;; Like `fold-files`, but if `start-path` is not #f and does not exist,
 ;; this returns `init-val` rather than abending with "path
@@ -752,24 +286,33 @@ EOF
   (cond [(and start-path (not (directory-exists? start-path))) init-val]
         [else (fold-files proc init-val start-path follow-links?)]))
 
+(define (post-date<=? a b)
+  (let ([a (post-date a)]
+        [b (post-date b)])
+    (cond [(current-index-newest-first?) (string<=? a b)]
+          [else                          (string<=? b a)])))
+
+;; Given a (hash/c path? post?) return a (hash/c string? (set/c
+;; path?)), where the string is a tag. In other words this returns a
+;; hash that maps a tag to all the posts that are marked with the tag.
+(define/contract (posts->tags posts)
+  ((hash/c path? post?) . ->  . (hash/c string? (set/c path?)))
+  (define h (make-hash))
+  (for ([(path post) (in-hash posts)])
+    (for ([tag (in-list (cons "all" (post-tags post)))])
+      (unless (equal? tag "")
+        (hash-set! h
+                   tag
+                   (set-add (hash-ref h tag (set)) path)))))
+  h)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; For use with `watch`. For quicker edit/view cycle. Try to build one
-;; markdown file and only its HTML output (at the cost of leaving all
-;; the other dependencies out of date, and with bogus older/newer
-;; links for a post page.)  If can do this, return #t.  Else if can't
-;; (b/c `path` isn't a post markdown or non-post page markdown) return
-;; #f in which case caller might want to do a full build.
-(define (build-one path)
-  (define-values (base name dir?) (split-path path))
-  (cond [(equal? (str base) ;a post md file?
-                 (str (src/posts-path) "/"))
-         (match (read-post path 'file '())
-           [(list p) (write-post-page p p p) #t]
-           [_ #f])]
-        [else (match name
-                [(pregexp "\\.(md|markdown)$") (build-non-post-pages)]
-                [_ #f])]))
+(define (clean)
+  (clean-post-output-files)
+  (clean-non-post-output-files)
+  (clean-tag-output-files)
+  (clean-serialized-posts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -784,8 +327,7 @@ EOF
                          ;; Output file
                          [(pregexp "\\.(?:html|xml|txt)") (void)]
                          ;; Source file
-                         [_ (unless (build-one path)
-                              (build))
+                         [_ (build)
                             (displayln #"\007")])) ;beep (hopefully)
                      #:rate 5)]
           [else (thread (thunk (sync never-evt)))]))
@@ -862,117 +404,6 @@ EOF
                                [output-dir "."])
       ;; (clean)
       (build)
-      (serve #:launch-browser? #t
-             #:watch? #f
-             #:port 3000)
+      ;; (serve #:launch-browser? #t #:watch? #f #:port 3000)
       ;; (watch)
       )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (find-frog-root)
-  (or (let ([x (find-parent-containing (current-directory) ".frogrc")])
-        (and x (simplify-path x)))
-      (current-directory)))
-
-(define-runtime-path info.rkt "../info.rkt")
-(define (frog-version)
-  ;; Because (require "../info.rkt") (#%info-lookup version) errors in
-  ;; some cases with Racket 6, resort to regexp-ing info.rkt as text.
-  (match (file->string info.rkt #:mode 'text)
-    [(pregexp "^#lang setup/infotab\n\\(define version \"([^\"]+)\""
-              (list _ v))
-     v]))
-
-(module+ main
-  (printf "Frog ~a\n" (frog-version))
-  (parameterize* ([top (find-frog-root)])
-    (parameterize-from-config (build-path (top) ".frogrc")
-                              ([scheme/host "http://www.example.com"]
-                               [title "Untitled Site"]
-                               [author "The Unknown Author"]
-                               [editor "$EDITOR"]
-                               [editor-command "{editor} {filename}"]
-                               [show-tag-counts? #t]
-                               [permalink "/{year}/{month}/{title}.html"]
-                               [index-full? #f]
-                               [feed-full? #f]
-                               [max-feed-items 999]
-                               [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f]
-                               [auto-embed-tweets? #t]
-                               [racket-doc-link-code? #t]
-                               [racket-doc-link-prose? #f]
-                               [posts-per-page 10]
-                               [index-newest-first? #t]
-                               [posts-index-uri "/index.html"]
-                               [source-dir "_src"]
-                               [output-dir "."])
-      (define watch? #f)
-      (define port 3000)
-      (command-line
-       #:program "frog"
-       #:once-each
-       [("--init")
-        (""
-         "Initialize current directory as a new Frog project, creating"
-         "default files as a starting point.")
-        (init-project)]
-       [("--edit") 
-        (""
-         "Opens the file created by -n or -N in editor as specified in .frogrc"
-         "Supply this flag before one of those flags.")
-        (enable-editor #t)]
-       #:multi
-       [("-n" "--new") title
-        (""
-         "Create a .md file for a new post based on today's date and <title>.")
-        (new-post title 'markdown)]
-       [("-N" "--new-scribble") title
-        (""
-         "Create a .scrbl file for a new post based on today's date and <title>.")
-        (new-post title 'scribble)]
-       [("-b" "--build")
-        (""
-         "Generate files.")
-        (build)]
-       [("-c" "--clean")
-        (""
-         "Delete generated files.")
-        (clean)]
-       #:once-each
-       [("-w" "--watch")
-        (""
-         "(Experimental: Only rebuilds some files.)"
-         "Supply this flag before -s/--serve or -p/--preview."
-         "Watch for changed files, and generate again."
-         "(You'll need to refresh the browser yourself.")
-        (set! watch? #t)]
-       [("--port") number
-        (""
-         "The port number for -s/--serve or -p/--preview."
-         "Supply this flag before one of those flags."
-         "Default: 3000.")
-        (set! port (string->number number))]
-       #:once-any
-       [("-s" "--serve")
-        (""
-         "Run a local web server.")
-        (serve #:launch-browser? #f
-               #:watch? watch?
-               #:port port)]
-       [("-p" "--preview")
-        (""
-         "Run a local web server and start your browser on blog home page.")
-        (serve #:launch-browser? #t
-               #:watch? watch?
-               #:port port)]
-       #:once-any
-       [("-S" "--silent") "Silent. Put first."
-        (current-verbosity -1)]
-       [("-v" "--verbose") "Verbose. Put first."
-        (current-verbosity 1)
-        (prn1 "Verbose mode")]
-       [("-V" "--very-verbose") "Very verbose. Put first."
-        (current-verbosity 2)
-        (prn2 "Very verbose mode")]))))
