@@ -8,8 +8,8 @@ env:
  - RACKET_VERSION=HEAD
 
 before_install:
-# Note: Important to pipe this to `bash` not to `sh`.
-- curl -L https://github.com/greghendershott/travis-racket/releases/download/v0.6/install-racket.sh | bash
+- git clone https://github.com/greghendershott/travis-racket.git
+- cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
 
 install:
 
