@@ -57,14 +57,19 @@
     (lambda (sym)
       (unless cache
         (set! cache (make-hasheq))
-        (prn0 "Building Racket documentation cache...")
+        (define older-racket? (string<=? (version) "6.0.1"))
+        (cond [older-racket?
+               (prn0 "Building Racket documentation cache -- MUCH faster in Racket 6.0.1+ ...")]
+              [else
+               (prn2 "Building Racket documentation cache...")])
         (for ([x (in-list (xref-index xref))])
           (match x
             [(entry words content tag (exported-index-desc name from-libs))
              (hash-set! cache name (append (hash-ref cache name '())
                                            (filter symbol? from-libs)))]
             [_ (void)]))
-        (prn0 "...~a items" (hash-count cache)))
+        (when older-racket?
+          (prn0 "...~a items" (hash-count cache))))
       (hash-ref cache sym #f))))
 
 (module+ test
