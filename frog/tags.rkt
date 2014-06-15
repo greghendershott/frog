@@ -76,7 +76,8 @@
   (for ([page-num (in-range num-pages)]
         [page-posts (in-list (take-every xs (current-posts-per-page)))])
     (write-index-page page-posts
-                      (str title " (page " (add1 page-num) ")")
+                      (cond [(zero? page-num) title]
+                            [else (str title " (page " (add1 page-num) ")")])
                       tag
                       feed
                       file
