@@ -189,12 +189,8 @@
   (let loop ([xs sorted-posts-src-paths])
     (match xs
       [(list this next more ...)
-       (hash-set! new-posts this
-                  (struct-copy post (hash-ref new-posts this)
-                               [older next]))
-       (hash-set! new-posts next
-                  (struct-copy post (hash-ref new-posts next)
-                               [newer this]))
+       (hash-update! new-posts this (lambda (v) (struct-copy post v [older next])))
+       (hash-update! new-posts next (lambda (v) (struct-copy post v [newer this])))
        (loop (cons next more))]
       [_ (void)]))   ;older & newer were intialized to #f; leave as-is
 
@@ -301,9 +297,7 @@
   (for ([(path post) (in-hash posts)])
     (for ([tag (in-list (cons "all" (post-tags post)))])
       (unless (equal? tag "")
-        (hash-set! h
-                   tag
-                   (set-add (hash-ref h tag (set)) path)))))
+        (hash-update! h tag (lambda (v) (set-add v path)) (set)))))
   h)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
