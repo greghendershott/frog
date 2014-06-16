@@ -241,7 +241,6 @@
       (stale? path
               (page-template.html) (post-template.html) (index-template.html))))
   (for ([(tag paths) (in-hash new-tags)])
-    (define enc-tag (our-encode tag))
     (when (or (not (equal? paths (hash-ref old-tags tag #f)))
               (stale/templates? (index-path-for-tag tag)
                                 (atom-path-for-tag tag)
