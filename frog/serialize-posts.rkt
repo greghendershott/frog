@@ -3,8 +3,7 @@
 (require racket/serialize
          "paths.rkt"
          "post-struct.rkt"
-         "util.rkt"
-         "verbosity.rkt")
+         "util.rkt")
 
 (provide (all-defined-out))
 
