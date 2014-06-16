@@ -117,6 +117,7 @@ expects:
 ```sh
 project/
   # Files provided by you:
+  .frog/build   # a cache to support minimal rebuilds
   .frogrc       # see next section of README for details
   _src/         # default. see `source-dir` in .frogrc
     page-template.html  # lets you define the page layout
