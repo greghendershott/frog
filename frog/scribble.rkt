@@ -7,6 +7,8 @@
 
 (provide read-scribble-file)
 
+(module+ test (require rackunit))
+
 (define/contract (read-scribble-file path
                                      #:img-local-path img-dir
                                      #:img-uri-prefix img-uri)
@@ -67,9 +69,10 @@
                  ,@xs)]
           [`(img ,(list-no-order `[src ,src] x ...))
            `(img ([src ,(str img-uri "/" src)] ,@x))]
-          ;; Scribble @section is rendered as <h3> (and subsection as
-          ;; <h4>, and so on). Hoist the headings up a couple levels to
-          ;; be consistent with the Markdown format sources.
+          ;; Scribble @title is rendered as <h2>, @section as <h3>,
+          ;; and @subsection as <h4>, and so on. Hoist the headings up
+          ;; to be consistent with the Markdown format sources.
+          [`(h2 ,x ...) `(h1 ,@x)]   ;elsewhere we special-case 1st h1
           [`(h3 ,x ...) `(h1 ,@x)]
           [`(h4 ,x ...) `(h2 ,@x)]
           [`(h5 ,x ...) `(h3 ,@x)]
@@ -78,21 +81,36 @@
           [x x])))
      x)))
 
-;; regression test for https://github.com/greghendershott/frog/issues/75
 (module+ test
-  (require rackunit)
-  (define s #<<EOF
+  (let ([path (make-temporary-file)]
+        [s #<<EOF
+#lang scribble/manual
+@title{The Title}
+@section{Section 1}
+Here is some text.
+EOF
+])
+    (with-output-to-file path #:exists 'replace (λ () (display s)))
+    (check-equal?
+     (read-scribble-file path
+                         #:img-local-path (find-system-path 'temp-dir)
+                         #:img-uri-prefix "/")
+     '((h1 () (a ((name "(part._.The_.Title)"))) "The Title")
+      (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
+      (p () "Here is some text.")))
+    (delete-file path))
+  ;; regression test for https://github.com/greghendershott/frog/issues/75
+  (let ([path (make-temporary-file)]
+        [s #<<EOF
 #lang scribble/manual
 @hyperlink["https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47" "Aur"]
 EOF
-)
-
-  (define path (make-temporary-file))
-  (with-output-to-file path #:exists 'replace (λ () (display s)))
-  (check-equal?
-   (read-scribble-file path
-                       #:img-local-path (find-system-path 'temp-dir)
-                       #:img-uri-prefix "/")
-   '((p ()
-        (a ((href "https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47")) "Aur"))))
-  (delete-file path))
+])
+    (with-output-to-file path #:exists 'replace (λ () (display s)))
+    (check-equal?
+     (read-scribble-file path
+                         #:img-local-path (find-system-path 'temp-dir)
+                         #:img-uri-prefix "/")
+     '((p ()
+          (a ((href "https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47")) "Aur"))))
+    (delete-file path)))

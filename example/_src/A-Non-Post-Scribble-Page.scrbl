@@ -7,6 +7,8 @@
 
 @(require (for-label racket))
 
+@title{Example of Non-Post Scribble Page}
+
 This is an example of a non-post page written in Scribble.
 
 Here's some @hyperlink["http://bullshitipsum.com/?paragraphs=2"

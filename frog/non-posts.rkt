@@ -16,6 +16,8 @@
 (provide clean-non-post-output-files
          build-non-post-pages)
 
+(module+ test (require rackunit))
+
 ;; NOTE: Since the user may manually plop HTML files anywhere in
 ;; (www-path), we can't just go around deleting those. Instead, we
 ;; need to iterate sources and delete only HTMLs corresponding to
@@ -61,21 +63,42 @@
                                  #:img-uri-prefix (abs->rel/www img-dest))]
             [_ (parse-markdown path)])
           enhance-body))
-    (define title
-      (match xs
-        ;; First h1 header, if any
-        [(list-no-order `(h1 (,_ ...) ... ,els ...) _ ...)
-         (string-join (map xexpr->markdown els) "")]
-        ;; Else name of the source file
-        [_ (~> path
-               (path-replace-suffix "")
-               file-name-from-path
-               path->string)]))
     (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
     (~> xs
         xexprs->string
-        (bodies->page #:title title
+        (bodies->page #:title (make-title xs path)
                       #:description (xexprs->description xs)
                       #:uri-path uri-path)
         (display-to-file* dest-path #:exists 'replace))
     (cons uri-path v)))
+
+(define (make-title xs path)
+  (or (for/or ([x (in-list xs)])
+        (match x
+          ;; First h1 header, if any -- Scribble style with <a> anchor
+          [`(h1 (,_ ...) (a ,_ ...) ,els ...+)
+           (string-join (map xexpr->markdown els) "")]
+          ;; First h1 header, if any -- otherwise
+          [`(h1 (,_ ...) ,els ...)
+           (string-join (map xexpr->markdown els) "")]
+          [_ #f]))
+      ;; Else name of the source file
+      (~> path
+          (path-replace-suffix "")
+          file-name-from-path
+          path->string)))
+
+(module+ test
+  (check-equal?
+   (make-title '((h1 () "The Title")
+                 (h1 () "Not the title")
+                 (p () "Blah blah"))
+               #f)
+   "The Title")
+  (check-equal?
+   (make-title
+    '((h1 () (a ((name "(part._.The_.Title)"))) "The Title")
+      (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
+      (p () "Here is some text."))
+    #f)
+   "The Title"))
