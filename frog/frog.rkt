@@ -252,7 +252,7 @@
         (filter values
                 (for/list ([src (in-list sorted-posts-src-paths)])
                   (define post (hash-ref new-posts src))
-                  (and post (post-has-tag? tag post)))))
+                  (and post (post-has-tag? tag post) post))))
       (write-stuff-for-tag tag posts-this-tag)))
 
   ;; [3] Save `new-posts` (to be used as the `old-posts` for our next
