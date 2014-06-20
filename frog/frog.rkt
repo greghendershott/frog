@@ -236,23 +236,29 @@
       (delete-file* (rss-path-for-tag tag) abs->rel/www)
       (prn0 "Deleted index pages and feeds for tag no longer used: `~a`" tag)))
   ;; (b) Write output files, as necessary.
-  (define (stale/templates? . paths)
-    (for/or ([path (in-list paths)])
-      (stale? path
+  (define (stale/templates? tag)
+    ;; Any of the index pages or feed files older than template files
+    ;; used to make them?
+    (for/or ([f (in-list (list index-path-for-tag atom-path-for-tag rss-path-for-tag))])
+      (stale? (f tag)
               (page-template.html) (post-template.html) (index-template.html))))
+  (define (stale/posts? posts)
+    ;; Any post using this tag has changed? (Because post contents
+    ;; like the blurb, date, etc. show up on index pages and feeds).
+    (for/or ([post (in-list posts)])
+      (not (equal? post (hash-ref old-posts (post-src-path post) #f)))))
+  (define (post-has-tag? tag post)
+    (or (equal? tag "all")
+        (member tag (post-tags post))))
   (for ([(tag paths) (in-hash new-tags)])
+    (define posts-this-tag
+      (filter values
+              (for/list ([src (in-list sorted-posts-src-paths)])
+                (define post (hash-ref new-posts src #f))
+                (and post (post-has-tag? tag post) post))))
     (when (or (not (equal? paths (hash-ref old-tags tag #f)))
-              (stale/templates? (index-path-for-tag tag)
-                                (atom-path-for-tag tag)
-                                (rss-path-for-tag tag)))
-      (define (post-has-tag? tag post)
-        (or (equal? tag "all")
-            (member tag (post-tags post))))
-      (define posts-this-tag
-        (filter values
-                (for/list ([src (in-list sorted-posts-src-paths)])
-                  (define post (hash-ref new-posts src))
-                  (and post (post-has-tag? tag post) post))))
+              (stale/posts? posts-this-tag)
+              (stale/templates? tag))
       (write-stuff-for-tag tag posts-this-tag)))
 
   ;; [3] Save `new-posts` (to be used as the `old-posts` for our next
