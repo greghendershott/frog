@@ -76,10 +76,10 @@
   (or (for/or ([x (in-list xs)])
         (match x
           ;; First h1 header, if any -- Scribble style with <a> anchor
-          [`(h1 (,_ ...) (a ,_ ...) ,els ...+)
+          [`(h1 (,_ ...) (a . ,_) . ,els)
            (string-join (map xexpr->markdown els) "")]
           ;; First h1 header, if any -- otherwise
-          [`(h1 (,_ ...) ,els ...)
+          [`(h1 (,_ ...) . ,els)
            (string-join (map xexpr->markdown els) "")]
           [_ #f]))
       ;; Else name of the source file

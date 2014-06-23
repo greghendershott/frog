@@ -99,11 +99,11 @@
      path
      x))
   (match xs
-    [`(,(or `(pre () (code () ,metas ...)) ;Markdown
-            `(pre () ,metas ...)           ;Markdown
-            `(pre ,metas ...)              ;Markdown
-            `(p () ,metas ...))            ;Scribble
-       ,more ...)
+    [`(,(or `(pre () (code () . ,metas)) ;Markdown
+            `(pre () . ,metas)           ;Markdown
+            `(pre . ,metas)              ;Markdown
+            `(p () . ,metas))            ;Scribble
+       . ,more)
      ;; In the meta-data we don't want HTML entities like &ndash; we
      ;; want plain text.
      (match (string-join (map xexpr->markdown metas))
@@ -111,7 +111,7 @@
                  (list _ title date tags))
         (values title date (tag-string->tags tags) more)]
        [_ (err (first xs))])]
-    [(list x _ ...) (err x)]
+    [(cons x _) (err x)]
     [_ (err "")]))
 
 (module+ test

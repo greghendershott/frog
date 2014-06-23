@@ -44,16 +44,16 @@
     (apply str (map (curryr xexpr->markdown block-suffix) es)))
   (define (normalize x) ;; ensure xexpr has explicit attributes
     (match x
-      [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) ,es ...) x]
-      [`(,(? symbol? tag) ,es ...) `(,tag () ,@es ...)] ;add '() attribs
+      [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) . ,es) x]
+      [`(,(? symbol? tag) . ,es) `(,tag () ,@es)] ;add '() empty attribs
       [_ x]))
   (match (normalize x)
-    [`(em            ,_ ,es ...) (str "_" (->s es) "_")]
-    [`(strong        ,_ ,es ...) (str "**" (->s es) "**")]
-    [`(code          ,_ ,es ...) (str "`" (->s es) "`")]
-    [`(,(? heading?) ,_ ,es ...) (str (->s es) ": ")]
-    [`(,(? block?)   ,_ ,es ...) (str (->s es) block-suffix)]
-    [`(,(? symbol?)  ,_ ,es ...) (str (->s es))]
+    [`(em            ,_ . ,es) (str "_" (->s es) "_")]
+    [`(strong        ,_ . ,es) (str "**" (->s es) "**")]
+    [`(code          ,_ . ,es) (str "`" (->s es) "`")]
+    [`(,(? heading?) ,_ . ,es) (str (->s es) ": ")]
+    [`(,(? block?)   ,_ . ,es) (str (->s es) block-suffix)]
+    [`(,(? symbol?)  ,_ . ,es) (str (->s es))]
     [(? string? s) s]
     ['ndash "-"]
     ['mdash "--"]

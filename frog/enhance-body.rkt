@@ -82,19 +82,19 @@
                     ;; Markdown `symbol`[racket] becomes xexpr like
                     ;; (code ([class "brush: racket"]) "symbol")
                     [(_
-                      `(code ([class "brush: racket"]) ,xs ...))
+                      `(code ([class "brush: racket"]) . ,xs))
                      (if (current-racket-doc-link-prose?)
                          `(code () ,@(->racket-doc-links xs))
                          x)]
                     ;; Only spans from Pygments lexed as Racket
-                    [(`((pre ,_ ...)
-                        (div ,_ ...)
-                        (td ,_ ...)
-                        (tr ,_ ...)
-                        (tbody ,_ ...)
-                        (table ,_ ...)
-                        (div ([class "brush: racket"]) ,_ ...))
-                      `(span ([class ,c]) ,xs ...))
+                    [(`((pre . ,_)
+                        (div . ,_)
+                        (td . ,_)
+                        (tr . ,_)
+                        (tbody . ,_)
+                        (table . ,_)
+                        (div ([class "brush: racket"]) . ,_))
+                      `(span ([class ,c]) . ,xs))
                      (if (current-racket-doc-link-code?)
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
                          x)]
@@ -112,7 +112,7 @@
         [`(p ,_ ...
              (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
                                  (list uri))])
-                ,_ ...))
+                . ,_))
          ;; Note: Although v1.0 API stopped working June 2013,
          ;; /statuses/oembed is an exception. See
          ;; <https://dev.twitter.com/docs/faq#17750>. That's good

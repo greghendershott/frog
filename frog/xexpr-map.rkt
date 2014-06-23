@@ -4,7 +4,7 @@
 (provide xexpr-map)
 
 ;; Does depth-first traversal of the xexpr `x`, calling `f` for each
-;; sub-xexpr of `x` (including `x`itself).
+;; sub-xexpr of `x` (including `x` itself).
 ;;
 ;; The xexprs passed to `f` always have an explicit attributes list --
 ;; similar to `(parameterize ([xexpr-drop-empty-attributes
@@ -32,14 +32,14 @@
   (define (inner ps f x)
     (match x
       ;; xexpr with explicit attributes (even if just '())
-      [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) ,es ...)
+      [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) . ,es)
        (f `(,tag
             ,(map list ks vs)
             ,@(append* (map (curry inner (cons x ps) f)
                             es)))
           ps)]
       ;; xexpr with no attributes: transform to empty list
-      [`(,(? symbol? tag) ,es ...) (inner ps f `(,tag () ,@es))]
+      [`(,(? symbol? tag) . ,es) (inner ps f `(,tag () ,@es))]
       [x (f x ps)]))
   (append* (inner '() f x)))
 
@@ -61,11 +61,11 @@
    (xexpr-map (lambda (xexpr _)
                 (match xexpr
                   ;; Change p to div
-                  [`(p ,as ,es ...) `((div ,as ,@es))]
+                  [`(p ,as . ,es) `((div ,as ,@es))]
                   ;; Replace (em x ...) with x ...
-                  [`(em ,_ ,es ...) `(,@es)]
+                  [`(em ,_ . ,es) `(,@es)]
                   ;; Delete (strong _ ...) completely
-                  [`(strong ,_ ...) `()]
+                  [`(strong . ,_) `()]
                   ;; Remains as-is.
                   [x `(,x)]))
               x1)
@@ -78,9 +78,9 @@
   (check-equal?
    (xexpr-map (lambda (xexpr parents)
                 (match* (xexpr parents)
-                  [(`(p ,as ,es ...) (list `(div ,_ ...) _ ...))
+                  [(`(p ,as . ,es) (list `(div . ,_) _ ...))
                    '("DIRECTLY UNDER DIV")]
-                  [(`(p ,as ,es ...) (list-no-order `(div ,_ ...) _ ...))
+                  [(`(p ,as . ,es) (list-no-order `(div . ,_) _ ...))
                    '("INDIRECTLY UNDER DIV")]
                   [(_ _) (list xexpr)]))
               '(div (p "Directly under div")
@@ -89,9 +89,9 @@
 
   (define (html->markdown/naive x p)
     (match x
-      [`(em ,as ,es ...) `("_" ,@es "_")]
-      [`(strong ,as ,es ...) `("**" ,@es "**")]
-      [`(p ,as ,es ...) `((,@es "\n"))]
+      [`(em ,as . ,es)     `("_" ,@es "_")]
+      [`(strong ,as . ,es) `("**" ,@es "**")]
+      [`(p ,as . ,es)      `((,@es "\n"))]
       [_ `(,x)]))
   (check-equal?
    (apply string-append

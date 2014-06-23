@@ -188,7 +188,7 @@
   ;; post-template.html get updated.)
   (let loop ([xs sorted-posts-src-paths])
     (match xs
-      [(list this next more ...)
+      [(list* this next more)
        (hash-update! new-posts this (lambda (v) (struct-copy post v [older next])))
        (hash-update! new-posts next (lambda (v) (struct-copy post v [newer this])))
        (loop (cons next more))]

@@ -172,9 +172,9 @@
     ;; Footnote definition return link
     [`(a ([href ,href]) "↩") ""]
     ;; All else
-    [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) ,es ...)
+    [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) . ,es)
      `(,tag ,(map list ks vs) ,@(unlinkify-footnotes es))]
-    [`(,(? symbol? tag) ,es ...)
+    [`(,(? symbol? tag) . ,es)
      `(,tag ,@(unlinkify-footnotes es))]
     [_ x]))
 

@@ -43,13 +43,13 @@
              cadr)
     [`(html
        ()
-       (head ,_ ...)
+       (head . ,_)
        ,(list-no-order
          `(div ([class "maincolumn"])
                (div ([class "main"])
                     (div ([class "versionbox"])
                          (span ([class "versionNoNav"]) ,_))
-                    ,xs ...))
+                    . ,xs))
          _ ...))
      (adjust-scribble-html xs img-uri)]
     [x
@@ -63,21 +63,19 @@
      (lambda (x _)
        (list
         (match x
-          [`(blockquote ([class "SCodeFlow"])
-                        ,xs ...)
-           `(div ([class "SCodeFlow"])
-                 ,@xs)]
+          [`(blockquote ([class "SCodeFlow"]) . ,xs)
+           `(div ([class "SCodeFlow"]) ,@xs)]
           [`(img ,(list-no-order `[src ,src] x ...))
            `(img ([src ,(str img-uri "/" src)] ,@x))]
           ;; Scribble @title is rendered as <h2>, @section as <h3>,
           ;; and @subsection as <h4>, and so on. Hoist the headings up
           ;; to be consistent with the Markdown format sources.
-          [`(h2 ,x ...) `(h1 ,@x)]   ;elsewhere we special-case 1st h1
-          [`(h3 ,x ...) `(h1 ,@x)]
-          [`(h4 ,x ...) `(h2 ,@x)]
-          [`(h5 ,x ...) `(h3 ,@x)]
-          [`(h6 ,x ...) `(h4 ,@x)]
-          [`(h7 ,x ...) `(h5 ,@x)]
+          [`(h2 . ,x) `(h1 ,@x)]   ;elsewhere we special-case 1st h1
+          [`(h3 . ,x) `(h1 ,@x)]
+          [`(h4 . ,x) `(h2 ,@x)]
+          [`(h5 . ,x) `(h3 ,@x)]
+          [`(h6 . ,x) `(h4 ,@x)]
+          [`(h7 . ,x) `(h5 ,@x)]
           [x x])))
      x)))
 

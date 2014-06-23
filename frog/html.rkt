@@ -14,7 +14,7 @@
 
 (define (decode-ampersands-in-attributes x)
   (match x
-    [`(,tag ([,ks ,vs] ...) ,els ...)
+    [`(,tag ([,ks ,vs] ...) . ,els)
      `(,tag
        ,(for/list ([k ks]
                    [v vs])

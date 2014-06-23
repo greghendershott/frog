@@ -100,7 +100,7 @@
   ;; parsed to something more complicated, the visual result will
   ;; probably be unappealing, but at least handle that case here.
   (define xs (match (parse-markdown t)
-               [`((p () ,xs ...)) xs]
+               [`((p () . ,xs)) xs]
                [xs xs]))
   (string-join (map xexpr->string xs) ""))
 
