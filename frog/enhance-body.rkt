@@ -22,14 +22,14 @@
 (define (syntax-highlight xs)
   (for/list ([x xs])
     (match x
-      [(or `(pre ([class ,brush]) (code () ,text))
-           `(pre ([class ,brush]) ,text))
+      [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
+           `(pre ([class ,brush]) ,(? string? texts) ...))
        (match brush
          [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
           `(div ([class ,(str "brush: " lang)])
-                ,@(pygmentize text lang))]
-         [_ `(pre ,text)])]
-      [_ x])))
+                ,@(pygmentize (apply string-append texts) lang))]
+         [_ `(pre ,@texts)])]
+      [x x])))
 
 (define (->racket-doc-links xs)
   (define (not-empty-string s)

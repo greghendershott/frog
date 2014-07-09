@@ -86,3 +86,21 @@ Here's a fancier one:
   (standard-fish 30 30 #:color "red" #:direction 'right)
   (standard-fish 25 20 #:color "blue" #:direction 'left)))
 ]
+
+How about non-Racket code? You can ask Pygments to syntax highlight it
+for you, like so:
+
+@(require frog/scribble)
+
+@pygment-code[#:lang "js"]{
+/**
+ * Some JavaScript
+ */
+function foo()
+{
+    if (counter <= 10)
+        return;
+    // it works!
+}
+}
+

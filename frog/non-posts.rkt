@@ -6,7 +6,7 @@
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
-         "scribble.rkt"
+         "read-scribble.rkt"
          "stale.rkt"
          "template.rkt"
          "util.rkt"

@@ -8,7 +8,7 @@
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
-         "scribble.rkt"
+         "read-scribble.rkt"
          "serialize-posts.rkt"
          "template.rkt"
          "util.rkt"
