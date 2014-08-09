@@ -17,12 +17,21 @@
 #     __END__
 
 import sys
+import optparse
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
 from pygments.formatters import HtmlFormatter
 
-formatter = HtmlFormatter(linenos=True, cssclass="source", encoding="utf-8")
+parser = optparse.OptionParser()
+parser.add_option('--linenos', action="store_true", dest="linenos")
+parser.add_option('--cssclass', default="source", dest="cssclass")
+(options, _) = parser.parse_args()
+
+formatter = HtmlFormatter(linenos=options.linenos,
+                          cssclass=options.cssclass,
+                          encoding="utf-8")
+
 lexer = ""
 code = ""
 py_version = sys.version_info.major
@@ -37,7 +46,7 @@ while 1:
     if line == '__EXIT__':
         break
     elif line == '__END__':
-        # Lex input finished. Lex it.        
+        # Lex input finished. Lex it.
         if py_version >= 3:
           sys.stdout.write(highlight(code, lexer, formatter).decode("utf-8"))
         else:

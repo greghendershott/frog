@@ -1,6 +1,7 @@
 #lang rackjure
 
 (require racket/runtime-path
+         "params.rkt"
          "html.rkt"
          "verbosity.rkt")
 
@@ -11,11 +12,14 @@
 (define-runtime-path pipe.py "pipe.py")
 (define-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
   (values #f #f #f #f #f))
-(define load-thread
+
+(define (make-pygments-thread)
   (thread
    (thunk
     ;; Start a subprocess running our pipe.py script.
-    (match (process (str "python -u " pipe.py))
+    (match (process (str "python -u " pipe.py
+                         (if (current-pygments-linenos?) " --linenos" "")
+                         " --cssclass " (current-pygments-cssclass)))
       [(list in out pid err proc)
        (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
                     (values in out pid err proc))
@@ -24,12 +28,14 @@
     (when (sync/timeout 3 pyg-in)
       (read-line pyg-in 'linefeed)))))
 
+(define load-thread #t)
+
 (define (running?)
   (define (?)
     (and pyg-proc
          (eq? (pyg-proc 'status) 'running)))
   (when load-thread ;; first time
-    (thread-wait load-thread)
+    (thread-wait (make-pygments-thread))
     (set! load-thread #f)
     (unless (?)
       (prn1 "Pygments not installed. Using plain `pre` blocks.")))
