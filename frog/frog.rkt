@@ -49,7 +49,9 @@
                                [index-newest-first? #t]
                                [posts-index-uri "/index.html"]
                                [source-dir "_src"]
-                               [output-dir "."])
+                               [output-dir "."]
+                               [pygments-linenos? #t]
+                               [pygments-cssclass "source"])
       (define watch? #f)
       (define port 3000)
       (command-line
@@ -226,7 +228,7 @@
                        (hash-ref new-posts (post-newer post) #f))))
 
   ;; [2] Tags: Output to index pages and feed files
-  ;; 
+  ;;
   ;; (a) Delete obsolete output files, for tags no longer in use.
   (for ([tag (in-list (hash-keys old-tags))])
     (unless (hash-has-key? new-tags tag)
@@ -267,7 +269,7 @@
 
   ;; [4] Non-post pages.
   (define non-post-pages (build-non-post-pages))
-  
+
   ;; [5] sitemap.txt, populated from new-posts and non-post-pages.
   ;;     (Generating this is cheap, so just always do it.)
   (prn1 "Generating sitemap.txt")
