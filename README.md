@@ -281,6 +281,12 @@ source-dir = _src
 # to the project top directory, i.e. to where this .frogrc file is
 # located.
 output-dir = .
+
+# Options controlling Pygments' HTML format.
+## Whether to use line numbers.
+pygments-linenos? = true
+## CSS class for the wrapping <div> tag (default: 'highlight').
+pygments-cssclass = source
 ```
 
 ## Creating blog posts
