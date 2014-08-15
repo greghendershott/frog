@@ -1,7 +1,10 @@
-#lang rackjure
+#lang racket/base
 
-(require xml)
-(require (only-in html read-html-as-xml))
+(require (only-in html read-html-as-xml)
+         racket/match
+         racket/port
+         rackjure/threading
+         xml)
 
 (provide read-html-as-xexprs)
 

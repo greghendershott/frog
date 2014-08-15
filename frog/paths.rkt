@@ -1,6 +1,11 @@
-#lang rackjure
+#lang racket/base
 
-(require racket/runtime-path
+(require racket/contract
+         racket/function
+         racket/match
+         racket/runtime-path
+         rackjure/str
+         rackjure/threading
          "params.rkt")
 
 (provide (all-defined-out))

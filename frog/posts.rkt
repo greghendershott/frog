@@ -1,7 +1,16 @@
-#lang rackjure
+#lang racket/base
 
-(require markdown
-         (only-in srfi/1 break)
+(require (only-in srfi/1 break)
+         markdown
+         racket/contract
+         racket/file
+         racket/function
+         racket/list
+         racket/match
+         racket/port
+         racket/string
+         rackjure/str
+         rackjure/threading
          "bodies-page.rkt"
          "enhance-body.rkt"
          "html.rkt"

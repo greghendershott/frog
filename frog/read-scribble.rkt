@@ -1,6 +1,12 @@
-#lang rackjure
+#lang racket/base
 
-(require (only-in xml xexpr?)
+(require racket/contract
+         racket/file
+         racket/match
+         racket/pretty
+         rackjure/str
+         rackjure/threading
+         (only-in xml xexpr?)
          "html.rkt"
          "xexpr-map.rkt"
          "util.rkt")

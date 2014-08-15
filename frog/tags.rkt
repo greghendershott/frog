@@ -1,6 +1,12 @@
-#lang rackjure
+#lang racket/base
 
-(require (only-in markdown xexpr->string)
+(require racket/contract
+         racket/file
+         racket/match
+         racket/string
+         rackjure/str
+         rackjure/threading
+         (only-in markdown xexpr->string)
          "bodies-page.rkt"
          "feeds.rkt"
          "paths.rkt"
@@ -9,8 +15,7 @@
          "take.rkt"
          "util.rkt"
          "template.rkt"
-         "verbosity.rkt"
-         )
+         "verbosity.rkt")
 
 (provide (all-defined-out))
 

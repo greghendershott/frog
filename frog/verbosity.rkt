@@ -1,6 +1,6 @@
-#lang racket
+#lang racket/base
 
-(require (for-syntax racket/syntax))
+(require (for-syntax racket/base racket/syntax))
 
 (provide current-verbosity prn0 prn1 prn2)
 

@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 ;; Provide a form that's like `parameterize`, except:
 ;;
@@ -24,7 +24,10 @@
 ;;                           ([twaddle-level 10])
 ;;    ....)
 
-(require (for-syntax racket/syntax)
+(require (for-syntax racket/base racket/syntax)
+         racket/dict
+         racket/file
+         racket/match
          "verbosity.rkt")
 
 (provide parameterize-from-config)
