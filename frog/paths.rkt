@@ -3,6 +3,7 @@
 (require racket/contract
          racket/function
          racket/match
+         racket/path
          racket/runtime-path
          rackjure/str
          rackjure/threading
