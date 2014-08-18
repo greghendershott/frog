@@ -1,9 +1,6 @@
-#lang racket/base
+#lang rackjure
 
-(require racket/file
-         racket/function
-         racket/pretty
-         rackjure/threading
+(require (only-in markdown display-xexpr)
          "verbosity.rkt")
 
 (provide (all-defined-out))

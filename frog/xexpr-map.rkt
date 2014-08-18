@@ -1,9 +1,6 @@
 #lang racket/base
 
-(require racket/function
-         racket/list
-         racket/match)
-
+(require xml racket/match racket/list racket/function)
 (provide xexpr-map)
 
 ;; Does depth-first traversal of the xexpr `x`, calling `f` for each

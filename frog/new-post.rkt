@@ -1,9 +1,6 @@
-#lang racket/base
+#lang rackjure
 
 (require racket/date
-         racket/system
-         rackjure/str
-         rackjure/threading
          "paths.rkt"
          "params.rkt"
          "util.rkt")

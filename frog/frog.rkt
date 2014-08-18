@@ -1,12 +1,7 @@
-#lang racket/base
+#lang rackjure
 
-(require racket/contract
-         racket/file
-         racket/function
-         racket/match
+(require markdown
          racket/runtime-path
-         racket/set
-         rackjure/threading
          (except-in xml xexpr->string) ;use markdown's version instead
          (only-in find-parent-dir find-parent-containing)
          (for-syntax racket/syntax)
@@ -28,10 +23,10 @@
          "xexpr2text.rkt"
          ;; Remainder are just for the serve/preview feature:
          web-server/servlet-env
+         web-server/http
          web-server/dispatchers/dispatch)
 
 (module+ main
-  (require racket/cmdline)
   (printf "Frog ~a\n" (frog-version))
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")

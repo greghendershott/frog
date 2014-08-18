@@ -1,8 +1,6 @@
-#lang racket/base
+#lang racket
 
-(require racket/contract
-         racket/file
-         racket/serialize
+(require racket/serialize
          "paths.rkt"
          "post-struct.rkt"
          "util.rkt")

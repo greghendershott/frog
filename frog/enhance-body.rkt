@@ -1,16 +1,10 @@
-#lang racket/base
+#lang rackjure
 
-(require json
-         net/uri-codec
+(require net/uri-codec
          net/url
-         racket/list
-         racket/match
-         racket/port
-         racket/string
-         rackjure/threading
-         rackjure/str
-         "doc-uri.rkt"
+         json
          "html.rkt"
+         "doc-uri.rkt"
          "params.rkt"
          "pygments.rkt"
          "xexpr-map.rkt")

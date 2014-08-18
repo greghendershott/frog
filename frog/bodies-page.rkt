@@ -1,13 +1,6 @@
-#lang racket/base
+#lang rackjure
 
 (require markdown
-         racket/dict
-         racket/list
-         racket/match
-         racket/port
-         racket/string
-         rackjure/threading
-         rackjure/str
          "feeds.rkt"
          "html.rkt"
          "paths.rkt"

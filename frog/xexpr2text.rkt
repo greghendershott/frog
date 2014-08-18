@@ -1,11 +1,6 @@
-#lang racket/base
+#lang rackjure
 
-(require racket/function
-         racket/match
-         racket/string
-         rackjure/str
-         rackjure/threading
-         xml)
+(require xml)
 
 (provide xexprs->description
          xexpr->markdown)

@@ -1,17 +1,14 @@
-#lang racket/base
+#lang rackjure
 
 (require markdown
-         racket/file
-         racket/match
-         racket/path
-         racket/string
-         rackjure/threading
          "bodies-page.rkt"
          "enhance-body.rkt"
+         "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
          "read-scribble.rkt"
          "stale.rkt"
+         "template.rkt"
          "util.rkt"
          "verbosity.rkt"
          "xexpr2text.rkt")

@@ -1,8 +1,4 @@
-#lang at-exp racket/base
-
-(require (for-syntax racket/base)
-         racket/function
-         racket/string)
+#lang at-exp racket
 
 (provide (all-defined-out))
 

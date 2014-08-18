@@ -1,11 +1,6 @@
-#lang racket/base
+#lang rackjure
 
-(require racket/function
-         racket/match
-         racket/port
-         racket/runtime-path
-         racket/system
-         rackjure/str
+(require racket/runtime-path
          "params.rkt"
          "html.rkt"
          "verbosity.rkt")
