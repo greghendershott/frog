@@ -20,5 +20,10 @@ script:
  - cd ..   # Travis did a cd into the dir. Back up, for the next:
  - /usr/racket/bin/raco pkg install --deps search-auto --link frog
  - /usr/racket/bin/raco test -x -p frog
+ # Let's confirm that we can at least create and build the initial blog:
+ - mkdir test-blog
+ - cd test-blog
+ - /usr/racket/bin/raco frog --init
+ - /usr/racket/bin/raco frog -b
 
 after_script:
