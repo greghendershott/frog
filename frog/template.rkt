@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 ;; Beware, cargo cults be here!
 ;;
@@ -16,8 +16,13 @@
 ;; works, but it does, following this Racket mailing list thread:
 ;; http://www.mail-archive.com/users@racket-lang.org/msg18108.html
 
-(require web-server/templates
-         frog/widgets)
+(require (for-syntax racket/base)
+         frog/widgets
+         racket/contract/base
+         racket/contract/region
+         racket/dict
+         racket/function
+         web-server/templates)
 
 ;; The modules needed by the template. Note that these must
 ;; be required above normally in this template.rkt module.

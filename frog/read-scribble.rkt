@@ -1,13 +1,21 @@
-#lang rackjure
+#lang rackjure/base
 
-(require (only-in xml xexpr?)
+(require racket/contract/base
+         racket/contract/region
+         racket/file
+         racket/match
+         racket/pretty
+         rackjure/str
+         rackjure/threading
+         (only-in xml xexpr?)
          "html.rkt"
-         "xexpr-map.rkt"
-         "util.rkt")
+         "util.rkt"
+         "xexpr-map.rkt")
 
 (provide read-scribble-file)
 
-(module+ test (require rackunit))
+(module+ test
+  (require rackunit))
 
 (define/contract (read-scribble-file path
                                      #:img-local-path img-dir

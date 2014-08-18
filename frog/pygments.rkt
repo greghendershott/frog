@@ -1,8 +1,13 @@
-#lang rackjure
+#lang rackjure/base
 
-(require racket/runtime-path
-         "params.rkt"
+(require racket/function
+         racket/match
+         racket/port
+         racket/runtime-path
+         racket/system
+         rackjure/str
          "html.rkt"
+         "params.rkt"
          "verbosity.rkt")
 
 (provide pygmentize)

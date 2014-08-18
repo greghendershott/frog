@@ -1,13 +1,17 @@
-#lang racket
+#lang racket/base
+
+(require racket/contract/base
+         racket/contract/region
+         racket/function
+         racket/match
+         scribble/manual-struct
+         scribble/xref
+         setup/xref
+         "verbosity.rkt")
 
 (provide doc-uri
          sym-mods
          doc-uri/sym-in-mod)
-
-(require setup/xref
-         scribble/xref
-         scribble/manual-struct
-         "verbosity.rkt")
 
 (module+ test
   (require rackunit))

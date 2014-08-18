@@ -1,13 +1,19 @@
-#lang rackjure
+#lang rackjure/base
 
-(require markdown
+(require racket/contract/base
+         racket/contract/region
+         racket/file
+         racket/function
+         racket/match
          racket/runtime-path
-         (except-in xml xexpr->string) ;use markdown's version instead
+         racket/set
+         rackjure/threading
+         web-server/dispatchers/dispatch
+         web-server/servlet-env
+         (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
-         (for-syntax racket/syntax)
          "bodies-page.rkt"
          "config.rkt"
-         "new-post.rkt"
          "non-posts.rkt"
          "params.rkt"
          "paths.rkt"
@@ -16,17 +22,13 @@
          "serialize-posts.rkt"
          "stale.rkt"
          "tags.rkt"
-         "take.rkt"
-         "watch-dir.rkt"
          "util.rkt"
          "verbosity.rkt"
-         "xexpr2text.rkt"
-         ;; Remainder are just for the serve/preview feature:
-         web-server/servlet-env
-         web-server/http
-         web-server/dispatchers/dispatch)
+         "watch-dir.rkt")
 
 (module+ main
+  (require racket/cmdline
+           "new-post.rkt")
   (printf "Frog ~a\n" (frog-version))
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")

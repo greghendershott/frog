@@ -1,12 +1,19 @@
-#lang rackjure
+#lang rackjure/base
 
-(require racket/runtime-path
+(require racket/contract/base
+         racket/contract/region
+         racket/match
+         racket/path ;moved to racket/base only as of Racket 6
+         racket/runtime-path
+         rackjure/str
+         rackjure/threading
          "params.rkt")
 
 (provide (all-defined-out))
 
 (module+ test
-  (require rackunit))
+  (require rackunit
+           racket/function))
 
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))

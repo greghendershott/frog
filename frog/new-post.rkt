@@ -1,8 +1,11 @@
-#lang rackjure
+#lang rackjure/base
 
 (require racket/date
-         "paths.rkt"
+         racket/system
+         rackjure/str
+         rackjure/threading
          "params.rkt"
+         "paths.rkt"
          "util.rkt")
 
 (provide new-post

@@ -1,7 +1,9 @@
-#lang rackjure
+#lang rackjure/base
 
-(require xml)
-(require (only-in html read-html-as-xml))
+(require racket/match
+         rackjure/threading
+         xml
+         (only-in html read-html-as-xml))
 
 (provide read-html-as-xexprs)
 
@@ -23,7 +25,8 @@
     [v v]))
 
 (module+ test
-  (require rackunit)
+  (require rackunit
+           racket/port)
   (define input
     "<p>Hi</p>
 <p><a href='/path/to/thing?a=1&b=2'>link</a></p>
