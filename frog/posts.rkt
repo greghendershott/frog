@@ -148,18 +148,14 @@
 
 (define (more-xexpr? x)
   (match x
-    [`(p ,(pregexp "\\s*<!--\\s*more\\s*-->\\s*")) #t]             ;Markdown
-    [`(!HTML-COMMENT () ,(pregexp "more")) #t]                     ;Markdown
-    [`(p () "<" "!" ndash ,(pregexp "\\s*more\\s*") ndash ">") #t] ;Scribble
+    [`(p ,(pregexp "\\s*<!--\\s*more\\s*-->\\s*")) #t] ;old markdown parser
+    [`(!HTML-COMMENT () ,(pregexp "more")) #t]         ;new markdown parser
     [_ #f]))
 
 (module+ test
   (check-true (more-xexpr? `(p   "<!--more-->")))
   (check-true (more-xexpr? `(p " <!-- more -->")))
   (check-true (more-xexpr? `(p "<!--  more  -->")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash   "more"   ndash ">")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash  " more "  ndash ">")))
-  (check-true (more-xexpr? `(p () "<" "!" ndash "  more  " ndash ">")))
   (check-false (more-xexpr? "not more")))
 
 (define (read-html-file path)

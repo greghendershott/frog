@@ -84,6 +84,7 @@
           [`(h5 . ,x) `(h3 ,@x)]
           [`(h6 . ,x) `(h4 ,@x)]
           [`(h7 . ,x) `(h5 ,@x)]
+          [`(p () "<" "!" ndash " more " ndash ">") `(!HTML-COMMENT () "more")]
           [x x])))
      x)))
 
@@ -94,6 +95,10 @@
 @title{The Title}
 @section{Section 1}
 Here is some text.
+
+<!-- more -->
+
+Below the fold.
 EOF
 ])
     (with-output-to-file path #:exists 'replace (λ () (display s)))
@@ -103,7 +108,9 @@ EOF
                          #:img-uri-prefix "/")
      '((h1 () (a ((name "(part._.The_.Title)"))) "The Title")
       (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
-      (p () "Here is some text.")))
+      (p () "Here is some text.")
+      (!HTML-COMMENT () "more")
+      (p () "Below the fold.")))
     (delete-file path))
   ;; regression test for https://github.com/greghendershott/frog/issues/75
   (let ([path (make-temporary-file)]
