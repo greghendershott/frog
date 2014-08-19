@@ -1,7 +1,6 @@
 #lang racket/base
 
-(require pkg/path
-         racket/contract/base
+(require racket/contract/base
          racket/contract/region
          racket/function
          racket/match
@@ -63,7 +62,9 @@
    "reference/Writing.html#(def._((quote._~23~25kernel)._printf))"
    "`printf` provided by multi libs, but one is racket/base"))
 
-;; Is module part of the Racket main distribution?
+;; Is module part of the Racket main distribution? Warning: This is
+;; only semi reliable as of 6.0, and not realiable at all prior to
+;; that (always returns #t).
 (define (main-distribution? mod)
   (and (symbol? mod) ;not e.g. "/x/y" or "foo.rkt"
        (match (path->pkg (resolve-module-path mod #f))
@@ -79,6 +80,12 @@
   (check-equal? (main-distribution? 'racket) 'racket)
   (check-equal? (main-distribution? 'racket/contract) 'racket/contract)
   (check-equal? (main-distribution? 'typed/racket) 'typed/racket))
+
+;; On Racket 6.0+, path->pkg returns the pkg for a path. Otherwise use
+;; a function always returns #f.
+(define path->pkg
+  (with-handlers ([exn:fail? (λ _ (λ (_) #f))])
+    (dynamic-require 'pkg/path 'path->pkg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
