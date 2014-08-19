@@ -19,8 +19,9 @@
 
 ;; This simplified interface returns one doc URI or #f for a given
 ;; symbol. (When a symbol is provided by _multiple_ libs? If one of
-;; the libs is racket, racket/base, typed/racket, or
-;; typed/racket/base, then its doc is used, else #f.)
+;; the libs is a "special" one -- e.g. racket, racket/base,
+;; typed/racket, or typed/racket/base -- then its doc is used, else
+;; #f.)
 (define doc-uri
   (let ([memoizes (make-hasheq)])
     (lambda (sym #:root-uri [root "http://docs.racket-lang.org/"])
@@ -30,10 +31,9 @@
           (match (sym-mods sym)
             [(list) #f]
             [(list m) m]
-            [(? list? ms) (or (member* 'racket/base ms) ;in order of pref
-                              (member* 'racket ms)
-                              (member* 'typed/racket/base ms)
-                              (member* 'typed/racket ms))]
+            [(? list? ms) (for/or ([m '(racket/base racket
+                                        typed/racket/base typed/racket)])
+                            (and (member m ms) m))]
             [_ #f]))
         (and mod
              (main-distribution? mod) ;don't make 404 links to www.r-l.org
@@ -43,10 +43,6 @@
                              (define v (lookup sym root))
                              (hash-set! memoizes k v)
                              v)))))
-
-;; Like member, but return just x not (x y z)
-(define (member* x xs)
-  (and (member x xs) x))
 
 (module+ test
   (check-equal? (doc-uri 'get-pure-port #:root-uri "")
