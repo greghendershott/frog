@@ -59,8 +59,8 @@
    "`printf` provided by multi libs, but one is racket/base"))
 
 ;; Is module part of the Racket main distribution? Warning: This is
-;; only semi reliable as of 6.0, and not realiable at all prior to
-;; that (always returns #t).
+;; only semi reliable as of 6.0, and not reliable at all prior to that
+;; (always returns #t).
 (define (main-distribution? mod)
   (and (symbol? mod) ;not e.g. "/x/y" or "foo.rkt"
        (match (path->pkg (resolve-module-path mod #f))
@@ -78,8 +78,10 @@
   (check-equal? (main-distribution? 'racket/contract) 'racket/contract)
   (check-equal? (main-distribution? 'typed/racket) 'typed/racket))
 
-;; On Racket 6.0+, path->pkg returns the pkg for a path. Otherwise use
-;; a function always returns #f.
+;; On Racket 6.0+, path->pkg returns the pkg for a path. Before that,
+;; doesn't exist, so use a function that always returns #f (to mimic
+;; what path->pkg does as of 6.01 when given a main distribution
+;; collection). Kludge on top of a kludge.
 (define path->pkg
   (with-handlers ([exn:fail? (λ _ (λ (_) #f))])
     (dynamic-require 'pkg/path 'path->pkg)))
