@@ -75,8 +75,9 @@
          [_ #f])))
 
 (module+ test
-  (check-equal? (main-distribution? 'rackjure/threading) #f)
-  (check-equal? (main-distribution? "/x/y") #f)
+  (unless (string<? (version) "6")
+    (check-equal? (main-distribution? 'rackjure/threading) #f)
+    (check-equal? (main-distribution? "/x/y") #f))
   (check-equal? (main-distribution? 'racket) 'racket)
   (check-equal? (main-distribution? 'racket/contract) 'racket/contract)
   (check-equal? (main-distribution? 'typed/racket) 'typed/racket))
