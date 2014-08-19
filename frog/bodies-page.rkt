@@ -1,10 +1,17 @@
-#lang rackjure
+#lang rackjure/base
 
 (require markdown
+         racket/dict
+         racket/list
+         racket/match
+         racket/port
+         racket/string
+         rackjure/str
+         rackjure/threading
          "feeds.rkt"
          "html.rkt"
-         "paths.rkt"
          "params.rkt"
+         "paths.rkt"
          "template.rkt"
          "util.rkt"
          "xexpr2text.rkt")

@@ -1,6 +1,12 @@
-#lang rackjure
+#lang rackjure/base
 
-(require file/md5)
+(require file/md5
+         racket/contract/base
+         racket/contract/region
+         racket/file
+         racket/function
+         rackjure/threading)
+
 (provide watch-directory
          checksum-path
          checksum-item)

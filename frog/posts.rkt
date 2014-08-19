@@ -1,6 +1,15 @@
-#lang rackjure
+#lang rackjure/base
 
 (require markdown
+         racket/contract/base
+         racket/contract/region
+         racket/file
+         racket/list
+         racket/match
+         racket/port
+         racket/string
+         rackjure/str
+         rackjure/threading
          (only-in srfi/1 break)
          "bodies-page.rkt"
          "enhance-body.rkt"
@@ -12,14 +21,16 @@
          "serialize-posts.rkt"
          "template.rkt"
          "util.rkt"
-         "xexpr2text.rkt"
-         "verbosity.rkt")
+         "verbosity.rkt"
+         "xexpr2text.rkt")
 
 (provide clean-post-output-files
          read-post
          write-post-page)
 
-(module+ test (require rackunit))
+(module+ test
+  (require rackunit
+           racket/function))
 
 ;; NOTE: Since the user may manually plop HTML files anywhere in
 ;; (www-path), we can't just go around deleting those. Instead, we

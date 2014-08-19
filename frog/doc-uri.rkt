@@ -1,20 +1,26 @@
-#lang racket
+#lang racket/base
+
+(require racket/contract/base
+         racket/contract/region
+         racket/function
+         racket/match
+         scribble/manual-struct
+         scribble/xref
+         setup/xref
+         syntax/modresolve
+         "verbosity.rkt")
 
 (provide doc-uri
          sym-mods
          doc-uri/sym-in-mod)
 
-(require setup/xref
-         scribble/xref
-         scribble/manual-struct
-         "verbosity.rkt")
-
 (module+ test
   (require rackunit))
 
 ;; This simplified interface returns one doc URI or #f for a given
-;; symbol. When a symbol is provided by multiple libs: If one of the
-;; libs is racket or racket/base then its doc is used, else #f.
+;; symbol. (When a symbol is provided by _multiple_ libs? If one of
+;; the libs is racket, racket/base, typed/racket, or
+;; typed/racket/base, then its doc is used, else #f.)
 (define doc-uri
   (let ([memoizes (make-hasheq)])
     (lambda (sym #:root-uri [root "http://docs.racket-lang.org/"])
@@ -24,14 +30,23 @@
           (match (sym-mods sym)
             [(list) #f]
             [(list m) m]
-            [(list-no-order (and (or 'racket/base 'racket) m) _ ...) m]
+            [(? list? ms) (or (member* 'racket/base ms) ;in order of pref
+                              (member* 'racket ms)
+                              (member* 'typed/racket/base ms)
+                              (member* 'typed/racket ms))]
             [_ #f]))
-        (and mod (doc-uri/sym-in-mod sym mod root)))
+        (and mod
+             (main-distribution? mod) ;don't make 404 links to www.r-l.org
+             (doc-uri/sym-in-mod sym mod root)))
       (define k (string->symbol (format "~a,~a" sym root)))
       (hash-ref memoizes k (lambda ()
                              (define v (lookup sym root))
                              (hash-set! memoizes k v)
                              v)))))
+
+;; Like member, but return just x not (x y z)
+(define (member* x xs)
+  (and (member x xs) x))
 
 (module+ test
   (check-equal? (doc-uri 'get-pure-port #:root-uri "")
@@ -46,6 +61,32 @@
    (doc-uri 'printf #:root-uri "")
    "reference/Writing.html#(def._((quote._~23~25kernel)._printf))"
    "`printf` provided by multi libs, but one is racket/base"))
+
+;; Is module part of the Racket main distribution? Warning: This is
+;; only semi reliable as of 6.0, and not realiable at all prior to
+;; that (always returns #t).
+(define (main-distribution? mod)
+  (and (symbol? mod) ;not e.g. "/x/y" or "foo.rkt"
+       (match (path->pkg (resolve-module-path mod #f))
+         [(or #f                  ;what `racket` returns in 6.01
+              "base" 'core        ;what `racket` is likely to return (?)
+              "typed-racket-lib") ;special case
+          mod]
+         [_ #f])))
+
+(module+ test
+  (unless (string<? (version) "6")
+    (check-equal? (main-distribution? 'rackjure/threading) #f)
+    (check-equal? (main-distribution? "/x/y") #f))
+  (check-equal? (main-distribution? 'racket) 'racket)
+  (check-equal? (main-distribution? 'racket/contract) 'racket/contract)
+  (check-equal? (main-distribution? 'typed/racket) 'typed/racket))
+
+;; On Racket 6.0+, path->pkg returns the pkg for a path. Otherwise use
+;; a function always returns #f.
+(define path->pkg
+  (with-handlers ([exn:fail? (λ _ (λ (_) #f))])
+    (dynamic-require 'pkg/path 'path->pkg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

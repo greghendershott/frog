@@ -1,7 +1,13 @@
-#lang rackjure
+#lang rackjure/base
 
-(require racket/date
-         net/uri-codec
+(require net/uri-codec
+         racket/date
+         racket/function
+         racket/list
+         racket/match
+         racket/string
+         rackjure/str
+         rackjure/threading
          (only-in markdown xexpr->string)
          "params.rkt"
          "paths.rkt"

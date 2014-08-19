@@ -8,7 +8,7 @@
                "srfi-lite-lib"
                "web-server-lib"
                ("markdown" "0.15")
-               "rackjure"
+               ("rackjure" "0.7")
                "find-parent-dir"))
 (define build-deps '("at-exp-lib"
                      "rackunit-lib"))
