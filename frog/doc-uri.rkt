@@ -31,18 +31,23 @@
           (match (sym-mods sym)
             [(list) #f]
             [(list m) m]
-            [(list-no-order (and (or 'racket/base 'racket
-                                     'typed/racket/base 'typed/racket)
-                                 m) _ ...) m]
+            [(? list? ms) (or (member* 'racket/base ms) ;in order of pref
+                              (member* 'racket ms)
+                              (member* 'typed/racket/base ms)
+                              (member* 'typed/racket ms))]
             [_ #f]))
         (and mod
-             (main-distribution? mod) ;don't make 404 links to www.r-g.org
+             (main-distribution? mod) ;don't make 404 links to www.r-l.org
              (doc-uri/sym-in-mod sym mod root)))
       (define k (string->symbol (format "~a,~a" sym root)))
       (hash-ref memoizes k (lambda ()
                              (define v (lookup sym root))
                              (hash-set! memoizes k v)
                              v)))))
+
+;; Like member, but return just x not (x y z)
+(define (member* x xs)
+  (and (member x xs) x))
 
 (module+ test
   (check-equal? (doc-uri 'get-pure-port #:root-uri "")
