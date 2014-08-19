@@ -100,7 +100,7 @@
                         (tbody . ,_)
                         (table . ,_)
                         (div ([class "brush: racket"]) . ,_))
-                      `(span ([class ,c]) . ,xs))
+                      `(span ([class ,(and c (not "c1"))]) . ,xs))
                      (if (current-racket-doc-link-code?)
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
                          x)]
