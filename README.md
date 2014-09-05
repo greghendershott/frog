@@ -667,9 +667,9 @@ Sources for posts (and for non-post pages) may also be [Scribble][]
 See the [example Scribble post][] and
 [example Scribble non-post page][] for more information.
 
-> **NOTE**: `raco frog -n` creates `.md` files, only. You will need to
-> create the `.scrbl` file for a new post manually, following the
-> naming convention.
+> **TIP**: `raco frog -n` (or `--new`) creates a new post in markdown
+> format. To create a new post in Scribble format, use `raco frog -N`
+> (or `--new-scribble`).
 
 # Bug reports? Feature requests?
 
