@@ -29,6 +29,9 @@
 (module+ main
   (require racket/cmdline
            "new-post.rkt")
+  (when (eq? 'windows (system-type 'os))
+    (file-stream-buffer-mode (current-output-port) 'line)
+    (file-stream-buffer-mode (current-error-port) 'line))
   (printf "Frog ~a\n" (frog-version))
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")
