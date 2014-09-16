@@ -13,7 +13,9 @@
 
 (module+ test
   (require rackunit
-           racket/function))
+           racket/function)
+  ;; For testing only, define some root directory
+  (define root (if (eq? 'windows (system-path-convention-type)) "C:\\" "/")))
 
 ;; top is the project directory (e.g. the main dir in Git)
 (define top (make-parameter #f))
@@ -40,16 +42,16 @@
 (define (src/posts-path) (build-path* (src-path) "posts"))
 
 (module+ test
-  (check-equal? (parameterize ([top "/projects/blog"]
+  (check-equal? (parameterize ([top (build-path root "projects" "blog")]
                                [current-source-dir "_src"])
                   (src-path))
                 (path->directory-path
-                 (build-path "/" "projects" "blog" "_src")))
-  (check-equal? (parameterize ([top "/projects/blog"]
-                               [current-source-dir "../source"])
+                 (build-path root "projects" "blog" "_src")))
+  (check-equal? (parameterize ([top (build-path root "projects" "blog")]
+                               [current-source-dir (build-path 'up "source")])
                   (src-path))
                 (path->directory-path
-                 (build-path "/" "projects" "source"))))
+                 (build-path root "projects" "source"))))
 
 ;; some specific source files
 (define (post-template.html)
@@ -76,16 +78,16 @@
         [else                 (build-path*       out)]))
 
 (module+ test
-  (check-equal? (parameterize ([top "/projects/blog"]
-                               [current-output-dir "."])
+  (check-equal? (parameterize ([top (build-path root "projects" "blog")]
+                               [current-output-dir (build-path 'same)])
                   (www-path))
                 (path->directory-path
-                 (build-path "/" "projects" "blog")))
-  (check-equal? (parameterize ([top "/projects/blog"]
-                               [current-output-dir "../build/stuff"])
+                 (build-path root "projects" "blog")))
+  (check-equal? (parameterize ([top (build-path root "projects" "blog")]
+                               [current-output-dir (build-path 'up "build" "stuff")])
                   (www-path))
                 (path->directory-path
-                 (build-path "/" "projects" "build" "stuff"))))
+                 (build-path root "projects" "build" "stuff"))))
 
 (define (www/tags-path) (build-path* (www-path) "tags"))
 (define (www/feeds-path) (build-path* (www-path) "feeds"))
@@ -106,39 +108,42 @@
                      (~> p explode-path cdr))]))
 
 (module+ test
-  (parameterize ([top "/projects/blog"]
-                 [current-output-dir "../build/stuff"])
+  (parameterize ([top (build-path root "projects" "blog")]
+                 [current-output-dir (build-path 'up "build" "stuff")])
     ;; absolute
     (check-equal? (parameterize ([current-posts-index-uri "/index.html"])
                     (www/index-pathname))
-                  (build-path "/" "projects" "build" "stuff"
+                  (build-path root "projects" "build" "stuff"
                               "index.html"))
     (check-equal? (parameterize ([current-posts-index-uri "/foo/bar.html"])
                     (www/index-pathname))
-                  (build-path "/" "projects" "build" "stuff"
+                  (build-path root "projects" "build" "stuff"
                               "foo" "bar.html"))
     ;; relative
     (check-equal? (parameterize ([current-posts-index-uri "index.html"])
                     (www/index-pathname))
-                  (build-path "/" "projects" "build" "stuff"
+                  (build-path root "projects" "build" "stuff"
                               "index.html"))
     (check-equal? (parameterize ([current-posts-index-uri "foo/bar.html"])
                     (www/index-pathname))
-                  (build-path "/" "projects" "build" "stuff"
+                  (build-path root "projects" "build" "stuff"
                               "foo" "bar.html"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Convert an absolute local path to a path string relative to
-;; (www-path). For example, what the URI path should be.
+;; (www-path), and always in Unix style (even on Windows) so it is
+;; suitable for use as a URI path.
 ;;
 ;; Ex: if project top is /project/blog and the output dir is ../build,
-;; then given "/project/build/css" this should return "/css".
+;; then given "/project/build/css" this should return "/css". Same result
+;; if on Windows and top is c:\project\blog and output dir is ..\build.
 (define (abs->rel/www path) ;; path? -> string?
   (let ([path (~> path simplify-path path->string)]
         [root (~> (www-path) path->string)])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
+      [(pregexp (str "^" (regexp-quote root) "(.+)$") (list _ s))
+       (str "/" (regexp-replaces s '([#rx"\\\\" "/"])))]
       [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
 
 (module+ test
@@ -157,7 +162,7 @@
   (let ([path (~> path simplify-path path->string)]
         [root (~> (src-path) path->string)])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
+      [(pregexp (str "^" (regexp-quote root) "(.+)$") (list _ x)) x]
       [_ (raise-user-error 'abs->rel/src "root: ~v path: ~v" root path)])))
 
 (module+ test
@@ -176,7 +181,7 @@
   (let ([path (~> path simplify-path path->string)]
         [root (~> (top) build-path* path->string)])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) x]
+      [(pregexp (str "^" (regexp-quote root) "(.+)$") (list _ x)) x]
       [_ (raise-user-error 'abs->rel/top "root: ~v path: ~v" root path)])))
 
 (module+ test
@@ -217,15 +222,13 @@
     (check-equal? (f "/blog/{year}/{month}/{day}/{filename}/index.html")
                   (build-path (top) "blog/2012/05/31/file-name/index.html"))))
 
-;; If the path-string ends in "/index.html", return the path without
-;; the "index.html" suffix.
+;; Given a path, return a URI path. Also, if the path ends in
+;; "/index.html", return the path without the "index.html" suffix.
 (define/contract (post-path->link pp)
   (path? . -> . string?)
-  (~> (match (path->string pp)
-        [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
-        [s s])
-      string->path
-      abs->rel/www))
+  (match (abs->rel/www pp) ;assumes abs->rel/www always returns 'unix style
+    [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
+    [s s]))
 
 (module+ test
   (parameterize ([top (find-system-path 'home-dir)])
