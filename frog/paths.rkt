@@ -130,7 +130,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Convert an absolute local path to a path string relative to
-;; (www-path). For example, what the URI path should be.
+;; (www-path). For example, what the URI path should be -- except this
+;; does NOT attempt to convert from Windows paths.
 ;;
 ;; Ex: if project top is /project/blog and the output dir is ../build,
 ;; then given "/project/build/css" this should return "/css".
@@ -138,7 +139,7 @@
   (let ([path (~> path simplify-path path->string)]
         [root (~> (www-path) path->string)])
     (match path
-      [(pregexp (str "^" (regexp-quote root) "(.+$)") (list _ x)) (str "/" x)]
+      [(pregexp (str "^" (regexp-quote root) "(.+)$") (list _ x)) (str "/" x)]
       [_ (raise-user-error 'abs->rel/www "root: ~v path: ~v" root path)])))
 
 (module+ test
@@ -217,15 +218,14 @@
     (check-equal? (f "/blog/{year}/{month}/{day}/{filename}/index.html")
                   (build-path (top) "blog/2012/05/31/file-name/index.html"))))
 
-;; If the path-string ends in "/index.html", return the path without
-;; the "index.html" suffix.
+;; Given a path, return a URI path. Also, if the path ends in
+;; "/index.html", return the path without the "index.html" suffix.
 (define/contract (post-path->link pp)
   (path? . -> . string?)
-  (~> (match (path->string pp)
-        [(pregexp "^(.+?)/index.html" (list _ s)) (str s "/")]
-        [s s])
-      string->path
-      abs->rel/www))
+  (define parts (match (map some-system-path->string (explode-path pp))
+                  [(list xs ..1 "index.html") (append xs '(same))]
+                  [xs xs]))
+  (abs->rel/www (apply build-path/convention-type 'unix parts)))
 
 (module+ test
   (parameterize ([top (find-system-path 'home-dir)])
