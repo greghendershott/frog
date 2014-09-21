@@ -176,12 +176,8 @@ project/        # default. see `output-dir` in .frogrc
 
 > **TIP**: To design a Bootstrap 3 "theme", try
 > [Bootstrap Magic](http://pikock.github.io/bootstrap-magic/).
-
-
-> (Although <http://bootswatch.com/> has some ready-made themes,
-> they're for Bootstrap 2.x, and to use them with Bootstrap 3 you'll
-> need to hand-tune the CSS.)
-
+>
+> Also, <http://bootswatch.com/> has some ready-made themes.
 
 > **TIP**: For examples of `pygments.css` code highlighting styles see
 > <https://github.com/richleland/pygments-css>.
