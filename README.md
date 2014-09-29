@@ -208,8 +208,9 @@ editor = $EDITOR
 # See the test submodule in paths.rkt for more examples
 editor-command = {editor} {filename}
 
-# Whether to show the count of posts next to each tag in sidebar
-show-tag-counts? = false
+# Whether to show the count of posts next to each tag in the
+# `page-template` variable `tags/feeds`.
+show-tag-counts? = true
 
 # Pattern for blog post permalinks
 # Optional: Default is "/{year}/{month}/{title}.html".
