@@ -46,6 +46,7 @@
    "page-template.html"
    {'contents contents
     'title title
+    'author (current-author)
     'description description
     'uri-path uri-path
     'full-uri (full-uri uri-path)

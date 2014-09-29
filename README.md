@@ -191,7 +191,11 @@ project/        # default. see `output-dir` in .frogrc
 # Required: Should NOT end in trailing slash.
 scheme/host = http://www.example.com
 
+# The title of the blog. Used when generating feeds.
 title = My Awesome Blog
+
+# The author. Used when generating feeds, and provided to
+# `page-template.html` as the template variable `@author`.
 author = The Unknown Author
 
 # What editor to launch with --edit. $EDITOR means to use $EDITOR from
