@@ -39,6 +39,10 @@ A: Frozen blog.
 
 1. Install [Racket 5.3.5 or newer](http://racket-lang.org/download/).
 
+    > **TIP:** On OS X you will need to add `/Applications/Racket\
+    > 6.1/bin` (or similar) to your OS X `PATH` in order to be able to
+    > run things like `racket` or `raco` at the command line.
+
 2. Install Frog: `$ raco pkg install frog`.
    
 3. Optional: Install Pygments if you want syntax highlighting for
