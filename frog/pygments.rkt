@@ -12,36 +12,29 @@
 
 (provide pygmentize)
 
-;; Go ahead during module load and start a thread to launch the
-;; subprocess that runs Python with our pipe.py script.
-(define-runtime-path pipe.py "pipe.py")
+;; Launch process that runs Python with our pipe.py script.
+(define should-start? #t)
 (define-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
   (values #f #f #f #f #f))
+(define-runtime-path pipe.py "pipe.py")
 
-(define (make-pygments-thread)
-  (thread
-   (thunk
-    ;; Start a subprocess running our pipe.py script.
-    (match (process (str "python -u " pipe.py
-                         (if (current-pygments-linenos?) " --linenos" "")
-                         " --cssclass " (current-pygments-cssclass)))
-      [(list in out pid err proc)
-       (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
-                    (values in out pid err proc))
-       (file-stream-buffer-mode out 'line)])
-    ;; Wait for its "ready\n"
-    (when (sync/timeout 3 pyg-in)
-      (read-line pyg-in 'linefeed)))))
-
-(define load-thread #t)
+(define (start)
+  (match (process (str "python -u " pipe.py
+                       (if (current-pygments-linenos?) " --linenos" "")
+                       " --cssclass " (current-pygments-cssclass)))
+    [(list in out pid err proc)
+     (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
+                  (values in out pid err proc))
+     (file-stream-buffer-mode out 'line)])
+  (read-line pyg-in 'any)) ;; consume "ready" line or EOF
 
 (define (running?)
   (define (?)
     (and pyg-proc
          (eq? (pyg-proc 'status) 'running)))
-  (when load-thread ;; first time
-    (thread-wait (make-pygments-thread))
-    (set! load-thread #f)
+  (when should-start? ;; first time
+    (set! should-start? #f)
+    (start)
     (unless (?)
       (prn1 "Pygments not installed. Using plain `pre` blocks.")))
   (?))
