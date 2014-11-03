@@ -71,7 +71,9 @@ Here is a @racket[interaction]:
           scribble/eval)
 @(define my-tr-evaluator
    (parameterize ([sandbox-output 'string]
-                  [sandbox-error-output 'string])
+                  [sandbox-error-output 'string]
+                  [sandbox-memory-limit #f]
+                  [sandbox-eval-limits #f])
      (make-evaluator 'typed/racket/base)))
 @interaction[#:eval my-tr-evaluator
 (: my-sqr (Real -> Real))
