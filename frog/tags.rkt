@@ -132,7 +132,9 @@
           'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
           'content content}))
       (string-join "\n")
-      (string-append (xexpr->string `(footer ,(bootstrap-pagination base-file page-num num-pages))))
+      (string-append
+       (if (> num-pages 1)
+           (xexpr->string `(footer ,(bootstrap-pagination base-file page-num num-pages))) ""))
       (bodies->page #:title title
                     #:description title
                     #:feed feed
