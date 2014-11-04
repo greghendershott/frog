@@ -12,32 +12,38 @@
 
 (provide pygmentize)
 
-;; Launch process that runs Python with our pipe.py script.
-(define should-start? #t)
+;; Process that runs Python with our pipe.py script.
+
 (define-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
   (values #f #f #f #f #f))
 (define-runtime-path pipe.py "pipe.py")
 
-(define (start)
-  (match (process (str "python -u " pipe.py
-                       (if (current-pygments-linenos?) " --linenos" "")
-                       " --cssclass " (current-pygments-cssclass)))
-    [(list in out pid err proc)
-     (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
-                  (values in out pid err proc))
-     (file-stream-buffer-mode out 'line)])
-  (read-line pyg-in 'any)) ;; consume "ready" line or EOF
+(define start
+  (let ([start-attempted? #f])
+    (λ ()
+      (unless start-attempted?
+        (set! start-attempted? #t)
+        (prn0 "Launching python pipe.py")
+        (match (process (str "python -u " pipe.py
+                             (if (current-pygments-linenos?) " --linenos" "")
+                             " --cssclass " (current-pygments-cssclass)))
+          [(list in out pid err proc)
+           (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
+                        (values in out pid err proc))
+           (file-stream-buffer-mode out 'line)
+           (match (read-line pyg-in 'any)  ;; consume "ready" line or EOF
+             [(? eof-object?) (say-no-pygments)]
+             [_ (say-pygments)])]
+          [_ (say-no-pygments)])))))
+
+(define (say-pygments)
+  (prn1 "Using Pygments."))
+(define (say-no-pygments)
+  (prn1 "Pygments not found. Using plain `pre` blocks."))
 
 (define (running?)
-  (define (?)
-    (and pyg-proc
-         (eq? (pyg-proc 'status) 'running)))
-  (when should-start? ;; first time
-    (set! should-start? #f)
-    (start)
-    (unless (?)
-      (prn1 "Pygments not installed. Using plain `pre` blocks.")))
-  (?))
+  (and pyg-proc
+       (eq? (pyg-proc 'status) 'running)))
 
 (define (stop) ;; -> void
   (when (running?)
@@ -57,6 +63,8 @@
 (define (pygmentize code lang) ;; string? string? -> (listof xexpr?)
   (define (default code)
     `((pre () (code () ,code))))
+  (unless (running?)
+    (start))
   (cond [(running?)
          (displayln lang pyg-out)
          (displayln code pyg-out)
