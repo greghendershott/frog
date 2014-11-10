@@ -34,7 +34,7 @@
   (define updated
     (match xs
       ['() "N/A"]
-      [_   (str (post-date (first xs)) "Z")])) ;; lie: not nec. UTC
+      [_   (rfc-8601/universal (post-date (first xs)))]))
   (~>
    `(feed
      ([xmlns "http://www.w3.org/2005/Atom"]
@@ -70,8 +70,8 @@
                  (our-encode (current-scheme/host))
                  ":"
                  (our-encode uri-path)))
-    (published () ,(str date "Z")) ;; lie: not necessarily UTC
-    (updated () ,(str date "Z"))   ;; lie: not necessarily UTC
+    (published () ,(rfc-8601/universal date))
+    (updated () ,(rfc-8601/universal date))
     (author (name ,(current-author)))
     (content
      ([type "html"])
@@ -93,7 +93,7 @@
   (define updated
     (match xs
       ['() "N/A"]
-      [_   (~> xs first post-date rfc-8601->822)]))
+      [_   (~> xs first post-date rfc-8601->rfc-822)]))
   (~>
    `(rss
      ([version "2.0"])
@@ -124,7 +124,7 @@
                    (our-encode (current-scheme/host))
                    ":"
                    (our-encode uri-path)))
-    (pubDate () ,(~> date rfc-8601->822))
+    (pubDate () ,(~> date rfc-8601->rfc-822))
     (description
      "<html>"
      ,(cond [(current-feed-full?) body] ;don't enhance-body
@@ -134,37 +134,89 @@
             [else blurb])
      "</html>")))
 
-(define (rfc-8601->822 s)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Datetimes
+
+;; Ensures in UT
+(define (rfc-8601/universal s)
+  (~> s rfc-8601->date date->rfc-8601))
+
+(define (rfc-8601->rfc-822 s)
+  (~> s rfc-8601->date date->rfc-822))
+
+(define (local->universal d)
+  (~> d (date->seconds #t) (seconds->date #f)))
+
+;; Only accepts "Z" time zone, or, no time zone at all in which latter
+;; case the time is converted to Z (to universal time).
+(define (rfc-8601->date s)
   (match s
-    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})"
-              (list _ year month day hour minute second))
-     (define MONTHS
-       #("Jan" "Feb" "Mar" "Apr" "May" "Jun"
-         "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
-     (define DAYS
-       #("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"))
-     (define tz-name (date*-time-zone-name (current-date)))
-     (define d (date* (string->number second)
-                      (string->number minute)
-                      (string->number hour)
-                      (string->number day)
-                      (string->number month)
-                      (string->number year)
-                      0 0 #f 0 0
-                      tz-name
-                      ))
-     (define weekday (~> d
-                         date->seconds
-                         seconds->date
-                         date-week-day
-                         DAYS))
-     (str weekday ", "
-          day " " (MONTHS (sub1 (string->number month))) " " year " "
-          hour ":" minute ":" second " " tz-name)]
+    [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(Z?)"
+              (list _ year month day hour minute second Z?))
+     (define zulu? (match Z? ["Z" #t] [_ #f]))
+     (define d (date (string->number second)
+                     (string->number minute)
+                     (string->number hour)
+                     (string->number day)
+                     (string->number month)
+                     (string->number year)
+                      0 0 #f 0))
+     (cond [zulu? d]
+           [else (local->universal d)])]
     [other
      (raise-argument-error
       'rfc-8601->822
       "date in ISO 8601 (YYYY-MM-DDThh:mm:ss) format" 0 s)]))
+
+(define MONTHS
+  #("Jan" "Feb" "Mar" "Apr" "May" "Jun"
+    "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"))
+(define DAYS
+  #("Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"))
+
+(define (date->rfc-822 d)
+  (match d
+    [(date sc mn hr dy mo yr wd yd dst? tzo)
+     (str (DAYS wd) ", "
+          (2d dy) " " (MONTHS (sub1 mo)) " " yr " "
+          (2d hr) ":" (2d mn) ":" (2d sc) " UT")]))
+
+(define (date->rfc-8601 d)
+  (match d
+    [(date sc mn hr dy mo yr wd yd dst? tzo)
+     (str yr "-" (2d mo) "-" (2d dy)
+          "T"
+          (2d hr) ":" (2d mn) ":" (2d sc)
+          "Z")]))
+
+(define (2d n)
+  (cond [(< n 10) (format "0~a" n)]
+        [else     (format "~a" n)]))
+
+
+;; WARNING these tests only work when run from ET time zone.
+(module+ test
+  ;; During EDT, 4 hour time difference from UT
+  (check-equal? (rfc-8601/universal "2014-06-01T00:00:00")
+                "2014-06-01T04:00:00Z")
+  (check-equal? (rfc-8601->rfc-822 "2014-06-01T00:00:00")
+                "Sun, 01 Jun 2014 04:00:00 UT")
+
+  (check-equal? (rfc-8601/universal "2014-06-01T00:00:00Z")
+                "2014-06-01T00:00:00Z")
+  (check-equal? (rfc-8601->rfc-822 "2014-06-01T00:00:00Z")
+                "Sun, 01 Jun 2014 00:00:00 UT")
+
+  ;; During EST, 5 hour time difference from UT
+  (check-equal? (rfc-8601/universal "2014-10-11T00:00:00")
+                "2014-10-11T04:00:00Z")
+  (check-equal? (rfc-8601->rfc-822 "2014-10-11T00:00:00")
+                "Sat, 11 Oct 2014 04:00:00 UT")
+
+  (check-equal? (rfc-8601/universal "2014-10-11T00:00:00Z")
+                "2014-10-11T00:00:00Z")
+  (check-equal? (rfc-8601->rfc-822 "2014-10-11T00:00:00Z")
+                "Sun, 11 Oct 2014 00:00:00 UT"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
