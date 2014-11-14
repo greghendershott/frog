@@ -193,30 +193,35 @@
   (cond [(< n 10) (format "0~a" n)]
         [else     (format "~a" n)]))
 
-
-;; WARNING these tests only work when run from ET time zone.
 (module+ test
-  ;; During EDT, 4 hour time difference from UT
-  (check-equal? (rfc-8601/universal "2014-06-01T00:00:00")
-                "2014-06-01T04:00:00Z")
-  (check-equal? (rfc-8601->rfc-822 "2014-06-01T00:00:00")
-                "Sun, 01 Jun 2014 04:00:00 UT")
-
+  ;; Tests where timezone is already explicitly UT.
   (check-equal? (rfc-8601/universal "2014-06-01T00:00:00Z")
                 "2014-06-01T00:00:00Z")
   (check-equal? (rfc-8601->rfc-822 "2014-06-01T00:00:00Z")
                 "Sun, 01 Jun 2014 00:00:00 UT")
-
-  ;; During EST, 5 hour time difference from UT
-  (check-equal? (rfc-8601/universal "2014-10-11T00:00:00")
-                "2014-10-11T04:00:00Z")
-  (check-equal? (rfc-8601->rfc-822 "2014-10-11T00:00:00")
-                "Sat, 11 Oct 2014 04:00:00 UT")
-
   (check-equal? (rfc-8601/universal "2014-10-11T00:00:00Z")
                 "2014-10-11T00:00:00Z")
   (check-equal? (rfc-8601->rfc-822 "2014-10-11T00:00:00Z")
-                "Sun, 11 Oct 2014 00:00:00 UT"))
+                "Sun, 11 Oct 2014 00:00:00 UT")
+
+  ;; Tests where timezone is unspecified. Assume local time and
+  ;; convert to UT. NOTE: These particular tests only work when run
+  ;; from a machine where local timezone is ET.
+  (match (date*-time-zone-name (current-date))
+    [(or "EST" "EDT")
+     ;; A date during EDT, 4 hour time difference from UT
+     (define EDT-date "2014-06-01T00:00:00")
+     (check-equal? (rfc-8601/universal EDT-date)
+                   "2014-06-01T04:00:00Z")
+     (check-equal? (rfc-8601->rfc-822 EDT-date)
+                   "Sun, 01 Jun 2014 04:00:00 UT")
+     ;; A date during EST, 5 hour time difference from UT
+     (define EST-date "2014-10-11T00:00:00")
+     (check-equal? (rfc-8601/universal EST-date)
+                   "2014-10-11T04:00:00Z")
+     (check-equal? (rfc-8601->rfc-822 EST-date)
+                   "Sat, 11 Oct 2014 04:00:00 UT")]
+    [_ (void)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
