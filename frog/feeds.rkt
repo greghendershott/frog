@@ -76,7 +76,7 @@
     (content
      ([type "html"])
      "<html>"
-     ,(cond [(current-feed-full?) body] ;don't enhance-body
+     ,(cond [(current-feed-full?) body] ;but don't enhance-body
             [more? (string-append blurb
                                   (xexpr->string `(a ([href ,item-uri])
                                                    (em "More" hellip))))]
@@ -127,7 +127,7 @@
     (pubDate () ,(~> date rfc-8601->rfc-822))
     (description
      "<html>"
-     ,(cond [(current-feed-full?) body] ;don't enhance-body
+     ,(cond [(current-feed-full?) body] ;but don't enhance-body
             [more? (string-append blurb
                                   (xexpr->string `(a ([href ,item-uri])
                                                    (em "More" hellip))))]
@@ -135,20 +135,23 @@
      "</html>")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Datetimes
 
-;; Ensures in UT
+;;; Datetime conversion
+
+;; See rfc-8601->date for description of handling of time zones.
 (define (rfc-8601/universal s)
   (~> s rfc-8601->date date->rfc-8601))
 
+;; See rfc-8601->date for description of handling of time zones.
 (define (rfc-8601->rfc-822 s)
   (~> s rfc-8601->date date->rfc-822))
 
-(define (local->universal d)
-  (~> d (date->seconds #t) (seconds->date #f)))
-
-;; Only accepts "Z" time zone, or, no time zone at all in which latter
-;; case the time is converted to Z (to universal time).
+;; Accepts 8601 time strings that either:
+;;
+;; (a) Explicitly have "Z", i.e. Universal Time.
+;;
+;; (b) Lack a "Z", in which case it's assumed to be local time and
+;; converted to Universal Time.
 (define (rfc-8601->date s)
   (match s
     [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(Z?)"
@@ -167,6 +170,9 @@
      (raise-argument-error
       'rfc-8601->822
       "date in ISO 8601 (YYYY-MM-DDThh:mm:ss) format" 0 s)]))
+
+(define (local->universal d)
+  (~> d (date->seconds #t) (seconds->date #f)))
 
 (define MONTHS
   #("Jan" "Feb" "Mar" "Apr" "May" "Jun"
