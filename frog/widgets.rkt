@@ -266,3 +266,23 @@
   @list{
         <script src="//gist.github.com/@|username|/@|id|.js"></script>
        })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Pinboard
+;;
+
+(define (pinboard username count)
+  @list{
+        <script src="//pinboard.in//widgets/v1/linkroll/?user=@|username|&count=@|count|"></script>
+        })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Tag at Pinboard
+;;
+
+(define (pinboard-tag username count tag)
+  @list{
+        <script src="//pinboard.in//widgets/v1/linkroll/?user=@|username|&count=@|count|&tag=@|tag|"></script>
+        })
