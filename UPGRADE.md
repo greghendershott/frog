@@ -137,17 +137,13 @@ In `page-template.html`, set it:
     <link rel="icon" href="/favicon.ico">
 ```
 
-## `google-analytics-account` and `google-analytics-domain`
+## `google-analytics-account`
 
-In `page-template.html`, set these:
+In `page-template.html`, set this:
 
 ```html
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-xxxxxx']);       <!-- SET THIS -->
-      _gaq.push(['_setDomainName', 'example.com']);  <!-- SET THIS -->
-      _gaq.push(['_trackPageview']);
-      ....
+    @google-universal-analytics["UA-xxxxxxxx"] <!-- SET THIS -->
+    ...
 ```
 
 ## `disqus-shortname`

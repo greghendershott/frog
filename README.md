@@ -564,7 +564,7 @@ templates. Plus they make clearer what are the user-specific
 parameters (as opposed to putting stuff like `<!-- CHANGE THIS! -->`
 in the template).
 
-For example, `@google-analytics["UA-xxxxx" "example.com"]` returns
+For example, `@google-universal-analytics["UA-xxxxx"]` returns
 text for a `<script>` element to insert Google Analytics tracking
 code. You supply it the two user-specific pieces of information, which
 it plugs into the boilerplate and returns.
