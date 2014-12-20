@@ -44,6 +44,13 @@ EOF
 )
 
 (define enable-editor? (make-parameter #f))
+(define (get-editor . _)
+  (or (getenv "EDITOR") (getenv "VISUAL")
+      (raise-user-error 'new-post
+        "EDITOR or VISUAL must be defined in the environment to use $EDITOR in .frogrc")))
+
+(define (replace-$editor-in-current-editor)
+  (regexp-replaces (current-editor) `([#rx"\\$EDITOR" ,get-editor])))
 
 (define (new-post title [type 'markdown])
   (let ([extension (case type
@@ -70,7 +77,6 @@ EOF
       (displayln pathname)
       (when (enable-editor?)
         (system (editor-command-string 
-                  (regexp-replaces (current-editor)
-                                   `([#rx"\\$EDITOR" ,(getenv "EDITOR")]))
+                  (replace-$editor-in-current-editor)
                   (path->string pathname) 
                   (current-editor-command)))))))
