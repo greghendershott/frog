@@ -36,6 +36,7 @@
   (parameterize* ([top (find-frog-root)])
     (parameterize-from-config (build-path (top) ".frogrc")
                               ([scheme/host "http://www.example.com"]
+                               [uri-prefix #f]
                                [title "Untitled Site"]
                                [author "The Unknown Author"]
                                [editor "$EDITOR"]

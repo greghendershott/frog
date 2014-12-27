@@ -52,7 +52,7 @@
                                   (~> path
                                       (path-replace-suffix ".html")
                                       abs->rel/src)))
-    (define uri-path (abs->rel/www dest-path))
+    (define uri-path (canonicalize-uri (abs->rel/www dest-path)))
     (unless (stale? dest-path path (page-template.html))
       (prn2 "Already up-to-date: ~a" dest-path)
       (return (cons uri-path v)))
@@ -63,7 +63,8 @@
              (define img-dest (path-replace-suffix dest-path ""))
              (read-scribble-file path
                                  #:img-local-path img-dest
-                                 #:img-uri-prefix (abs->rel/www img-dest))]
+                                 #:img-uri-prefix (canonicalize-uri
+                                                   (abs->rel/www img-dest)))]
             [_ (parse-markdown path)])
           enhance-body))
     (prn1 "Generating non-post ~a" (abs->rel/www dest-path))

@@ -192,9 +192,40 @@
                   (abs->rel/top (string->path "/projects/blog/source/foo.md")))
                 "source/foo.md"))
 
+;; Possibly rewrite a URI path to take account of the current root
+;; If full is given make it a full URI, or explode if it makes no sense
+;; This probably should handle URIs with protocol & host, but does not.
+;;
+(define/contract (canonicalize-uri uri-path)
+  (string? . -> . string?)
+  (match uri-path
+    [(pregexp #px"^/")
+     (let ([c (current-uri-prefix)])
+       (if c
+           (str (regexp-replace #px"/+$" c "") uri-path)
+           uri-path))]
+    [_ uri-path]))
+
+(module+ test
+  (let ([au "/absolute/path"]
+        [ru "relative/path"])
+    (parameterize ([current-uri-prefix #f])
+      (check-equal? ru (canonicalize-uri ru))
+      (check-equal? au (canonicalize-uri au)))
+    (parameterize ([current-uri-prefix "/reroot"])
+      (check-equal? ru (canonicalize-uri ru))
+      (check-equal? (str (current-uri-prefix) au)
+                    (canonicalize-uri au)))
+    (parameterize ([current-uri-prefix "/reroot///"])
+      (check-equal? (str "/reroot" au) (canonicalize-uri au)))))
+
 ;; Given a uri-path, prepend the scheme & host to make a full URI.
 (define (full-uri uri-path)
-  (str (current-scheme/host) uri-path))
+  (match uri-path
+    [(pregexp #px"^/")
+     (str (current-scheme/host) uri-path)]
+    [_ (raise-user-error 'full-uri
+                         "can't attach host/scheme to relative path")]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
