@@ -56,7 +56,8 @@
                                       (str dt "-" nm)))
          (read-scribble-file path
                              #:img-local-path img-dest
-                             #:img-uri-prefix (abs->rel/www img-dest))]
+                             #:img-uri-prefix (canonicalize-uri
+                                               (abs->rel/www img-dest)))]
         [(pregexp "\\.html$")
          (define same.scrbl (path-replace-suffix path ".scrbl"))
          (when (file-exists? same.scrbl)
@@ -92,7 +93,7 @@
           path
           (file-or-directory-modify-seconds path)
           dest-path
-          (post-path->link dest-path)
+          (canonicalize-uri (post-path->link dest-path))
           date
           #f ;; older
           #f ;; newer

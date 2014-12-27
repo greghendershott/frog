@@ -5,6 +5,7 @@
 ;; Parameters loaded from configuration file
 
 (define current-scheme/host (make-parameter #f))
+(define current-uri-prefix (make-parameter #f))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
 (define current-editor (make-parameter #f))

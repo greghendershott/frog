@@ -58,8 +58,8 @@
 
 (define (index-uri-for-tag tag)
   (match tag
-    ["all" (current-posts-index-uri)]
-    [_     (abs->rel/www (index-path-for-tag tag))]))
+    ["all" (canonicalize-uri (current-posts-index-uri))]
+    [_     (canonicalize-uri (abs->rel/www (index-path-for-tag tag)))]))
 
 (define (title-for-tag tag)
   (match tag
@@ -138,7 +138,7 @@
       (bodies->page #:title title
                     #:description title
                     #:feed feed
-                    #:uri-path (abs->rel/www file)
+                    #:uri-path (canonicalize-uri (abs->rel/www file))
                     #:keywords (cond [tag (list tag)]
                                      [else (hash-keys (all-tags))])
                     #:tag tag)
@@ -149,16 +149,17 @@
        ,(cond [(zero? page-num) `(li ([class "disabled"])
                                      (a ([href "#"]) 'larr))]
               [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
-                                        abs->rel/www)])
+                                        abs->rel/www canonicalize-uri)])
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
            `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www)])
+                (a ([href ,(~> (file/page base-file n) abs->rel/www 
+                               canonicalize-uri)])
                    ,(number->string (add1 n)))))
        ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
                                                   (a ([href "#"]) 'rarr))]
               [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
-                                        abs->rel/www)])
+                                        abs->rel/www canonicalize-uri)])
                             'rarr))]) ))
 
 (define (file/page base-file page-num)
