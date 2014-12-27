@@ -60,6 +60,7 @@
                                [pygments-cssclass "source"])
       (define watch? #f)
       (define port 3000)
+      (define root (www-path))
       (command-line
        #:program "frog"
        #:once-each
@@ -104,19 +105,27 @@
          "Supply this flag before one of those flags."
          "Default: 3000.")
         (set! port (string->number number))]
+       [("--root") path
+        (""
+         "the root directory for -s/--serve or -p/--preview."
+         "Supply this flags before one of those flags."
+         "Default: output-dir as specified in .frogrc, or \".\"")
+        (set! root path)]
        #:once-any
        [("-s" "--serve")
         (""
          "Run a local web server.")
         (serve #:launch-browser? #f
                #:watch? watch?
-               #:port port)]
+               #:port port
+               #:root root)]
        [("-p" "--preview")
         (""
          "Run a local web server and start your browser on blog home page.")
         (serve #:launch-browser? #t
                #:watch? watch?
-               #:port port)]
+               #:port port
+               #:root root)]
        #:once-any
        [("-S" "--silent") "Silent. Put first."
         (current-verbosity -1)]
@@ -325,7 +334,8 @@
 
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
-               #:port port)
+               #:port port
+               #:root root)
   (define watcher-thread
     (cond [watch? (watch-directory (build-path (src-path))
                      '(file)
@@ -342,7 +352,7 @@
     (ensure-external-browser-preference))
   (serve/servlet (lambda (_) (next-dispatcher))
                  #:servlet-path "/"
-                 #:extra-files-paths (list (www-path))
+                 #:extra-files-paths (list root)
                  #:port port
                  #:listen-ip #f
                  #:launch-browser? launch-browser?)
