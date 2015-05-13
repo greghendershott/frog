@@ -24,5 +24,6 @@
 (define current-posts-index-uri (make-parameter "/index.html"))
 (define current-source-dir (make-parameter "_src"))
 (define current-output-dir (make-parameter "."))
+(define current-python-executable (make-parameter "python"))
 (define current-pygments-linenos? (make-parameter #t))
 (define current-pygments-cssclass (make-parameter "source"))

@@ -100,6 +100,10 @@ source-dir = _src
 output-dir = .
 
 # Options controlling Pygments' HTML format.
+## Python executable to be passed to the shell. If only a filename or
+## relative path is given, Racket's find-executable-path will be used
+## to locate the executable.
+python-executable = python
 ## Whether to use line numbers.
 pygments-linenos? = true
 ## CSS class for the wrapping <div> tag (default: 'highlight').
