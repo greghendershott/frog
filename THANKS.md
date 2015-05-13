@@ -16,6 +16,8 @@ Thanks to the following people for contributing pull requests!
 
 - [William J. Bowman](https://github.com/bluephoenix47)
 
+- [Jordan Johnson](https://github.com/RenaissanceBug)
+
 ## Issues
 
 Thanks to the following people for reporting bugs and feature
