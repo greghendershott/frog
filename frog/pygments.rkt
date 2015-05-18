@@ -6,6 +6,7 @@
          racket/runtime-path
          racket/system
          rackjure/str
+         rackjure/conditionals
          "html.rkt"
          "params.rkt"
          "verbosity.rkt")
@@ -23,18 +24,22 @@
     (λ ()
       (unless start-attempted?
         (set! start-attempted? #t)
-        (prn0 "Launching python pipe.py")
-        (match (process (str "python -u " pipe.py
-                             (if (current-pygments-linenos?) " --linenos" "")
-                             " --cssclass " (current-pygments-cssclass)))
-          [(list in out pid err proc)
-           (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
-                        (values in out pid err proc))
-           (file-stream-buffer-mode out 'line)
-           (match (read-line pyg-in 'any)  ;; consume "ready" line or EOF
-             [(? eof-object?) (say-no-pygments)]
-             [_ (say-pygments)])]
-          [_ (say-no-pygments)])))))
+        (if-let [python (find-executable-path (current-python-executable))]
+          (begin
+            (prn0 (str "Launching " python " pipe.py"))
+            (match (process
+                    (str python " -u " pipe.py
+                         (if (current-pygments-linenos?) " --linenos" "")
+                         " --cssclass " (current-pygments-cssclass)))
+              [(list in out pid err proc)
+               (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
+                            (values in out pid err proc))
+               (file-stream-buffer-mode out 'line)
+               (match (read-line pyg-in 'any)  ;; consume "ready" line or EOF
+                 [(? eof-object?) (say-no-pygments)]
+                 [_ (say-pygments)])]
+              [_ (say-no-pygments)]))
+          (prn1 "Python not found. Using plain `pre` blocks."))))))
 
 (define (say-pygments)
   (prn1 "Using Pygments."))
