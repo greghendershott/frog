@@ -1,10 +1,10 @@
 # Required: Should NOT end in trailing slash.
 scheme/host = http://www.example.com
 
-# Prefix for URIs, default being /
-# this will be interposed at the beginning of any URI, including those
-# specified here.
-#uri-prefix = /
+# A path prepended to URIs, including those specified here in .frogrc
+# such as `permalink` and `posts-index-uri`. Defaults to `/`. This is
+# useful when you want to embed your blog in another web site.
+uri-prefix = /
 
 # The title of the blog. Used when generating feeds.
 title = My Awesome Blog

@@ -108,8 +108,9 @@
         (set! port (string->number number))]
        [("--root") path
         (""
-         "the root directory for -s/--serve or -p/--preview."
-         "Supply this flags before one of those flags."
+         "The root directory for -s/--serve or -p/--preview."
+         "Supply this flag before one of those flags."
+         "If .frogrc has uri-prefix = /path/to/site/blog, try --root /path/to/site"
          "Default: output-dir as specified in .frogrc, or \".\"")
         (set! root path)]
        #:once-any
