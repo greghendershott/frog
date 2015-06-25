@@ -195,16 +195,11 @@
 ;; Possibly rewrite a URI path to take account of the current root
 ;; If full is given make it a full URI, or explode if it makes no sense
 ;; This probably should handle URIs with protocol & host, but does not.
-;;
 (define/contract (canonicalize-uri uri-path)
   (string? . -> . string?)
-  (match uri-path
-    [(pregexp #px"^/")
-     (let ([c (current-uri-prefix)])
-       (if c
-           (str (regexp-replace #px"/+$" c "") uri-path)
-           uri-path))]
-    [_ uri-path]))
+  (match* ((current-uri-prefix) uri-path)
+    [((? values prefix) (pregexp "^/.*")) (str prefix uri-path)]
+    [(_                 uri-path        ) uri-path]))
 
 (module+ test
   (let ([au "/absolute/path"]
