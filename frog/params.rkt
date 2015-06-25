@@ -1,11 +1,19 @@
 #lang racket/base
 
+(require racket/match)
+
 (provide (all-defined-out))
 
 ;; Parameters loaded from configuration file
 
 (define current-scheme/host (make-parameter #f))
-(define current-uri-prefix (make-parameter #f))
+(define current-uri-prefix
+  (make-parameter #f
+                  (λ (v)
+                    (and v
+                         (match (regexp-replace #px"/+$" v "")
+                           ["" #f]
+                           [v v])))))
 (define current-title (make-parameter #f))
 (define current-author (make-parameter #f))
 (define current-editor (make-parameter #f))
