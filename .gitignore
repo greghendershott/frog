@@ -13,3 +13,12 @@ example/tags/
 example/2*
 example/A-Non-Post-Scribble-Page*
 example/img/posts/
+
+# Emacs / DrRacket backups & auto save files
+*~
+\#*\#
+.\#*
+
+# Emacs tags
+TAGS
+

@@ -27,7 +27,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (atom-feed-uri tag)
-  (str "/feeds/" tag ".atom.xml"))
+  (canonicalize-uri (str "/feeds/" tag ".atom.xml")))
 
 (define (write-atom-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/www file))
@@ -41,7 +41,7 @@
       [xml:lang "en"])
      (title ([type "text"]) ,(str (current-title) ": " title))
      (link ([rel "self"]
-            [href ,(full-uri (abs->rel/www file))]))
+            [href ,(full-uri (canonicalize-uri (abs->rel/www file)))]))
      (link ([href ,(full-uri of-uri-path)]))
      (id () ,(str "urn:"
                  (our-encode (current-scheme/host))
@@ -86,7 +86,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (rss-feed-uri tag)
-  (str "/feeds/" tag ".rss.xml"))
+  (canonicalize-uri (str "/feeds/" tag ".rss.xml")))
 
 (define (write-rss-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/www file))
@@ -115,7 +115,8 @@
 
 (define (post->rss-feed-entry-xexpr tag x)
   (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "RSS"))
+  (define item-uri (full-uri/decorated uri-path
+                                       #:source tag #:medium "RSS"))
   `(item
     ()
     (title ,title)

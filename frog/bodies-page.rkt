@@ -71,11 +71,11 @@
                     ,@(if (current-show-tag-counts?) `(,(format "(~a)" v)) '())
                     " "
                     (a ([href ,(atom-feed-uri k)])
-                       (img ([src "/img/feed.png"]))))))
+                       (img ([src ,(canonicalize-uri "/img/feed.png")]))))))
     (p (a ([href ,(current-posts-index-uri)]) "All Posts")
        " "
        (a ([href ,(atom-feed-uri "all")])
-          (img ([src "/img/feed.png"])))))))
+          (img ([src ,(canonicalize-uri "/img/feed.png")])))))))
 
 (define (tags-list-items)
   (for/list ([(k v) (in-dict (tags-alist))])
@@ -95,7 +95,7 @@
                         ", ")))
 
 (define (tag->xexpr s)
-  `(a ([href ,(str "/tags/" (our-encode s) ".html")]) ,s))
+  `(a ([href ,(canonicalize-uri (str "/tags/" (our-encode s) ".html"))]) ,s))
 
 (define (blurb->description s)
   (~> (with-input-from-string s read-html-as-xexprs)
