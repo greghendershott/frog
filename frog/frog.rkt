@@ -61,7 +61,12 @@
                                [pygments-cssclass "source"])
       (define watch? #f)
       (define port 3000)
-      (define root (www-path))
+      (define root
+        ;; Default the server root to be the number of parent dirs
+        ;; above (www-path) as there are dirs in current-uri-prefix.
+        (let ([depth (sub1 (length (explode-path (current-uri-prefix))))])
+          (simplify-path (apply build-path (list* (www-path)
+                                                  (build-list depth (λ _ 'up)))))))
       (command-line
        #:program "frog"
        #:once-each
