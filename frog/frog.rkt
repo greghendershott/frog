@@ -5,6 +5,7 @@
          racket/file
          racket/function
          racket/match
+         racket/path ;moved to racket/base only as of Racket 6
          racket/runtime-path
          racket/set
          rackjure/threading
