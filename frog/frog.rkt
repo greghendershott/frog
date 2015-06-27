@@ -353,7 +353,7 @@
   (when launch-browser?
     (ensure-external-browser-preference))
   (serve/servlet (lambda (_) (next-dispatcher))
-                 #:servlet-path "/"
+                 #:servlet-path (canonicalize-uri (current-posts-index-uri))
                  #:extra-files-paths (list root)
                  #:port port
                  #:listen-ip #f
