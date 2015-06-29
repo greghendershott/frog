@@ -118,7 +118,7 @@
          "The root directory for -s/--serve or -p/--preview."
          "Supply this flag before one of those flags."
          "If .frogrc has uri-prefix = /path/to/site/blog, try --root /path/to/site"
-         "Default: output-dir as specified in .frogrc, or \".\"")
+         "Default: One less than the number of dirs in uri-prefix, above output-dir.")
         (set! root path)]
        #:once-any
        [("-s" "--serve")

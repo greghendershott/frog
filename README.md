@@ -676,6 +676,26 @@ See the [example Scribble post][] and
 > format. To create a new post in Scribble format, use `raco frog -N`
 > (or `--new-scribble`).
 
+# Embedding a blog in an existing site
+
+If you want to embed the entire blog in an existing site, one way is
+to use a subdomain, e.g. `blog.example.com`.
+
+Another way is to embed your blog "under" the existing site's URI path
+structure, e.g. `example.com/blog/`. To do so:
+
+1. In `post-template.html` change URIs from `/` to `/blog/` as
+   appropriate.
+
+2. In `.frogrc` set `uri-prefix = /blog`. This causes URIs generated
+   by Frog to be prefixed with `/blog`. (Other URIs in `.frogrc` --
+   such as `posts-index-uri` and `permalink` -- will automatically be
+   prefixed with `blog/`, so _don't_ change those.)
+
+The `--preview` flag should open on your blog's index page at
+`/blog/index.html`, automatically. (But there's also a `--root` flag
+in case you need to control it more specifically.)
+
 # Bug reports? Feature requests?
 
 Please use [GitHub Issues][].
