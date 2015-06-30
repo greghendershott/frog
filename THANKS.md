@@ -18,10 +18,13 @@ Thanks to the following people for contributing pull requests!
 
 - [Jordan Johnson](https://github.com/RenaissanceBug)
 
+- [Tim Bradshaw](https://github.com/tfeb)
+
 ## Issues
 
-Thanks to the following people for reporting bugs and feature
-requests!
+Thanks to everyone who has reported bugs and feature requests!
+
+Especially the following people!
 
 - [Dave Herman](https://github.com/dherman). Early on, Dave submitted
   _many_ helpful bug reports and feature requests. He was willing to
