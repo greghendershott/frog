@@ -696,6 +696,18 @@ The `--preview` flag should open on your blog's index page at
 `/blog/index.html`, automatically. (But there's also a `--root` flag
 in case you need to control it more specifically.)
 
+# MathJax
+
+To use MathJax:
+
+1. Add configuration to the `<head>` of your `page-template.html`. For
+   a standard MathJax configuration simply add `@math-jax[]` (call the
+   the `math-jax` function from `widgets.rkt`).
+
+2. In your markdown source files, use `\\( some math \\)` for inline
+   and `\\[ some math \\]` for display. (Note the _double_
+   backslashes, `\\`, because in markdown `\` already has a meaning.)
+
 # Bug reports? Feature requests?
 
 Please use [GitHub Issues][].

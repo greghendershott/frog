@@ -283,3 +283,14 @@
   @list{
         <script src="//gist.github.com/@|username|/@|id|.js"></script>
        })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; MathJax
+;;
+
+(define (math-jax)
+  @list{<script type="text/javascript"
+                src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+        </script>
+        })

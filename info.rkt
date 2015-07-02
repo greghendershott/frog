@@ -1,5 +1,5 @@
 #lang setup/infotab
-(define version "0.21")
+(define version "0.22")
 (define collection 'multi)
 (define deps '("base"
                "html-lib"
@@ -7,7 +7,7 @@
                "scribble-lib"
                "srfi-lite-lib"
                "web-server-lib"
-               ("markdown" "0.15")
+               ("markdown" "0.20")
                ("rackjure" "0.7")
                "find-parent-dir"))
 (define build-deps '("at-exp-lib"
