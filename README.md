@@ -195,6 +195,11 @@ project/        # default. see `output-dir` in .frogrc
 # Required: Should NOT end in trailing slash.
 scheme/host = http://www.example.com
 
+# A path prepended to URIs, including those specified here in .frogrc
+# such as `permalink` and `posts-index-uri`. Defaults to `/`. This is
+# useful when you want to embed your blog in another web site.
+uri-prefix = /
+
 # The title of the blog. Used when generating feeds.
 title = My Awesome Blog
 
