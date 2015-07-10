@@ -701,6 +701,13 @@ The `--preview` flag should open on your blog's index page at
 `/blog/index.html`, automatically. (But there's also a `--root` flag
 in case you need to control it more specifically.)
 
+> **TIP**: Are you a "Tilde Club" member -- your blog will be hosted
+> at `http://example.com/~user`? In your Frog project directory,
+> create an output directory named `~user`: `mkdir \~user` (note the
+> `\~` to allow using `~` in the name). Then follow the steps above,
+> including setting `output-dir = ~user` and `uri-prefix = /~user` in
+> `.frogrc`, and adjusting your `page-template.html` and os on.
+
 # MathJax
 
 To use MathJax:
