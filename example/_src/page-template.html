@@ -10,15 +10,15 @@
     <meta name="author"      content="@|author|">
     <meta name="keywords"    content="@|keywords|">
     <meta name="viewport"    content="width=device-width, initial-scale=1.0">
-    <link rel="icon"      href="/favicon.ico">
+    <link rel="icon"      href="@|uri-prefix|/favicon.ico">
     <link rel="canonical" href="@|full-uri|">
     @(when rel-next @list{<link rel="next" href="@|rel-next|">})
     @(when rel-prev @list{<link rel="prev" href="@|rel-prev|">})
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/pygments.css">
-    <link rel="stylesheet" type="text/css" href="/css/scribble.css">
-    <link rel="stylesheet" type="text/css" href="/css/custom.css">
+    <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/pygments.css">
+    <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/scribble.css">
+    <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/custom.css">
     <!-- Feeds -->
     <link rel="alternate" type="application/atom+xml"
           href="@|atom-feed-uri|" title="Atom Feed">
@@ -41,7 +41,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a href="/index.html" class="navbar-brand">My Blog Brand</a>
+          <a href="@|uri-prefix|/index.html" class="navbar-brand">My Blog Brand</a>
         </div>
         <div class="collapse navbar-collapse our-nav-collapse"
              role="navigation">
@@ -58,11 +58,11 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                 Tags <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="/index.html">All Posts</a></li>
+                <li><a href="@|uri-prefix|/index.html">All Posts</a></li>
                 @|tags-list-items|
               </ul>
             </li>
-            @ni["/About.html" "About"]
+            @ni[(string-append uri-prefix "/About.html") "About"]
             <li><a href="@|atom-feed-uri|">Atom</a></li>
             <li><a href="@|rss-feed-uri|">RSS</a></li>
           </ul>
@@ -78,7 +78,9 @@
         <div id="content" class="col-md-12">
           @;{ To put something only on the home page, check for
               @uri-path being "/index.html" }
-          @(when (string-ci=? uri-path "/index.html")
+          @(when (string-ci=? uri-path
+                              (string-append uri-prefix
+                                             "/index.html"))
             @list{
               <h1>Welcome</h1>
               <p>Here is some text that only goes on the home page,
@@ -103,6 +105,6 @@
     </div>
     <!-- </body> JS -->
     <script type="text/javascript" src="//code.jquery.com/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="@|uri-prefix|/js/bootstrap.min.js"></script>
   </body>
 </html>
