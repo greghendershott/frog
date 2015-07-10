@@ -48,6 +48,7 @@
     'title title
     'author (current-author)
     'description description
+    'uri-prefix (let ([prefix (current-uri-prefix)]) (if prefix prefix ""))
     'uri-path uri-path
     'full-uri (full-uri uri-path)
     'atom-feed-uri (atom-feed-uri feed)
