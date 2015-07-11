@@ -179,7 +179,7 @@
        (src-path)
        "post-template.html"
        {'title (title->htmlstr title)
-        'uri-prefix (let ([prefix (current-uri-prefix)]) (if prefix prefix ""))
+        'uri-prefix (or (current-uri-prefix) "")
         'uri-path uri-path
         'full-uri (full-uri uri-path)
         'date-8601 date

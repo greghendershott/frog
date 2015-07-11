@@ -123,7 +123,7 @@
          (src-path)
          tpl
          {'title (title->htmlstr title)
-          'uri-prefix (let ([prefix (current-uri-prefix)]) (if prefix prefix ""))
+          'uri-prefix (or (current-uri-prefix) "")
           'uri-path uri-path
           'full-uri (full-uri uri-path)
           'date-8601 date
@@ -154,7 +154,7 @@
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
            `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www 
+                (a ([href ,(~> (file/page base-file n) abs->rel/www
                                canonicalize-uri)])
                    ,(number->string (add1 n)))))
        ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
