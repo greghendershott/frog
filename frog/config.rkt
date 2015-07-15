@@ -24,7 +24,10 @@
 ;;                           ([twaddle-level 10])
 ;;    ....)
 
-(require (for-syntax racket/base racket/syntax)
+(require (for-syntax racket/base
+                     racket/syntax
+                     syntax/parse
+                     syntax/stx)
          racket/dict
          racket/file
          racket/match
@@ -33,13 +36,11 @@
 (provide parameterize-from-config)
 
 (define-syntax (parameterize-from-config stx)
-  (syntax-case stx ()
-    [(_ cfg-path ([name default] ...)
+  (syntax-parse stx
+    [(_ cfg-path:expr ([name:id default:expr] ...)
         body ...)
-     (map identifier? (syntax->list #'(name ...)))
-     (with-syntax ([(id ...) (map (lambda (x)
-                                    (format-id stx "current-~a" x))
-                                  (syntax->list #'(name ...)))])
+     (with-syntax ([(id ...) (stx-map (λ (x) (format-id stx "current-~a" x))
+                                      #'(name ...))])
        #'(parameterize ([id (get-config (quote name) default cfg-path)] ...)
            body ...))]))
 
