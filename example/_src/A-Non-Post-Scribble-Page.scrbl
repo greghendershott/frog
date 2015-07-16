@@ -7,7 +7,7 @@
 
 @(require (for-label racket))
 
-@title{Example of Non-Post Scribble Page}
+@title{Example of Non-Post Scribble Page. And a λ char.}
 
 This is an example of a non-post page written in Scribble.
 

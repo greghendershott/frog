@@ -1,6 +1,7 @@
 #lang rackjure/base
 
-(require racket/function
+(require racket/contract
+         racket/function
          racket/match
          racket/string
          rackjure/str
@@ -13,7 +14,8 @@
 (module+ test
   (require rackunit))
 
-(define (xexprs->description xs [max-len 255])
+(define/contract (xexprs->description xs [max-len 255])
+  (->* ((listof xexpr/c)) (exact-nonnegative-integer?) string?)
   (define s (~> (string-join (map (curryr xexpr->markdown " ") xs) "")
                 kill-newlines))
   (define len (string-length s))
@@ -40,7 +42,8 @@
    "A heading: A _paragraph_ of &quot;some&quot; stuff...."))
 
 ;; Not full markdown, just a "lite" variant for human readers only.
-(define (xexpr->markdown x [block-suffix ""])
+(define/contract (xexpr->markdown x [block-suffix ""])
+  (->* (xexpr/c) (string?) string?)
   (define (heading? s)
     (memq s '(h1 h2 h3 h4 h5 h6 h7 h8 h9)))
   (define (block? s)
@@ -50,8 +53,8 @@
   (define (normalize x) ;; ensure xexpr has explicit attributes
     (match x
       [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) . ,es) x]
-      [`(,(? symbol? tag) . ,es) `(,tag () ,@es)] ;add '() empty attribs
-      [_ x]))
+      [`(,(? symbol? tag)                                         . ,es) `(,tag () ,@es)]
+      [_                                                                 x]))
   (match (normalize x)
     [`(em            ,_ . ,es) (str "_" (->s es) "_")]
     [`(strong        ,_ . ,es) (str "**" (->s es) "**")]
@@ -59,14 +62,14 @@
     [`(,(? heading?) ,_ . ,es) (str (->s es) ": ")]
     [`(,(? block?)   ,_ . ,es) (str (->s es) block-suffix)]
     [`(,(? symbol?)  ,_ . ,es) (str (->s es))]
-    [(? string? s) s]
-    ['ndash "-"]
-    ['mdash "--"]
-    ['amp "&"]
-    [(or 'lsquo 'rsquo) "'"]
-    [(or 'ldquo 'rdquo 'quot) "\""]
-    [(? valid-char? c) (integer->char c)]
-    [_ ""])) ;; ignore others
+    [(? string? s)             s]
+    ['ndash                    "-"]
+    ['mdash                    "--"]
+    ['amp                      "&"]
+    [(or 'lsquo 'rsquo)        "'"]
+    [(or 'ldquo 'rdquo 'quot)  "\""]
+    [(? valid-char? i)         (string (integer->char i))]
+    [_                         ""])) ;; ignore others
 
 (module+ test
   (check-equal? (xexpr->markdown '(em "italic"))
@@ -89,7 +92,9 @@
   (check-equal? (xexpr->markdown '(div (p "Hi.") (p "Hi.")) "\n")
                 "Hi.\nHi.\n\n")
   (check-equal? (xexpr->markdown '(p "Hi" #x20 "there"))
-                "Hi there"))
+                "Hi there")
+  (check-equal? (xexpr->markdown `(p () "A " ,(char->integer #\λ) " char"))
+                "A λ char"))
 
 (define (escape-double-quotes s)
   (regexp-replace* #rx"\"" s "\\&quot;")) ;need to escape `&` in replace str
