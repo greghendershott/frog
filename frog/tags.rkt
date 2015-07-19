@@ -112,30 +112,23 @@
                                  `(footer ([class "read-more"])
                                    (a ([href ,uri-path]) hellip "more" hellip)))]
                                [else ""])))
-        ;; For users of old versions of Frog: If project has no
-        ;; index-template.html, copy the one from example. Much like
-        ;; --init does, but just this one file.
         (define tpl "index-template.html")
-        (define to (~> (build-path (src-path) tpl) simplify-path))
-        (unless (file-exists? to)
-          (define from (~> (build-path example "_src" tpl) simplify-path))
-          (prn0 "~a does not exist. Copying from ~a" to from)
-          (copy-file from to))
+        (ensure-index-template tpl)
         (render-template
          (src-path)
          tpl
-         {'title (title->htmlstr title)
-          'uri-prefix (or (current-uri-prefix) "")
-          'uri-path uri-path
-          'full-uri (full-uri uri-path)
-          'date-8601 date
-          'date-struct (date->date-struct date)
-          'date (~> date date->xexpr xexpr->string)
-          'tags (~> tags tags->xexpr xexpr->string)
-          'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
-          'content content
+         {'title        (title->htmlstr title)
+          'uri-prefix   (or (current-uri-prefix) "")
+          'uri-path     uri-path
+          'full-uri     (full-uri uri-path)
+          'date-8601    date
+          'date-struct  (date->date-struct date)
+          'date         (~> date date->xexpr xexpr->string)
+          'tags         (~> tags tags->xexpr xexpr->string)
+          'date+tags    (~> (date+tags->xexpr date tags) xexpr->string)
+          'content      content
           'content-only content-only
-          'more? effectively-more?}))
+          'more?        effectively-more?}))
       (string-join "\n")
       (string-append
        (if (> num-pages 1)
@@ -148,6 +141,16 @@
                                      [else (hash-keys (all-tags))])
                     #:tag tag)
       (display-to-file* file #:exists 'replace)))
+
+(define (ensure-index-template tpl)
+  ;; For users of old versions of Frog: If project has no
+  ;; index-template.html, copy the one from example. Much like
+  ;; --init does, but just this one file.
+  (define to (~> (build-path (src-path) tpl) simplify-path))
+  (unless (file-exists? to)
+    (define from (~> (build-path example "_src" tpl) simplify-path))
+    (prn0 "~a does not exist. Copying from ~a" to from)
+    (copy-file from to)))
 
 (define (bootstrap-pagination base-file page-num num-pages)
   `(ul ([class "pagination"])
