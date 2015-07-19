@@ -530,7 +530,9 @@ the default template. Specifically:
 - `date`: HTML to show the date of the post in a `<time>` element.
 - `tags`: HTML to show the tags of the post as links.
 - `date+tags`: HTML to show the date and tags of the post.
-- `content`: The content of the post
+- `content`: The content of the post plus a "More.." link when needed.
+- `content-only`: The content of the post, only.
+- `more?`: Is the content just a blurb?
 
 ### Template Example
 

@@ -102,14 +102,16 @@
   (~> (for/list ([x (in-list xs)])
         (match-define
          (post title src modtime dest-path uri-path date older newer tags blurb more? body) x)
-        (define content
-          (cond [(current-index-full?) body]
-                [more? (string-append
-                        blurb
-                        (xexpr->string
-                         `(footer ([class "read-more"])
-                           (a ([href ,uri-path]) hellip "more" hellip))))]
-                [else blurb]))
+        (define content-only (cond [(current-index-full?) body]
+                                   [else blurb]))
+        (define effectively-more? (and more? (not (current-index-full?))))
+        (define content (string-append
+                         content-only
+                         (cond [effectively-more?
+                                (xexpr->string
+                                 `(footer ([class "read-more"])
+                                   (a ([href ,uri-path]) hellip "more" hellip)))]
+                               [else ""])))
         ;; For users of old versions of Frog: If project has no
         ;; index-template.html, copy the one from example. Much like
         ;; --init does, but just this one file.
@@ -131,7 +133,9 @@
           'date (~> date date->xexpr xexpr->string)
           'tags (~> tags tags->xexpr xexpr->string)
           'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
-          'content content}))
+          'content content
+          'content-only content-only
+          'more? effectively-more?}))
       (string-join "\n")
       (string-append
        (if (> num-pages 1)

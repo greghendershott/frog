@@ -3,5 +3,9 @@
     <h2><a href='@|uri-path|'>@|title|</a></h2>
     <p class='date-and-tags'>@|date| :: @|tags|</p>
   </header>
-  @|content|
+  @|content-only|
+  @(when more?
+    @list{<footer>
+            <a href='@|uri-path|'>&hellip; more &hellip;</a>
+          </footer>})
 </article>
