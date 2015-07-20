@@ -49,6 +49,7 @@
   (match (~> (build-path dir "frog.html")
              (with-input-from-file read-html-as-xexprs)
              cadr)
+    ; HTML produced from #scribble/manual
     [`(html
        ()
        (head . ,_)
@@ -57,6 +58,16 @@
                (div ([class "main"])
                     (div ([class "versionbox"])
                          (span ([class "versionNoNav"]) ,_))
+                    . ,xs))
+         _ ...))
+     (adjust-scribble-html xs img-uri)]
+    ; HTML produced from #scribble/base
+    [`(html
+       ()
+       (head . ,_)
+       ,(list-no-order
+         `(div ([class "maincolumn"])
+               (div ([class "main"])
                     . ,xs))
          _ ...))
      (adjust-scribble-html xs img-uri)]
