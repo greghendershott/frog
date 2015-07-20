@@ -1,5 +1,5 @@
 #lang setup/infotab
-(define version "0.22")
+(define version "0.23")
 (define collection 'multi)
 (define deps '("base"
                "html-lib"
