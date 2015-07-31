@@ -77,6 +77,7 @@
      '()]))
 
 (define (adjust-scribble-html xs img-uri)
+  (pretty-print xs)
   (for/list ([x (in-list xs)])
     (xexpr-map
      (lambda (x _)
@@ -103,7 +104,7 @@
   (let ([path (make-temporary-file)]
         [s #<<EOF
 #lang scribble/manual
-@title{The Title}
+@title{The Post's Title}
 @section{Section 1}
 Here is some text.
 
@@ -117,7 +118,7 @@ EOF
      (read-scribble-file path
                          #:img-local-path (find-system-path 'temp-dir)
                          #:img-uri-prefix "/")
-     '((h1 () (a ((name "(part._.The_.Title)"))) "The Title")
+     '((h1 () (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title")
       (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
       (p () "Here is some text.")
       (!HTML-COMMENT () "more")

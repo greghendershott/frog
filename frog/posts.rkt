@@ -118,7 +118,7 @@
        . ,more)
      ;; In the meta-data we don't want HTML entities like &ndash; we
      ;; want plain text.
-     (match (string-join (map xexpr->markdown metas))
+     (match (string-join (map xexpr->markdown metas) "")
        [(pregexp "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$"
                  (list _ title date tags))
         (values title date (tag-string->tags tags) more)]
@@ -133,7 +133,16 @@
   (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
   (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
-  (check-exn exn? (thunk (meta-data '((p () "not meta data")) p))))
+  (check-exn exn? (thunk (meta-data '((p () "not meta data")) p)))
+  ;; https://github.com/greghendershott/frog/issues/142
+  (let-values ([(title date tags more)
+                (meta-data '((p
+                              ()
+                              "Title: A Beginner"
+                              rsquo
+                              "s Scribble Post\nDate: 2013-06-19T00:00:00\nTags: Racket, blogging"))
+                           (string->path "/"))])
+    (check-equal? title "A Beginner's Scribble Post")))
 
 (define (tag-string->tags s)
   (~>> (regexp-split #px"," s)
