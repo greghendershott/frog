@@ -77,7 +77,6 @@
      '()]))
 
 (define (adjust-scribble-html xs img-uri)
-  (pretty-print xs)
   (for/list ([x (in-list xs)])
     (xexpr-map
      (lambda (x _)
