@@ -67,13 +67,16 @@ EOF
                                 our-encode)
                             extension))
       (define pathname (build-path (src/posts-path) filename))
-      (when (file-exists? pathname)
-        (raise-user-error 'new-post "~a already exists." pathname))
-      (display-to-file* (format template
-                                title
-                                (date->string d #t)) ;do include time
+      (cond
+        [(file-exists? pathname)
+         (unless (enable-editor?)
+           (raise-user-error 'new-post "~a already exists." pathname))]
+        [else
+         (display-to-file* (format template
+                                   title
+                                   (date->string d #t)) ;do include time
                         pathname
-                        #:exists 'error)
+                        #:exists 'error)])
       (displayln pathname)
       (when (enable-editor?)
         (system (editor-command-string 
