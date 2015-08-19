@@ -26,6 +26,7 @@
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))
 (define current-auto-embed-tweets? (make-parameter #t))
+(define current-embed-tweet-parents? (make-parameter #t))
 (define current-racket-doc-link-code? (make-parameter #t))
 (define current-racket-doc-link-prose? (make-parameter #f))
 (define current-posts-per-page (make-parameter 10))

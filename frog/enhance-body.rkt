@@ -128,7 +128,10 @@
          (define oembed-url
            (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
                              "url=" (uri-encode uri)
-                             "&align=center")))
+                             "&align=center"
+                             (if (current-embed-tweet-parents?)
+                                 ""
+                                 "&hide_thread=true"))))
          (define js (call/input-url oembed-url get-pure-port read-json))
          (define html ('html js))
          (cond [html (~>> (with-input-from-string html read-html-as-xexprs)

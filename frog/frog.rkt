@@ -50,6 +50,7 @@
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [auto-embed-tweets? #t]
+                               [embed-tweet-parents? #t]
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
                                [posts-per-page 10]
@@ -421,6 +422,7 @@
                                [decorate-feed-uris? #t]
                                [feed-image-bugs? #f]
                                [auto-embed-tweets? #t]
+                               [embed-tweet-parents? #t]
                                [racket-doc-link-code? #t]
                                [racket-doc-link-prose? #f]
                                [posts-per-page 2] ;small, for testing
