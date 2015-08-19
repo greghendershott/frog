@@ -261,6 +261,10 @@ feed-image-bugs? = true
 #
 auto-embed-tweets? = true
 
+# When embedding tweets that are replies, show the parent tweet along
+# with the reply?
+embed-tweet-parents? = true
+
 # Try to automatically link symbols in Markdown ```racket fenced code
 # blocks, to Racket documentation?
 racket-doc-link-code? = true
