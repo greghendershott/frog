@@ -5,7 +5,8 @@
 <p><sub><em><a href="http://www.flickr.com/photos/doug88888/4717363945/">Frog image by @Goug8888</a>, used under Creative Commons license <a href="http://creativecommons.org/licenses/by-nc-sa/2.0/">Attribution-NonCommercial-ShareAlike 2.0 Generic</a>.</em></sub></p>
 
 [![Build Status](https://travis-ci.org/greghendershott/frog.png?branch=master)](https://travis-ci.org/greghendershott/frog)
-[![raco pkg install frog](https://img.shields.io/badge/Racket_Package-raco_pkg_install_frog-blue.svg)](http:pkgs.racket-lang.org/#[frog])
+[![raco pkg install frog](https://img.shields.io/badge/raco_pkg_install-frog-aa00ff.svg)](http:pkgs.racket-lang.org/#[frog])
+[![Documentation](https://img.shields.io/badge/read-documentation-blue.svg)](http://pkg-build.racket-lang.org/doc/frog@frog/index.html)
 
 
 # Overview
