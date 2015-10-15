@@ -204,7 +204,7 @@
   ;; Make a list of the post source paths, sorted by post date.
   ;; (This is needed by index pages, which list posts ordered by date.)
   (define sorted-posts-src-paths
-    (map post-src-path (sort (hash-values new-posts)
+    (map post-src-path (sort (filter linked-post? (hash-values new-posts))
                              (negate post-date<=?))))
   ;; Update the `older` and `newer` fields for each post in new-posts.
   ;; These act like pointers in a doubly-linked list, except they are
@@ -302,7 +302,8 @@
     (thunk
      (for-each displayln
                (map full-uri
-                    (append (map post-uri-path (hash-values new-posts))
+                    (append (map post-uri-path (filter linked-post?
+                                                       (hash-values new-posts)))
                             non-post-pages))))))
 
 ;;----------------------------------------------------------------------------
@@ -320,6 +321,9 @@
     (cond [(current-index-newest-first?) (string<=? a b)]
           [else                          (string<=? b a)])))
 
+(define (linked-post? p)
+  (not (member "UNLINKED" (post-tags p))))
+
 ;; Given a (hash/c path? post?) return a (hash/c string? (set/c
 ;; path?)), where the string is a tag. In other words this returns a
 ;; hash that maps a tag to all the posts that are marked with the tag.
@@ -327,9 +331,10 @@
   ((hash/c path? post?) . ->  . (hash/c string? (set/c path?)))
   (define h (make-hash))
   (for ([(path post) (in-hash posts)])
-    (for ([tag (in-list (cons "all" (post-tags post)))])
-      (unless (equal? tag "")
-        (hash-update! h tag (lambda (v) (set-add v path)) (set)))))
+    (unless (linked-post? post)
+      (for ([tag (in-list (cons "all" (post-tags post)))])
+        (unless (equal? tag "")
+          (hash-update! h tag (lambda (v) (set-add v path)) (set))))))
   h)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

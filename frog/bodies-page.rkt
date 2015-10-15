@@ -86,13 +86,15 @@
   ;; Sort alphabetically by tag name. Use association list (can't sort
   ;; a hash).
   (~> (for/list ([(k v) (in-hash (all-tags))]
-                 #:unless (equal? k "all"))
+                 #:unless (member k '("all" "UNLINKED")))
         (cons k v))
       (sort string-ci<=? #:key car)))
 
 (define (tags->xexpr tags)
   `(span ([class "tags"])
-         ,@(add-between (map tag->xexpr tags)
+         ,@(add-between (map tag->xexpr
+                             (filter (λ (x) (not (equal? x "UNLINKED")))
+                                     tags))
                         ", ")))
 
 (define (tag->xexpr s)
