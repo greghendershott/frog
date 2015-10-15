@@ -331,7 +331,7 @@
   ((hash/c path? post?) . ->  . (hash/c string? (set/c path?)))
   (define h (make-hash))
   (for ([(path post) (in-hash posts)])
-    (unless (linked-post? post)
+    (when (linked-post? post)
       (for ([tag (in-list (cons "all" (post-tags post)))])
         (unless (equal? tag "")
           (hash-update! h tag (lambda (v) (set-add v path)) (set))))))
