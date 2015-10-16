@@ -41,7 +41,7 @@ A: Frozen blog.
 
 ## Installing Frog
 
-1. Install [Racket 5.3.5 or newer](http://racket-lang.org/download/).
+1. Install [Racket 6.0 or newer](http://racket-lang.org/download/).
 
     > **TIP:** On OS X you will need to add `/Applications/Racket\
     > 6.1/bin` (or similar) to your OS X `PATH` in order to be able to
@@ -58,21 +58,9 @@ A: Frozen blog.
 
 ## Updating Frog
 
-To update Frog and its dependencies, use the approach appropriate for
-your version of Racket.
-
-### Using Racket 6
+To update Frog and its dependencies:
 
     raco pkg update --update-deps frog
-
-### Using Racket 5.3.5 or 5.3.6
-
-You need to remove Frog then install Frog again. (This is due to `raco
-pkg update` not working when a minimum required version of a package
-is specified.)
-
-    raco pkg remove frog
-    raco pkg install frog
 
 ## Starting a new blog project
 
