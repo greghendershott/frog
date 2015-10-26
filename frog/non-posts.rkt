@@ -12,6 +12,7 @@
          "post-struct.rkt"
          "read-scribble.rkt"
          "stale.rkt"
+         "template.rkt"
          "util.rkt"
          "verbosity.rkt"
          "xexpr2text.rkt")
@@ -21,6 +22,8 @@
 
 (module+ test (require rackunit))
 
+(define non-post-file-px #px"\\.(?:md|markdown|mdt|scrbl)$")
+
 ;; NOTE: Since the user may manually plop HTML files anywhere in
 ;; (www-path), we can't just go around deleting those. Instead, we
 ;; need to iterate sources and delete only HTMLs corresponding to
@@ -29,7 +32,7 @@
   (define (maybe-delete path type v)
     (define-values (_ name __) (split-path path))
     (when (and (eq? type 'file)
-               (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
+               (regexp-match? non-post-file-px path)
                (not (regexp-match? post-file-px (path->string name))))
       (define dest-path (build-path (www-path)
                                     (~> path
@@ -43,9 +46,9 @@
 
 (define (write-non-post-page path type v)
   (let/ec return
-    (define-values (_ name __) (split-path path))
+    (define-values (path-to name __) (split-path path))
     (unless (and (eq? type 'file)
-                 (regexp-match? #px"\\.(?:md|markdown|scrbl)$" path)
+                 (regexp-match? non-post-file-px path)
                  (not (regexp-match? post-file-px (path->string name))))
       (return v))
     (define dest-path (build-path (www-path)
@@ -65,7 +68,11 @@
                                  #:img-local-path img-dest
                                  #:img-uri-prefix (canonicalize-uri
                                                    (abs->rel/www img-dest)))]
-            [_ (parse-markdown path)])
+            [(pregexp "\\.(?:md|markdown)$")
+             (parse-markdown path)]
+            [(pregexp "\\.mdt$")
+             (define text (render-template path-to (path->string name) {}))
+             (parse-markdown text)])
           enhance-body))
     (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
     (~> xs

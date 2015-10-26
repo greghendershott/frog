@@ -43,9 +43,9 @@
 
 (define/contract (read-post path)
   (path? . -> . (or/c post? #f))
-  ;; Read Markdown, Scribble, or HTML(ish) file
+  ;; Read Markdown, Markdown Template, Scribble, or HTML(ish) file
   (let/ec return
-    (define-values (_ name __) (split-path path))
+    (define-values (path-to name __) (split-path path))
     (match-define (pregexp post-file-px (list _ dt nm)) (path->string name))
     (prn1 "Reading ~a" (abs->rel/src path))
     (define xs
@@ -70,7 +70,11 @@
          ;; Footnote prefix is date & name w/o ext
          ;; e.g. "2010-01-02-a-name"
          (define footnote-prefix (~> (str dt "-" nm) string->symbol))
-         (parse-markdown path footnote-prefix)]))
+         (parse-markdown path footnote-prefix)]
+        [(pregexp "\\.mdt$")
+         (define footnote-prefix (~> (str dt "-" nm) string->symbol))
+         (define text (render-template path-to (path->string name) {}))
+         (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
     (define-values (title date tags body) (meta-data xs name))
     (when (member "DRAFT" tags)

@@ -678,6 +678,22 @@ See the [example Scribble post][] and
 > format. To create a new post in Scribble format, use `raco frog -N`
 > (or `--new-scribble`).
 
+
+# Markdown template files (experimental)
+
+Files with a `.mdt` extension are first evalutaed as templates (as
+described above for the various `xxx-template.html` files). The
+resulting text is fed to the markdown parser, as for a `.md` plain
+markdown source.
+
+Such files may be used as the source for both posts and non-post
+pages.
+
+Currently there are no templates variables -- not even when the file
+is being used as the source of a post. The template evaluation occurs
+prior to the extraction of the post meta-data.
+
+
 # Embedding a blog in an existing site
 
 If you want to embed the entire blog in an existing site, one way is

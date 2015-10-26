@@ -437,6 +437,6 @@
                                [output-dir "."])
       ;; (clean)
       (build)
-      ;; (serve #:launch-browser? #t #:watch? #f #:port 3000)
+      (serve #:launch-browser? #t #:watch? #f #:port 3000 #:root "/")
       ;; (watch)
       )))

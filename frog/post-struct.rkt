@@ -18,4 +18,4 @@
               ) #:prefab)
 
 (define post-file-px
-  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|scrbl|html)$")
+  #px"^(\\d{4}-\\d{2}-\\d{2})-(.+?)\\.(?:md|markdown|mdt|scrbl|html)$")
