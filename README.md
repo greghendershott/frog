@@ -681,7 +681,7 @@ See the [example Scribble post][] and
 
 # Markdown template files (experimental)
 
-Files with a `.mdt` extension are first evalutaed as templates (as
+Files with a `.mdt` extension are first evaluated as templates (as
 described above for the various `xxx-template.html` files). The
 resulting text is fed to the markdown parser, as for a `.md` plain
 markdown source.
