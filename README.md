@@ -6,7 +6,6 @@
 
 [![Build Status](https://travis-ci.org/greghendershott/frog.png?branch=master)](https://travis-ci.org/greghendershott/frog)
 [![raco pkg install frog](https://img.shields.io/badge/raco_pkg_install-frog-aa00ff.svg)](http:pkgs.racket-lang.org/#[frog])
-[![Documentation](https://img.shields.io/badge/read-documentation-blue.svg)](http://pkg-build.racket-lang.org/doc/frog@frog/index.html)
 ![MIT License](https://img.shields.io/badge/license-MIT-118811.svg)
 
 
