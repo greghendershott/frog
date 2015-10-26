@@ -1,9 +1,12 @@
+@; It is OK to put things above the meta-data, as long as they evaluate to
+@; blank lines.
+@(define x 42)
     Title: A blog post using markdown template
     Date: 2015-10-26T00:00:00
     Tags: Racket
 
 This file has a `.mdt` extension, meaning it will first be evaluated
-as a template, and tthe resulting text is provided to the markdown
+as a template, and the resulting text is provided to the markdown
 parser.
 
 For example `@"@+[1 1]"` evaluates to @+[1 1].
