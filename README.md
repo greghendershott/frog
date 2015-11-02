@@ -519,6 +519,15 @@ to minimize repetition.
 > you must use `local-require`. Plain `require` won't work because the
 > template is not evaluated at a module level or top level.
 
+> **TIP**: `@"@"` evaluates to a literal `@`. For example if you need
+> to write an email address: `foo@"@"bar.com` becomes `"foo@bar.com"`.
+>
+> Understanding why this works may help you remember it:
+>
+> 1. `@` means "evaluate the following s-expression as Racket code".
+> 2. `"@"` is the Racket code for the string literal `"@"`.
+> 3. Therefore `@"@"` evaluates to the string `"@"`.
+
 # Page template: `_src/page-template.html`
 
 The `_src/page-template.html` template specifies an `<html>` element
@@ -715,7 +724,7 @@ in case you need to control it more specifically.)
 > create an output directory named `~user`: `mkdir \~user` (note the
 > `\~` to allow using `~` in the name). Then follow the steps above,
 > including setting `output-dir = ~user` and `uri-prefix = /~user` in
-> `.frogrc`, and adjusting your `page-template.html` and os on.
+> `.frogrc`, and adjusting your `page-template.html` and so on.
 
 # MathJax
 
