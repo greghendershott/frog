@@ -486,13 +486,13 @@ just post pages) also provides:
 
 # Non-post pages
 
-You can put other `.md` files in `_src`, and in subdirs of it (other
-than `_src/posts`). They will be converted to HTML pages.  For
-example, `_src/About.md` will be `/About.html` in the site.
+You can put `.md`, `.mdt`, and `.scrbl` files in `_src` and its
+subdirs (_except_ `_src/posts`). They will be converted to HTML pages.
+For example, `_src/About.md` will be `/About.html` in the site.
 
 > **NOTE**: Non-post pages are _not_ included in any automatically
-> generated index pages or feeds. You can manually add them to the nav
-> bar by editing that portion of `page-template.html`.
+> generated index pages or feeds. You can manually add links to them
+> in the nav bar by editing that portion of `page-template.html`.
 
 # sitemap.txt
 
