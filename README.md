@@ -36,6 +36,7 @@ A: Frozen blog.
 
 [MIT license](https://github.com/greghendershott/frog/blob/master/frog/LICENSE).
 
+
 # Quick Start
 
 ## Installing Frog
@@ -313,11 +314,13 @@ can copy or rsync the files to your static file server.
 > **TIP**: If you use Emacs, try markdown-mode. Although Markdown is
 > _really_ simple, markdown-mode makes it even more enjoyable.
 
-# More details
+# Posts
 
-## Posts
+You create new posts in `_src/posts`. There are several source formats.
 
-You create new posts in `_src/posts`. They should be named
+## Markdown source files
+
+Post source files in markdown format should be named
 `YYYY-MM-DD-TITLE.md` and need to have some meta-data in the first few
 lines.
 
@@ -353,235 +356,21 @@ feeds. A "Continue reading..." link is provided instead.
 > The tag `DRAFT` (all uppercase) causes the post `.html` file _not_
 > to be generated.
 
-### Automatic post features
 
-Posts are automatically included in various index pages and feeds.
+### Markdown template files (experimental)
 
-Posts with _any_ tag go on the home page `/index.html`, in an Atom feed
-`/feeds/all.atom.xml`, and in an RSS feed `/feeds/all.rss.xml`.
+Files with a `.mdt` extension are first evaluated as
+[templates](#templates). The resulting text is fed to the markdown
+parser, as for a `.md` plain markdown source.
 
-Posts for each tag go on an index page `/tags/<tag>.html`, in an Atom
-feed `/feeds/<tag>.atom.xml`, and in an RSS feed
-`/feeds/<tag>.rss.xml`.
+Such files may be used as the source for both posts and non-post
+pages.
 
-The default template `post-template.html` provides:
+There are no template variables -- not even when the file
+is being used as the source of a post. The template evaluation occurs
+prior to the extraction of the post meta-data.
 
-- Twitter and Google+ sharing buttons.
-- Disqus comments.
-
-The default template `page-template.html` (used for _all_ pages, not
-just post pages) also provides:
-
-- Twitter follow button.
-- Google Analytics tracking.
-
-## Non-post pages
-
-You can put other `.md` files in `_src`, and in subdirs of it (other
-than `_src/posts`). They will be converted to HTML pages.  For
-example, `_src/About.md` will be `/About.html` in the site.
-
-> **NOTE**: Non-post pages are _not_ included in any automatically
-> generated index pages or feeds. You can manually add them to the nav
-> bar by editing that portion of `page-template.html`.
-
-## sitemap.txt
-
-A `/sitemap.txt` file (for web crawlers) is automatically generated
-and includes all post and non-post pages. (It does _not_ include index
-pages for tags.)
-
-## Templates
-
-Frog uses the Racket
-[`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
-system based on `scribble/text` `@`-expressions. This means that the
-files are basically normal HTML format, with the ability to use `@` to
-reference a template variable --- or indeed to "escape" to arbitrary
-Racket code.
-
-In contrast to most templating systems, you have a full programming
-language available -- Racket -- should you need it. However most of
-what you need to do will probably be very simple, such as the
-occasional `if` or `when` test, or perhaps defining a helper function
-to minimize repetition.
-
-> **NOTE**: If you need to require another module in your template,
-> you must use `local-require`. Plain `require` won't work because the
-> template is not evaluated at a module level or top level.
-
-### Page template: `_src/page-template.html`
-
-The `_src/page-template.html` template specifies an `<html>` element
-used by Frog to generate every page on your site.
-
-Anything in the file that looks like `@variable` or `@|variable|` is a
-template variable supplied by Frog.  Most of these should be
-self-explanatory from their name and from seeing how they are used in
-the default template. Specifically:
-
-- `contents`: The contents of the page.
-- `title`: The title of the page (for `<title>`)
-- `description`: The description of the page (for `<meta>` content element)
-- `keywords`: The keywords for the page (for `<meta>` keywords element)
-- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
-- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
-- `atom-feed-uri`: The full URI to the Atom feed
-- `rss-feed-uri`: The full URI to the RSS feed
-- `tag`: If this an index page, `tag` is the name of the index (such
-  as "All Posts") or ("Posts tagged foo"), else `tag` is `#f`.
-- `tags-list-items`: HTML with a `<li>` for every tag on the blog, suitable for putting in a `<ul>`. Each `<li>` has a link to that tag's index page.
-- `tags/feeds`: HTML that has, for each tag, a link to its index page
-  and a link to its Atom feed.
-- `rel-prev`: `@(when rel-prev @list{<link rel="next" href="@|rel-next|">})`
-- `rel-next`: `@(when rel-next @list{<link rel="prev" href="@|rel-prev|">})`
-
-### Post template: `_src/post-template.html`
-
-The `_src/post-template.html` template determines how blog posts are
-laid out on pages that are dedicated to one post. The default template
-defines an `<article>` element.
-
-For pages that are blog posts, the result of `post-template.html`
-becomes most of the `@|contents|` variable in `page-template.html`. In
-other words, the post template is effectively nested in the page
-template. (They are two separate templates so that the page template
-can also be used for pages that are not blog post pages.)
-
-    +---------------------------+
-    | page-template             |
-    |                           |
-    |       +---------------+   |
-    |       | post-template |   |
-    |       +---------------+   |
-    |                           |
-    +---------------------------+
-
-> **NOTE**: This template does _not_ control how a blog post is laid
-> out on an index page like `/index.html` or
-> `/tags/<some-tag>.html`. For that, see `_src/index-template.rkt`.
->
-> The main purpose of this template is to specify things like Disqus
-> comments, Tweet and +1 sharing buttons, and older/newer links ---
-> things that only make sense in the context of pages dedicated to one
-> blog post.
-
-Anything in the file that looks like `@variable` or `@|variable|` is a
-template variable supplied by Frog.  Most of these should be
-self-explanatory from their name and from seeing how they are used in
-the default template. Specifically:
-
-- `title`: The title of the post
-- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
-- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
-- `date-8601`: The post date as a string, "YYYY-MM-DD".
-- `date-struct`: The post date as a `racket/date` `date` struct.
-- `date`: HTML to show the date of the post in a `<time>` element.
-- `tags`: HTML to show the tags of the post as links.
-- `date+tags`: HTML to show the date and tags of the post.
-- `content`: The content of the post
-- `older-uri`: The URI of the next older post, if any, or `#f`
-- `older-title`: The title of the next older post, if any, or `#f`
-- `newer-uri`: The URI of the next newer post, if any, or `#f`
-- `newer-title`: The title of the next newer post, if any, or `#f`
-
-### Index template: `_src/index-template.html`
-
-The `_src/index-template.html` template determines how blog posts are
-laid out on index pages.
-
-Typically it would be similar to your `_src/post-template.rkt`, but
-without some "footer" items like comments or previous/next post
-buttons.
-
-    +----------------------------+
-    | page-template              |
-    |                            |
-    |       +----------------+   |
-    |       | index-template |   |
-    |       +----------------+   |
-    |                            |
-    |       +----------------+   |
-    |       | index-template |   |
-    |       +----------------+   |
-    |                            |
-    |       +----------------+   |
-    |       | index-template |   |
-    |       +----------------+   |
-    |              . . .         |
-    |                            |
-    +----------------------------+
-
-Anything in the file that looks like `@variable` or `@|variable|` is a
-template variable supplied by Frog.  Most of these should be
-self-explanatory from their name and from seeing how they are used in
-the default template. Specifically:
-
-- `title`: The title of the post
-- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
-- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
-- `date-8601`: The post date as a string, "YYYY-MM-DD".
-- `date-struct`: The post date as a `racket/date` `date` struct.
-- `date`: HTML to show the date of the post in a `<time>` element.
-- `tags`: HTML to show the tags of the post as links.
-- `date+tags`: HTML to show the date and tags of the post.
-- `content`: The content of the post plus a "More.." link when needed.
-- `content-only`: The content of the post, only.
-- `more?`: Is the content just a blurb?
-
-### Template Example
-
-Let's say you want to customize the date display format of your posts.
-Instead of the default ISO-8601 YYYY-MM-DD format, you want it to be
-the default of the `date->string` function from the `racket/date`
-module. Here is what you could do in your `index-template.rkt`:
-
-```html
-@(local-require racket/date)
-<article>
-  <header>
-    <h2><a href='@|uri-path|'>@|title|</a></h2>
-    <p class='date-and-tags'>
-      <time datetime='@|date-8601|' pubdate='true'>
-        @(date->string date-struct)
-      </time>
-      :: @|tags|</p>
-  </header>
-  @|content|
-</article>
-```
-
-> **NOTE**: If you need to require another module in your template,
-> you must use `local-require`. Plain `require` won't work because the
-> template is not evaluated at a module level or top level.
-
-### Widgets
-
-In addition to the variables described above for each template, some
-predefined functions are available for templates to use: "widgets".
-
-Anything a widget can do, you could code directly in the
-template. There's no magic. But widgets minimize clutter in the
-templates. Plus they make clearer what are the user-specific
-parameters (as opposed to putting stuff like `<!-- CHANGE THIS! -->`
-in the template).
-
-For example, `@google-universal-analytics["UA-xxxxx"]` returns
-text for a `<script>` element to insert Google Analytics tracking
-code. You supply it the two user-specific pieces of information, which
-it plugs into the boilerplate and returns.
-
-Likewise there are widgets for things like Twitter and Google+ share
-buttons, Twitter follow button, Disqus comments, older/newer post
-links.
-
-See [`widgets.rkt`][] for the complete list. See the
-[example page template][] and [example post template][] for usage
-examples.
-
-> **NOTE**: If you'd like to add a widget, pull requests are welcome!
-
-## Code blocks
+### Code blocks in markdown files
 
 Frog optionally uses [Pygments][] to do syntax highlighting. When
 using fenced code blocks, you can specify a language (as on
@@ -657,42 +446,249 @@ pre {
 }
 ```
 
-> **NOTE**: I have a soft spot for [Pygments][] because it's actually
-> the first existing open source project to which I contributed. I added
-> a lexer for the [Racket][] language. More importantly it has lexers
-> for tons of languages and is used by things like GitHub (via
-> [pygments.rb][]), BitBucket, and so on. Plus, it fits the spirit of
-> static web site generation better than JavaScript options like
-> [SyntaxHighlighter][].
+> **NOTE**: [Pygments][] has lexers for many, many languages. Plus, it
+> fits the spirit of static web site generation better than JavaScript
+> options like [SyntaxHighlighter][].
 
+## Scribble source files
 
-# Scribble source files
+Post source files in [Scribble][] format should be named
+`YYYY-MM-DD-TITLE.scrbl` and need to have some meta-data in the first
+few lines.
 
-Sources for posts (and for non-post pages) may also be [Scribble][]
-`.srcbl` files.
+You can do `raco frog -N "My Title"` to create such a file
+easily. This will also fill in the required meta-data section.
 
 See the [example Scribble post][] and
 [example Scribble non-post page][] for more information.
 
-> **TIP**: `raco frog -n` (or `--new`) creates a new post in markdown
-> format. To create a new post in Scribble format, use `raco frog -N`
-> (or `--new-scribble`).
+## Automatic post features
 
+Posts are automatically included in various index pages and feeds.
 
-# Markdown template files (experimental)
+Posts with _any_ tag go on the home page `/index.html`, in an Atom feed
+`/feeds/all.atom.xml`, and in an RSS feed `/feeds/all.rss.xml`.
 
-Files with a `.mdt` extension are first evaluated as templates (as
-described above for the various `xxx-template.html` files). The
-resulting text is fed to the markdown parser, as for a `.md` plain
-markdown source.
+Posts for each tag go on an index page `/tags/<tag>.html`, in an Atom
+feed `/feeds/<tag>.atom.xml`, and in an RSS feed
+`/feeds/<tag>.rss.xml`.
 
-Such files may be used as the source for both posts and non-post
-pages.
+The default template `post-template.html` provides:
 
-Currently there are no templates variables -- not even when the file
-is being used as the source of a post. The template evaluation occurs
-prior to the extraction of the post meta-data.
+- Twitter and Google+ sharing buttons.
+- Disqus comments.
 
+The default template `page-template.html` (used for _all_ pages, not
+just post pages) also provides:
+
+- Twitter follow button.
+- Google Analytics tracking.
+
+# Non-post pages
+
+You can put other `.md` files in `_src`, and in subdirs of it (other
+than `_src/posts`). They will be converted to HTML pages.  For
+example, `_src/About.md` will be `/About.html` in the site.
+
+> **NOTE**: Non-post pages are _not_ included in any automatically
+> generated index pages or feeds. You can manually add them to the nav
+> bar by editing that portion of `page-template.html`.
+
+# sitemap.txt
+
+A `/sitemap.txt` file (for web crawlers) is automatically generated
+and includes all post and non-post pages. (It does _not_ include index
+pages for tags.)
+
+# Templates
+
+Frog uses the Racket
+[`web-server/templates`](http://docs.racket-lang.org/web-server/templates.html)
+system based on `scribble/text` `@`-expressions. This means that the
+files are basically normal HTML format, with the ability to use `@` to
+reference a template variable --- or indeed to "escape" to arbitrary
+Racket code.
+
+In contrast to most templating systems, you have a full programming
+language available -- Racket -- should you need it. However most of
+what you need to do will probably be very simple, such as the
+occasional `if` or `when` test, or perhaps defining a helper function
+to minimize repetition.
+
+> **NOTE**: If you need to require another module in your template,
+> you must use `local-require`. Plain `require` won't work because the
+> template is not evaluated at a module level or top level.
+
+# Page template: `_src/page-template.html`
+
+The `_src/page-template.html` template specifies an `<html>` element
+used by Frog to generate every page on your site.
+
+Anything in the file that looks like `@variable` or `@|variable|` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template. Specifically:
+
+- `contents`: The contents of the page.
+- `title`: The title of the page (for `<title>`)
+- `description`: The description of the page (for `<meta>` content element)
+- `keywords`: The keywords for the page (for `<meta>` keywords element)
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `atom-feed-uri`: The full URI to the Atom feed
+- `rss-feed-uri`: The full URI to the RSS feed
+- `tag`: If this an index page, `tag` is the name of the index (such
+  as "All Posts") or ("Posts tagged foo"), else `tag` is `#f`.
+- `tags-list-items`: HTML with a `<li>` for every tag on the blog, suitable for putting in a `<ul>`. Each `<li>` has a link to that tag's index page.
+- `tags/feeds`: HTML that has, for each tag, a link to its index page
+  and a link to its Atom feed.
+- `rel-prev`: `@(when rel-prev @list{<link rel="next" href="@|rel-next|">})`
+- `rel-next`: `@(when rel-next @list{<link rel="prev" href="@|rel-prev|">})`
+
+## Post template: `_src/post-template.html`
+
+The `_src/post-template.html` template determines how blog posts are
+laid out on pages that are dedicated to one post. The default template
+defines an `<article>` element.
+
+For pages that are blog posts, the result of `post-template.html`
+becomes most of the `@|contents|` variable in `page-template.html`. In
+other words, the post template is effectively nested in the page
+template. (They are two separate templates so that the page template
+can also be used for pages that are not blog post pages.)
+
+    +---------------------------+
+    | page-template             |
+    |                           |
+    |       +---------------+   |
+    |       | post-template |   |
+    |       +---------------+   |
+    |                           |
+    +---------------------------+
+
+> **NOTE**: This template does _not_ control how a blog post is laid
+> out on an index page like `/index.html` or
+> `/tags/<some-tag>.html`. For that, see `_src/index-template.rkt`.
+>
+> The main purpose of this template is to specify things like Disqus
+> comments, Tweet and +1 sharing buttons, and older/newer links ---
+> things that only make sense in the context of pages dedicated to one
+> blog post.
+
+Anything in the file that looks like `@variable` or `@|variable|` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template. Specifically:
+
+- `title`: The title of the post
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `date-8601`: The post date as a string, "YYYY-MM-DD".
+- `date-struct`: The post date as a `racket/date` `date` struct.
+- `date`: HTML to show the date of the post in a `<time>` element.
+- `tags`: HTML to show the tags of the post as links.
+- `date+tags`: HTML to show the date and tags of the post.
+- `content`: The content of the post
+- `older-uri`: The URI of the next older post, if any, or `#f`
+- `older-title`: The title of the next older post, if any, or `#f`
+- `newer-uri`: The URI of the next newer post, if any, or `#f`
+- `newer-title`: The title of the next newer post, if any, or `#f`
+
+## Index template: `_src/index-template.html`
+
+The `_src/index-template.html` template determines how blog posts are
+laid out on index pages.
+
+Typically it would be similar to your `_src/post-template.rkt`, but
+without some "footer" items like comments or previous/next post
+buttons.
+
+    +----------------------------+
+    | page-template              |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |                            |
+    |       +----------------+   |
+    |       | index-template |   |
+    |       +----------------+   |
+    |              . . .         |
+    |                            |
+    +----------------------------+
+
+Anything in the file that looks like `@variable` or `@|variable|` is a
+template variable supplied by Frog.  Most of these should be
+self-explanatory from their name and from seeing how they are used in
+the default template. Specifically:
+
+- `title`: The title of the post
+- `uri-path`: The path portion of the URI, e.g. `/path/to/file.html`
+- `full-uri`: The full URI, e.g. `http://example.com/path/to/file.html`
+- `date-8601`: The post date as a string, "YYYY-MM-DD".
+- `date-struct`: The post date as a `racket/date` `date` struct.
+- `date`: HTML to show the date of the post in a `<time>` element.
+- `tags`: HTML to show the tags of the post as links.
+- `date+tags`: HTML to show the date and tags of the post.
+- `content`: The content of the post plus a "More.." link when needed.
+- `content-only`: The content of the post, only.
+- `more?`: Is the content just a blurb?
+
+## Template Example
+
+Let's say you want to customize the date display format of your posts.
+Instead of the default ISO-8601 YYYY-MM-DD format, you want it to be
+the default of the `date->string` function from the `racket/date`
+module. Here is what you could do in your `index-template.rkt`:
+
+```html
+@(local-require racket/date)
+<article>
+  <header>
+    <h2><a href='@|uri-path|'>@|title|</a></h2>
+    <p class='date-and-tags'>
+      <time datetime='@|date-8601|' pubdate='true'>
+        @(date->string date-struct)
+      </time>
+      :: @|tags|</p>
+  </header>
+  @|content|
+</article>
+```
+
+> **NOTE**: If you need to require another module in your template,
+> you must use `local-require`. Plain `require` won't work because the
+> template is not evaluated at a module level or top level.
+
+## Widgets
+
+In addition to the variables described above for each template, some
+predefined functions are available for templates to use: "widgets".
+
+Anything a widget can do, you could code directly in the
+template. There's no magic. But widgets minimize clutter in the
+templates. Plus they make clearer what are the user-specific
+parameters (as opposed to putting stuff like `<!-- CHANGE THIS! -->`
+in the template).
+
+For example, `@google-universal-analytics["UA-xxxxx"]` returns
+text for a `<script>` element to insert Google Analytics tracking
+code. You supply it the two user-specific pieces of information, which
+it plugs into the boilerplate and returns.
+
+Likewise there are widgets for things like Twitter and Google+ share
+buttons, Twitter follow button, Disqus comments, older/newer post
+links.
+
+See [`widgets.rkt`][] for the complete list. See the
+[example page template][] and [example post template][] for usage
+examples.
+
+> **NOTE**: If you'd like to add a widget, pull requests are welcome!
 
 # Embedding a blog in an existing site
 
@@ -733,6 +729,7 @@ To use MathJax:
    and `\\[ some math \\]` for display. (Note the _double_
    backslashes, `\\`, because in markdown `\` already has a meaning.)
 
+
 # Bug reports? Feature requests?
 
 Please use [GitHub Issues][].
@@ -745,7 +742,6 @@ Please use [GitHub Issues][].
 [Bootstrap]: http://getbootstrap.com/
 [responsive]: https://en.wikipedia.org/wiki/Responsive_web_design
 [Pygments]: http://pygments.org/
-[pygments.rb]: https://github.com/tmm1/pygments.rb
 [SyntaxHighlighter]: http://alexgorbatchev.com/SyntaxHighlighter/
 [GitHub Pages]: https://help.github.com/articles/user-organization-and-project-pages
 [GitHub Issues]: https://github.com/greghendershott/frog/issues
