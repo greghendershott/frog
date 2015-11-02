@@ -744,7 +744,6 @@ To use MathJax:
 Please use [GitHub Issues][].
 
 
-[my blog]: http://www.greghendershott.com
 [Racket]: http://www.racket-lang.org
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
 [Scribble]: http://docs.racket-lang.org/scribble/index.html
