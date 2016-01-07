@@ -26,6 +26,7 @@
          "util.rkt"
          "verbosity.rkt"
          "watch-dir.rkt")
+(provide serve)
 
 (module+ main
   (require racket/cmdline
@@ -127,6 +128,7 @@
          "Run a local web server.")
         (serve #:launch-browser? #f
                #:watch? watch?
+               #:watch-callback watch-callback
                #:port port
                #:root root)]
        [("-p" "--preview")
@@ -134,6 +136,7 @@
          "Run a local web server and start your browser on blog home page.")
         (serve #:launch-browser? #t
                #:watch? watch?
+               #:watch-callback watch-callback
                #:port port
                #:root root)]
        #:once-any
@@ -347,20 +350,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (watch-callback path what)
+  (match (path->string path)
+    ;; Output file
+    [(pregexp "\\.(?:html|xml|txt)") (void)]
+    ;; Source file
+    [_ (build)
+       (displayln #"\007")])) ;beep (hopefully)
+
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
+               #:watch-callback [watch-callback #f]
                #:port port
                #:root root)
   (define watcher-thread
-    (cond [watch? (watch-directory (build-path (src-path))
+    (cond [(and watch? (not watch-callback)) (error 'frog "No watch callback given")]
+          [watch? (watch-directory (build-path (src-path))
                      '(file)
-                     (lambda (path what)
-                       (match (path->string path)
-                         ;; Output file
-                         [(pregexp "\\.(?:html|xml|txt)") (void)]
-                         ;; Source file
-                         [_ (build)
-                            (displayln #"\007")])) ;beep (hopefully)
+                     watch-callback
                      #:rate 5)]
           [else (thread (thunk (sync never-evt)))]))
   (when launch-browser?
