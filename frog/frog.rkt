@@ -129,6 +129,7 @@
         (serve #:launch-browser? #f
                #:watch? watch?
                #:watch-callback watch-callback
+               #:watch-path (src-path)
                #:port port
                #:root root)]
        [("-p" "--preview")
@@ -137,6 +138,7 @@
         (serve #:launch-browser? #t
                #:watch? watch?
                #:watch-callback watch-callback
+               #:watch-path (src-path)
                #:port port
                #:root root)]
        #:once-any
@@ -361,11 +363,12 @@
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
                #:watch-callback [watch-callback #f]
+               #:watch-path [watch-path #f]
                #:port port
                #:root root)
   (define watcher-thread
-    (cond [(and watch? (not watch-callback)) (error 'frog "No watch callback given")]
-          [watch? (watch-directory (build-path (src-path))
+    (cond [(and watch? (not (and watch-path watch-callback))) (error 'frog "No watch callback given")]
+          [watch? (watch-directory (build-path watch-path)
                      '(file)
                      watch-callback
                      #:rate 5)]
