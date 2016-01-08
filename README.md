@@ -738,6 +738,12 @@ To use MathJax:
    and `\\[ some math \\]` for display. (Note the _double_
    backslashes, `\\`, because in markdown `\` already has a meaning.)
 
+# The serve function
+
+If you wish to create your own static website, you can still take advantage
+of continuous building when files change.
+Place `(require frog)` in your module, and use the `serve` function
+(found in `frog/frog.rkt`) to continuously build your website.
 
 # Bug reports? Feature requests?
 
