@@ -367,11 +367,12 @@
                #:port port
                #:root root)
   (define watcher-thread
-    (cond [(and watch? (not (and watch-path watch-callback))) (error 'frog "No watch callback given")]
-          [watch? (watch-directory (build-path watch-path)
-                     '(file)
-                     watch-callback
-                     #:rate 5)]
+    (cond [watch? (unless (and watch-path watch-callback)
+                    (error 'frog "No watch callback given"))
+                  (watch-directory (build-path watch-path)
+                                   '(file)
+                                   watch-callback
+                                   #:rate 5)]
           [else (thread (thunk (sync never-evt)))]))
   (when launch-browser?
     (ensure-external-browser-preference))
