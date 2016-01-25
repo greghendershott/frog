@@ -2,6 +2,9 @@
 
 (provide stale?)
 
+(module+ test
+  (require rackunit))
+
 ;; (path? path? ... -> boolean?)
 (define (stale? target . deps)
   (or (not (file-exists? target))

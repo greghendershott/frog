@@ -24,6 +24,12 @@
          racket/function
          web-server/templates)
 
+(provide render-template)
+
+;; Not a submodule. Avoid running the module at all.
+(module test racket/base
+  (require rackunit))
+
 ;; The modules needed by the template. Note that these must
 ;; be required above normally in this template.rkt module.
 (define mods '(racket
@@ -60,5 +66,3 @@
                      (list k v)))
              (include-template ,filename))
           (current-namespace))))
-
-(provide render-template)

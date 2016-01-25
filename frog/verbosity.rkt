@@ -4,6 +4,9 @@
 
 (provide current-verbosity prn0 prn1 prn2)
 
+(module+ test
+  (require rackunit))
+
 ;; Note: This may be set to -1 for silent mode.
 (define current-verbosity (make-parameter 0))
 

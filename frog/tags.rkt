@@ -20,6 +20,9 @@
 
 (provide (all-defined-out))
 
+(module+ test
+  (require rackunit))
+
 ;; Each tag has index page(s) and feed files.
 ;;
 ;; Includes the special tag "all", meaning all posts.

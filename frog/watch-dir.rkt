@@ -11,6 +11,9 @@
          checksum-path
          checksum-item)
 
+(module+ test
+  (require rackunit))
+
 ;; This is a poor person's version of OS-specific mechanisms like
 ;; FindFirstFileChangeNotification on Windows and fsevents on OS X.
 ;; Instead this does a checksum of a path's contents, running a thread
@@ -35,7 +38,7 @@
                                   types
                                   on-change
                                   #:rate [rate 3])
-  ((path? 
+  ((path?
     (listof (or/c 'file 'dir 'link))
     (path? (or/c 'create 'delete 'modify) . -> . any))
    (#:rate (and/c positive? number?))

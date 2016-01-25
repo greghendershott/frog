@@ -10,6 +10,9 @@
 
 (provide (all-defined-out))
 
+(module+ test
+  (require rackunit))
+
 (define (clean-serialized-posts)
   (define (maybe-delete path type v)
     (when (eq? type 'file)

@@ -3,6 +3,9 @@
 (provide (struct-out post)
          post-file-px)
 
+(module+ test
+  (require rackunit))
+
 (struct post (title      ;string?
               src-path   ;path? - full pathname of source file
               modified   ;exact-integer? time blurb/body were updated

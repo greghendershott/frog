@@ -35,6 +35,9 @@
 
 (provide parameterize-from-config)
 
+(module+ test
+  (require rackunit))
+
 (define-syntax (parameterize-from-config stx)
   (syntax-parse stx
     [(_ cfg-path:expr ([name:id default:expr] ...)

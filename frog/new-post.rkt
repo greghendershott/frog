@@ -11,6 +11,9 @@
 (provide new-post
          enable-editor?)
 
+(module+ test
+  (require rackunit))
+
 (define new-markdown-post-template
 #<<EOF
     Title: ~a

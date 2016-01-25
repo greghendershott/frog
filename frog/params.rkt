@@ -4,6 +4,9 @@
 
 (provide (all-defined-out))
 
+(module+ test
+  (require rackunit))
+
 ;; Parameters loaded from configuration file
 
 (define current-scheme/host (make-parameter #f))

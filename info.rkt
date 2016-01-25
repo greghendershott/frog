@@ -13,3 +13,4 @@
                "web-server-lib"))
 (define build-deps '("at-exp-lib"
                      "rackunit-lib"))
+(define test-omit-paths '("example/"))

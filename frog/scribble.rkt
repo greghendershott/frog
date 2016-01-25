@@ -4,6 +4,11 @@
          (only-in scribble/manual para)
          (only-in scribble/html-properties attributes alt-tag))
 
+(provide pygment-code)
+
+(module+ test
+  (require rackunit))
+
 ;; For use in Scribble source file. Lets you create a <pre> block with
 ;; a language tag that can be syntax highlighted by Pygments.
 ;;
@@ -16,5 +21,3 @@
                        (list (attributes `([class . ,lang]))
                              (alt-tag "pre")))
         xs))
-
-(provide pygment-code)

@@ -6,6 +6,9 @@
 
 (provide (all-defined-out))
 
+(module+ test
+  (require rackunit))
+
 ;; Functions provided by this module are made available by
 ;; `render-template` to templates like `page-template.html` and
 ;; `post-template.html`. You could describe functions here as

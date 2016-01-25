@@ -27,6 +27,9 @@
          date+tags->xexpr
          date->xexpr)
 
+(module+ test
+  (require rackunit))
+
 ;; All tags, and the source file pathnames of the posts using them.
 ;; (hash/c string? (listof path?))
 (define all-tags (make-parameter (make-hash)))

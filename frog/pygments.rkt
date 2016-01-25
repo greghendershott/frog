@@ -13,6 +13,9 @@
 
 (provide pygmentize)
 
+(module+ test
+  (require rackunit))
+
 ;; Process that runs Python with our pipe.py script.
 
 (define-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)

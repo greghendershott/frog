@@ -28,6 +28,9 @@
          "watch-dir.rkt")
 (provide serve)
 
+(module+ test
+  (require rackunit))
+
 (module+ main
   (require racket/cmdline
            "new-post.rkt")
