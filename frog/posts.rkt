@@ -106,6 +106,26 @@
           more?
           (~> body enhance-body xexprs->string))))
 
+(define (read-meta-data-line input)
+  (match input
+         [(pregexp
+           (string-join (list
+                         "^\\s*([^:]+)\\s*"; key (space-trimmed)
+                         ":\\s*([^\n]+)\\s*"; value (space-rimmed)
+                         "(?:\n(.*))?$"; rest (optional)
+                         ) "")
+           (list _ key val rest))
+          (cons (cons key val) rest)]
+         [_ #f]))
+
+(define (read-meta-data-acc acc input)
+  (match (read-meta-data-line input)
+    [(cons binding rest)
+     (read-meta-data-acc (cons binding acc) rest)]
+    [#f (values (reverse acc) input)]))
+
+(define (read-meta-data input) (read-meta-data-acc '() input))
+
 ;; (listof xexpr?) path? -> (values string? string? string? (listof xexpr?))
 (define (meta-data xs path)
   (define (err x)
@@ -120,20 +140,34 @@
             `(pre . ,metas)              ;Markdown
             `(p () . ,metas))            ;Scribble
        . ,more)
-     ;; In the meta-data we don't want HTML entities like &ndash; we
-     ;; want plain text.
-     (match (string-join (map xexpr->markdown metas) "")
-       [(pregexp "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$"
-                 (list _ title date tags))
-        (values title date (tag-string->tags tags) more)]
-       [_ (err (first xs))])]
-    [(cons x _) (err x)]
-    [_ (err "")]))
+     (let ([input
+            ;; In the meta-data we don't want HTML entities like &ndash; we
+            ;; want plain text.
+            (string-join (map xexpr->markdown metas) "")])
+       (let-values ([(header more) (read-meta-data input)])
+         (match (for/list
+                 ([key (list "Title" "Date" "Tags")])
+                 (match (assoc key header)
+                   [(cons _ v) v]
+                   [#f (raise-user-error
+                        'error
+                        "Metadata of ~a: mandatory field ~v is missing"
+                        path key)]))
+                [(list title date tags)
+                 (values title date (tag-string->tags tags) more)])))]
+    [_ (raise-user-error
+        'error
+        "Unable to find metadata for ~a:~a"
+        path
+        (if (empty? xs)
+            "file is empty"
+            (format "found ~a instead" (car xs))))]))
 
 (module+ test
   (define p (string->path "/"))
   (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
   (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
+  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nAuthor: Foo Bar\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
   (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
