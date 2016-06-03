@@ -144,7 +144,7 @@
             ;; In the meta-data we don't want HTML entities like &ndash; we
             ;; want plain text.
             (string-join (map xexpr->markdown metas) "")])
-       (let-values ([(header more) (read-meta-data input)])
+       (let-values ([(header rest) (read-meta-data input)])
          (match (for/list
                  ([key (list "Title" "Date" "Tags")])
                  (match (assoc key header)
