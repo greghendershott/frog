@@ -351,7 +351,10 @@ feeds. A "Continue reading..." link is provided instead.
 
 `Date` must be an ISO-8601 datetime string: `yyyy-mm-ddThr:mn:sc`.
 
-`Tags` are optional (although you have to include the `Tags:` part).
+`Tags` are optional.
+
+`Authors` are also optional for multi-author blogs, and work similarly
+to tags.
 
 > The tag `DRAFT` (all uppercase) causes the post `.html` file _not_
 > to be generated.
