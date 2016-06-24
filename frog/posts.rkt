@@ -148,10 +148,11 @@
        (let-values ([(header rest) (read-meta-data input)])
          (match (for/list
                  ([key (list "Title" "Authors" "Date" "Tags")])
-                 (match (assoc key header)
+                 (match (or (assoc key header) key)
                    [(cons _ v) v]
-                   [#f #:when (equal? key "Authors") #f]
-                   [#f (raise-user-error
+                   ["Authors" ""]
+                   ["Tags" ""]
+                   [_ (raise-user-error
                         'error
                         "Metadata of ~a: mandatory field ~v is missing"
                         path key)]))
