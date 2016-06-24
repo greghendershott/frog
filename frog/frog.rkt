@@ -8,7 +8,6 @@
          racket/path ;moved to racket/base only as of Racket 6
          racket/runtime-path
          racket/set
-         racket/hash
          rackjure/threading
          web-server/dispatchers/dispatch
          web-server/servlet-env
@@ -207,14 +206,23 @@
   (define new-posts
     (fold-files* on-file (make-hash) (src/posts-path) #f))
   ;; Make hashes of tags -> posts, old and new.
-  (define old-tags (let ([ht (posts->tags/authors old-posts)])
-                     (hash-union! ht (posts->tags/authors old-posts #:type 'authors)
-                                  #:combine (λ (a b) a))
-                     ht))
-  (define new-tags (let ([ht (posts->tags/authors new-posts)])
-                     (hash-union! ht (posts->tags/authors new-posts #:type 'authors)
-                                  #:combine (λ (a b) a))
-                     ht))
+  (define (merge-tags a b)
+    (define ret (make-hash))
+    (for* ([(k v) (in-hash a)]
+           [(k* v*) (in-hash b)]
+           #:when (equal? k k*))
+      (hash-set! ret k v))
+    (for ([(k v) (in-hash a)]
+          #:unless (hash-has-key? b k))
+      (hash-set! ret k v))
+    (for ([(k v) (in-hash b)]
+          #:unless (hash-has-key? a k))
+      (hash-set! ret k v))
+    ret)
+  (define old-tags (merge-tags (posts->tags/authors old-posts)
+                               (posts->tags/authors old-posts #:type 'authors)))
+  (define new-tags (merge-tags (posts->tags/authors new-posts)
+                               (posts->tags/authors new-posts #:type 'authors)))
   (all-tags new-tags)
   ;; Make a list of the post source paths, sorted by post date.
   ;; (This is needed by index pages, which list posts ordered by date.)
