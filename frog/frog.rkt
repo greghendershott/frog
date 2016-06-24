@@ -8,6 +8,7 @@
          racket/path ;moved to racket/base only as of Racket 6
          racket/runtime-path
          racket/set
+         racket/hash
          rackjure/threading
          web-server/dispatchers/dispatch
          web-server/servlet-env
@@ -206,8 +207,14 @@
   (define new-posts
     (fold-files* on-file (make-hash) (src/posts-path) #f))
   ;; Make hashes of tags -> posts, old and new.
-  (define old-tags (posts->tags old-posts))
-  (define new-tags (posts->tags new-posts))
+  (define old-tags (let ([ht (posts->tags/authors old-posts)])
+                     (hash-union! ht (posts->tags/authors old-posts #:type 'authors)
+                                  #:combine (λ (a b) a))
+                     ht))
+  (define new-tags (let ([ht (posts->tags/authors new-posts)])
+                     (hash-union! ht (posts->tags/authors new-posts #:type 'authors)
+                                  #:combine (λ (a b) a))
+                     ht))
   (all-tags new-tags)
   ;; Make a list of the post source paths, sorted by post date.
   ;; (This is needed by index pages, which list posts ordered by date.)
@@ -284,7 +291,8 @@
       (not (equal? post (hash-ref old-posts (post-src-path post) #f)))))
   (define (post-has-tag? tag post)
     (or (equal? tag "all")
-        (member tag (post-tags post))))
+        (member tag (post-tags post))
+        (member tag (post-authors post))))
   (for ([(tag paths) (in-hash new-tags)])
     (define posts-this-tag
       (filter values
@@ -295,7 +303,7 @@
               (stale/posts? posts-this-tag)
               (stale/templates? tag))
       (write-stuff-for-tag tag posts-this-tag)))
-
+  
   ;; [3] Save `new-posts` (to be used as the `old-posts` for our next
   ;;     build).
   (serialize-posts new-posts)
@@ -333,17 +341,19 @@
   (not (member "UNLINKED" (post-tags p))))
 
 ;; Given a (hash/c path? post?) return a (hash/c string? (set/c
-;; path?)), where the string is a tag. In other words this returns a
-;; hash that maps a tag to all the posts that are marked with the tag.
-(define/contract (posts->tags posts)
-  ((hash/c path? post?) . ->  . (hash/c string? (set/c path?)))
+;; path?)), where the string is a tag or author. In other words this returns a
+;; hash that maps a tag or author to all the posts that are marked with the tag or author.
+(define/contract (posts->tags/authors posts #:type [type 'tags])
+  (((hash/c path? post?)) (#:type (or/c 'tags 'authors)) . ->*  . (hash/c string? (set/c path?)))
   (define h (make-hash))
   (for ([(path post) (in-hash posts)])
     (when (linked-post? post)
-      (for ([tag (in-list (cons "all" (post-tags post)))])
+      (for ([tag (in-list (cons "all" ((if (equal? type 'tags) post-tags post-authors)
+                                       post)))])
         (unless (equal? tag "")
           (hash-update! h tag (lambda (v) (set-add v path)) (set))))))
   h)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

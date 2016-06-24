@@ -25,6 +25,7 @@
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
 (define current-show-tag-counts? (make-parameter #t))
+(define current-show-author-counts? (make-parameter #t))
 (define current-max-feed-items (make-parameter 999))
 (define current-decorate-feed-uris? (make-parameter #t))
 (define current-feed-image-bugs? (make-parameter #f))

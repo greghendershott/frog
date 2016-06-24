@@ -157,7 +157,7 @@
                         "Metadata of ~a: mandatory field ~v is missing"
                         path key)]))
                 [(list title authors date tags)
-                 (values title authors date (tag-string->tags tags) more)])))]
+                 (values title (tag-string->tags authors) date (tag-string->tags tags) more)])))]
     [_ (raise-user-error
         'error
         "Unable to find metadata for ~a:~a"
@@ -234,7 +234,7 @@
         'full-uri (full-uri uri-path)
         'date-8601 date
         'date-struct (date->date-struct date)
-        'authors authors
+        'authors (~> authors tags->xexpr xexpr->string)
         'date (~> date date->xexpr xexpr->string)
         'tags (~> tags tags->xexpr xexpr->string)
         'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
