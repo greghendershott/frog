@@ -127,6 +127,7 @@
           'date-8601    date
           'date-struct  (date->date-struct date)
           'date         (~> date date->xexpr xexpr->string)
+          'authors      (~> authors tags->xexpr xexpr->string)
           'tags         (~> tags tags->xexpr xexpr->string)
           'date+tags    (~> (date+tags->xexpr date tags) xexpr->string)
           'content      content
