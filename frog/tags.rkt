@@ -104,7 +104,7 @@
   (prn1 "Generating ~a" (abs->rel/www file))
   (~> (for/list ([x (in-list xs)])
         (match-define
-         (post title src modtime dest-path uri-path date older newer tags blurb more? body) x)
+         (post title src modtime dest-path uri-path authors date older newer tags blurb more? body) x)
         (define content-only (cond [(current-index-full?) body]
                                    [else blurb]))
         (define effectively-more? (and more? (not (current-index-full?))))

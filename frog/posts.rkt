@@ -76,7 +76,7 @@
          (define text (render-template path-to (path->string name) {}))
          (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
-    (define-values (title date tags body) (meta-data xs name))
+    (define-values (title authors date tags body) (meta-data xs name))
     (when (member "DRAFT" tags)
       (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
             (abs->rel/src path))
@@ -98,6 +98,7 @@
           (file-or-directory-modify-seconds path)
           dest-path
           (canonicalize-uri (post-path->link dest-path))
+          authors
           date
           #f ;; older
           #f ;; newer
@@ -146,15 +147,16 @@
             (string-join (map xexpr->markdown metas) "")])
        (let-values ([(header rest) (read-meta-data input)])
          (match (for/list
-                 ([key (list "Title" "Date" "Tags")])
+                 ([key (list "Title" "Authors" "Date" "Tags")])
                  (match (assoc key header)
                    [(cons _ v) v]
+                   [#f #:when (equal? key "Authors") #f]
                    [#f (raise-user-error
                         'error
                         "Metadata of ~a: mandatory field ~v is missing"
                         path key)]))
-                [(list title date tags)
-                 (values title date (tag-string->tags tags) more)])))]
+                [(list title authors date tags)
+                 (values title authors date (tag-string->tags tags) more)])))]
     [_ (raise-user-error
         'error
         "Unable to find metadata for ~a:~a"
@@ -167,13 +169,13 @@
   (define p (string->path "/"))
   (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
   (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
-  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nAuthor: Foo Bar\nTags: DRAFT\n")) p)))
+  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nAuthors: Foo Bar\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
   (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
   (check-exn exn? (thunk (meta-data '((p () "not meta data")) p)))
   ;; https://github.com/greghendershott/frog/issues/142
-  (let-values ([(title date tags more)
+  (let-values ([(title authors date tags more)
                 (meta-data '((p
                               ()
                               "Title: A Beginner"
@@ -218,7 +220,7 @@
 
 (define/contract (write-post-page p older newer)
   (post? (or/c post? #f) (or/c post? #f) . -> . void)
-  (match-define (post title _ _ dest-path uri-path date _ _ tags blurb _ body) p)
+  (match-define (post title _ _ dest-path uri-path authors date _ _ tags blurb _ body) p)
   (prn1 "Generating post ~a" (abs->rel/www dest-path))
   (define older-uri (and older (post-uri-path older)))
   (define newer-uri (and newer (post-uri-path newer)))
@@ -231,6 +233,7 @@
         'full-uri (full-uri uri-path)
         'date-8601 date
         'date-struct (date->date-struct date)
+        'authors authors
         'date (~> date date->xexpr xexpr->string)
         'tags (~> tags tags->xexpr xexpr->string)
         'date+tags (~> (date+tags->xexpr date tags) xexpr->string)

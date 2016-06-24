@@ -11,6 +11,7 @@
               modified   ;exact-integer? time blurb/body were updated
               dest-path  ;path? - full pathname of local HTML file
               uri-path   ;string? - path portion of URI, with leading /
+              authors    ;(listof string?) - list of authors of post
               date       ;string? - 8601 datetime format
               older      ;(or/c path? #f) - the src-path of older post
               newer      ;(or/c path? #f) - the src-path of newer post
