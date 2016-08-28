@@ -4,8 +4,9 @@
          racket/function
          racket/pretty
          rackjure/threading
+         (only-in net/uri-codec uri-path-segment-encode)
          (only-in markdown display-xexpr)
-         "verbosity.rkt")
+          "verbosity.rkt")
 
 (provide (all-defined-out))
 
@@ -68,3 +69,13 @@
   (check-equal? (our-encode "Here's a question--how many hyphens???")
                 "Here-s-a-question-how-many-hyphens"))
 
+;; URI encode path to handle spaces and non-ascii characters
+(define (uri-encode-path path)
+  ;; (absolute-path? . -> . path?)
+  (let ([ps (for/list ([ps (explode-path path)])
+              (uri-path-segment-encode (path->string ps)))])
+    (apply build-path "/" (cdr ps))))
+
+(module+ test
+  (check-equal? (uri-encode-path (string->path "/dir/other dir/file name.ext"))
+                (string->path "/dir/other%20dir/file%20name.ext")))

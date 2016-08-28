@@ -13,7 +13,10 @@
          "html.rkt"
          "params.rkt"
          "pygments.rkt"
-         "xexpr-map.rkt")
+         "xexpr-map.rkt"
+         "verbosity.rkt"
+         "paths.rkt"
+         "responsive-images.rkt")
 
 (provide enhance-body)
 
@@ -21,9 +24,149 @@
 
 (define (enhance-body xs)
   (~> xs
+      responsive-images
       syntax-highlight
       add-racket-doc-links
       auto-embed-tweets))
+
+(define responsive-images
+  (let ([magick-notice-displayed? #f])
+    (λ (xs)
+      (define (remote-host url)
+        (url-host (string->url url)))
+      (define (do-it xs)
+        (for/list ([x xs])
+          (match x
+            [`(div ([class ,classes])
+                   (img ,(list-no-order `[src ,url] attrs ...))
+                   ,content ...)
+             #:when (and (regexp-match #px"\\bfigure\\b" classes)
+                         (not (remote-host url)))
+             (let ([sizes-attr (assq 'sizes attrs)])
+               `(div ([class ,classes])
+                     (img ([class "img-responsive"] ; Add Bootstrap class
+                           ,@(make-responsive url (cond [sizes-attr => second]
+                                                        [#t #f]))
+                           ,@(if sizes-attr
+                                 (remove sizes-attr attrs)
+                                 attrs)))
+                     ,@content))
+             ]
+            ;; xexpr-map?
+            [`(p () (img ,(list-no-order `[src ,url] `[class ,classes] attrs ...)))
+             #:when (and (regexp-match #px"\\bimg-responsive\\b" classes)
+                         (not (remote-host url)))
+             `(p () (img ([class ,classes]
+                          ,@(make-responsive url #f) ; TODO honor custom sizes?
+                          ,@attrs)))]
+            [x x])))
+      (cond [(current-responsive-images?)
+             (if magick-available?
+                 (do-it xs)
+                 (begin
+                   (unless magick-notice-displayed?
+                     (prn1 "ImageMagick not found. Omitting img srcset attributes.")
+                     (set! magick-notice-displayed? #t))
+                   xs))]
+            [else xs]))))
+
+
+(module+ test
+  (parameterize ([top example]
+                 [current-responsive-images? #t]
+                 [current-image-output-dir "resized"]
+                 [current-image-sizes-attr #f]
+                 [current-image-sizes '(320 600 1200)]
+                 [current-image-default-size 600]
+                 [current-verbosity 0])
+    (test-equal? "Remote images"
+                 (responsive-images
+                  '((div ((class "figure")) (img ((src "//somehost.com/img/file.jpg"))))))
+                 ;; Don't resize remote images. Or should we fetch it and resize it?
+                 '((div ((class "figure")) (img ((src "//somehost.com/img/file.jpg"))))))
+    (when magick-available?
+      (test-equal? "Element-specific custom sizes attribute"
+                   (responsive-images
+                    '((div ([class "figure"])
+                           (img ([src "/img/1x1.gif"]
+                                 [sizes "some-custom-size-spec"])))))
+                   '((div ((class "figure"))
+                          (img ([class "img-responsive"]
+                                [src "/img/1x1.gif"]
+                                [srcset "/img/1x1.gif 2w"]
+                                [sizes "some-custom-size-spec"])))))
+      (test-equal? "Img with img-responsive class inside p tag"
+                   (responsive-images
+                    '((p () (img ([src "/img/1x1.gif"]
+                                  [alt ""]
+                                  [class "img-responsive among-others"]
+                                  [foo-attr "bar"])))))
+                   '((p () (img ([class "img-responsive among-others"]
+                                 [src "/img/1x1.gif"]
+                                 [srcset "/img/1x1.gif 2w"]
+                                 [sizes "(max-width: 2px) 100vw, 2px"]
+                                 [alt ""]
+                                 [foo-attr "bar"])))))
+      (test-equal? "Image bigger than maximum size"
+                   (responsive-images
+                    '((div ([class "figure pull-right"])
+                           (img ([src "/img/1300px-image.gif"] (alt "")))
+                           (p ([class "caption"]) "some text"))))
+                   `((div ((class "figure pull-right"))
+                          (img ([class "img-responsive"]
+                                [src "/img/resized/600/1300px-image.gif"]
+                                [srcset
+                                 ,(string-join
+                                   (for/list ([s (current-image-sizes)])
+                                     (format "/img/resized/~a/1300px-image.gif ~aw" s s))
+                                   ", ")]
+                                [sizes "(max-width: 1300px) 100vw, 1300px"]
+                                (alt "")))
+                          (p ((class "caption")) "some text"))))
+      (test-equal? "Image smaller than biggest size but bigger than smallest size"
+                   (responsive-images
+                    '((div ((class "figure"))
+                           (img ((src "/img/800px-image.gif") (alt "")))
+                           (p ((class "caption")) "some text"))))
+                   `((div ((class "figure"))
+                          (img ([class "img-responsive"]
+                                (src ,(format "/img/resized/~a/800px-image.gif"
+                                              (current-image-default-size)))
+                                (srcset
+                                 ,(string-append
+                                   (string-join
+                                    (for/list ([s '(320 600)])
+                                      (format "/img/resized/~a/800px-image.gif ~aw" s s))
+                                    ", ")
+                                  ", /img/800px-image.gif 800w"))
+                                (sizes "(max-width: 800px) 100vw, 800px")
+                                (alt "")))
+                          (p ((class "caption")) "some text"))))
+      (test-equal? "Image equal to a one of the sizes specified"
+                   (responsive-images
+                    '((div ((class "figure"))
+                           (img ((src "/img/600px-image.gif") (alt "")))
+                           (p ((class "caption")) "some text"))))
+                   '((div ((class "figure"))
+                          (img ([class "img-responsive"]
+                                (src "/img/600px-image.gif")
+                                (srcset "/img/resized/320/600px-image.gif 320w, /img/600px-image.gif 600w")
+                                (sizes "(max-width: 600px) 100vw, 600px")
+                                (alt "")))
+                          (p ((class "caption")) "some text"))))
+      (test-equal? "Image smaller than smallest size"
+                   (responsive-images
+                    '((div ((class "figure"))
+                           (img ((src "/img/1x1.gif") (alt ""))) ; Tiny image
+                           (p ((class "caption")) "some text"))))
+                   '((div ((class "figure"))
+                          (img ([class "img-responsive"]
+                                (src "/img/1x1.gif")
+                                (srcset "/img/1x1.gif 2w")
+                                (sizes "(max-width: 2px) 100vw, 2px")
+                                (alt "")))
+                          (p ((class "caption")) "some text"))))
+      (clean-resized-images))))
 
 (define (syntax-highlight xs)
   (for/list ([x xs])
@@ -131,6 +274,7 @@
                                  "&hide_thread=true"))))
          (define js (call/input-url oembed-url get-pure-port read-json))
          (define html ('html js))
+
          (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
                           (append '(div ([class "embed-tweet"]))))]
                [else x])]
