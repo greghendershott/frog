@@ -448,7 +448,10 @@
                                [index-newest-first? #t]
                                [posts-index-uri "/index.html"]
                                [source-dir "_src"]
-                               [output-dir "."])
+                               [output-dir "."]
+                               [python-executable "python"]
+                               [pygments-linenos? #t]
+                               [pygments-cssclass "source"])
       ;; (clean)
       (build)
       (serve #:launch-browser? #t #:watch? #f #:port 3000 #:root "/")

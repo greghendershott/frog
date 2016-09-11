@@ -95,10 +95,7 @@
                     ;; Only spans from Pygments lexed as Racket
                     [(`((pre . ,_)
                         (div . ,_)
-                        (td . ,_)
-                        (tr . ,_)
-                        (tbody . ,_)
-                        (table . ,_)
+                        ,_ ... ;varies: line numbers?
                         (div ([class "brush: racket"]) . ,_))
                       `(span ([class ,(and c (not "c1"))]) . ,xs))
                      (if (current-racket-doc-link-code?)
