@@ -75,13 +75,11 @@
     (author (name ,(current-author)))
     (content
      ([type "html"])
-     "<html>"
      ,(cond [(current-feed-full?) body] ;but don't enhance-body
             [more? (string-append blurb
                                   (xexpr->string `(a ([href ,item-uri])
                                                    (em "More" hellip))))]
-            [else blurb])
-     "</html>")))
+            [else blurb]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -127,13 +125,11 @@
                    (our-encode uri-path)))
     (pubDate () ,(~> date rfc-8601->rfc-822))
     (description
-     "<html>"
      ,(cond [(current-feed-full?) body] ;but don't enhance-body
             [more? (string-append blurb
                                   (xexpr->string `(a ([href ,item-uri])
                                                    (em "More" hellip))))]
-            [else blurb])
-     "</html>")))
+            [else blurb]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
