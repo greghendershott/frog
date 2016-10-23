@@ -26,7 +26,7 @@ Testing
 
 You are encouraged to add tests covering your new code. In addition it is a good idea to make sure that the existing tests also pass. To run the test suite:
 
-	$ raco test frog
+	$ raco test -x -p frog
 	
 from the repository root (or by specifying some specific file as described above).
 
