@@ -11,21 +11,24 @@
          racket/system
          racket/string
          rackjure/threading
+         rackjure/str
          "params.rkt"
          "util.rkt"
          "verbosity.rkt"
          "paths.rkt")
 
-(provide make-responsive clean-resized-images magick-available?)
+(provide make-responsive wait-resize-images clean-resized-images magick-available?)
+
+(module+ test
+  (require rackunit))
+
+(define resize-procs '())               ; Use hash?
 
 ;; Depend on ImageMagick
 (define identify (find-executable-path "identify"))
 (define mogrify (find-executable-path "mogrify"))
 
 (define magick-available? (and identify mogrify))
-
-(module+ test
-  (require rackunit))
 
 (define (image-width path)
   (~> (with-output-to-string
@@ -36,15 +39,16 @@
 
 (module+ test
   (when magick-available?
-    (parameterize ([top example])
+    (parameterize ([top example]
+                   [current-verbosity 99])
       (check-eq? (image-width (build-path (www/img-path) "800px-image.gif")) 800))))
 
-(define/contract (resize-image in new-width out-path)
-  (path? number? path? . -> . boolean?)
-  (prn1 "Shrinking ~a to ~a pixels... " (abs->rel/www in) new-width)
+(define/contract (resize-image input new-width out-path)
+  (path? number? path? . -> . void?)
+  (prn1 "Shrinking ~a to ~a pixels... " (abs->rel/www input) new-width)
   ;; Imagemagick options from
   ;; https://www.smashingmagazine.com/2015/06/efficient-image-resizing-with-imagemagick/
-  (apply system* mogrify
+  (define args
          `("-filter" "Triangle" "-define" "filter:support=2"
            "-unsharp" "0.25x0.08+8.3+0.045" "-dither" "None" "-posterize" "136"
            "-quality" "82" "-define" "jpeg:fancy-upsampling=off"
@@ -52,7 +56,40 @@
            "-define" "png:compression-strategy=1" "-define" "png:exclude-chunk=all"
            "-interlace" "none" "-colorspace" "sRGB"
            "-thumbnail" ,(number->string new-width)
-           "-path" ,out-path ,in)))
+           "-path" ,out-path ,input))
+  ;; Make simple job server using dispatcher thread and thread mailboxes?
+  ;;
+  ;; One problem with the async approach is that if Frog is killed before
+  ;; subprocesses are finished they will not be triggered again if Frog is
+  ;; invoked again and the source post has not been touched. Ideally we would
+  ;; trap SIGINT and write out unfinished work to disk, or at least
+  ;; detect that work was finished prematurely and restart everything somehow.
+  (let-values ([(proc in out err) (apply subprocess
+                                         (current-output-port)
+                                         (current-input-port)
+                                         (current-error-port)
+                                         mogrify args)])
+    (set! resize-procs (cons proc resize-procs))
+    (prn2 "Spawned ImageMagick in subprocess for ~a" (abs->rel/www input))))
+
+(define wait-resize-images
+  (let ([wait-notice-displayed? #f])
+    (λ ()
+      (unless (empty? resize-procs)
+        (unless wait-notice-displayed?
+          ;; Indicate number of processes left?
+          (prn0 "Waiting for any image resize processes to finish.")
+          (set! wait-notice-displayed? #t))
+        (let* ([p (apply sync resize-procs)]
+               [status (subprocess-status p)])
+          (if (eq? status 'running)
+              (wait-resize-images)
+              (begin
+                (unless (zero? status)
+                  (eprintf "~a finished with non-zero exit code: ~a\n"
+                           mogrify status))
+                (set! resize-procs (remq p resize-procs))
+                (wait-resize-images))))))))
 
 (module+ test
   (when magick-available?
@@ -63,6 +100,7 @@
       (test-eq? "resize"
                 (begin
                   (resize-image (build-path (www/img-path) "600px-image.gif") 10 tmp)
+                  (wait-resize-images)
                   (image-width output))
                 10)
       (delete-file* output))))
@@ -106,7 +144,7 @@
                                      orig))))
   (define srcset-string
     (string-join
-     (for/list ([srcdef  srcset])
+     (for/list ([srcdef srcset])
        (format "~a ~aw" (~> (car srcdef)
                             abs->rel/www string->path
                             uri-encode-path path->string)

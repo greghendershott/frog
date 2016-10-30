@@ -166,6 +166,7 @@
                                 (sizes "(max-width: 2px) 100vw, 2px")
                                 (alt "")))
                           (p ((class "caption")) "some text"))))
+      (wait-resize-images)
       (clean-resized-images))))
 
 (define (syntax-highlight xs)

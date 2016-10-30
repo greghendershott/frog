@@ -318,7 +318,9 @@
                (map full-uri
                     (append (map post-uri-path (filter linked-post?
                                                        (hash-values new-posts)))
-                            non-post-pages))))))
+                            non-post-pages)))))
+  (when (current-responsive-images?)
+    (wait-resize-images)))
 
 ;;----------------------------------------------------------------------------
 
