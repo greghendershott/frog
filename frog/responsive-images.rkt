@@ -10,6 +10,8 @@
          racket/port
          racket/system
          racket/string
+         (only-in racket/future processor-count)
+         (only-in racket/match match-let-values)
          rackjure/threading
          rackjure/str
          "params.rkt"
@@ -22,7 +24,7 @@
 (module+ test
   (require rackunit))
 
-(define resize-procs '())               ; Use hash?
+(define *max-jobs* (* 1.5 (processor-count)))  ; Arbitrary heuristic
 
 ;; Depend on ImageMagick
 (define identify (find-executable-path "identify"))
@@ -31,11 +33,13 @@
 (define magick-available? (and identify mogrify))
 
 (define (image-width path)
-  (~> (with-output-to-string
-        (λ ()
-          (system* identify "-format" "%w" path)))
-      string-trim
-      string->number))
+  (if (file-exists? path)
+      (~> (with-output-to-string
+            (λ ()
+              (system* identify "-format" "%w" path)))
+          string-trim
+          string->number)
+      (raise-argument-error 'image-width "Existing file" path)))
 
 (module+ test
   (when magick-available?
@@ -43,53 +47,91 @@
                    [current-verbosity 99])
       (check-eq? (image-width (build-path (www/img-path) "800px-image.gif")) 800))))
 
+(struct job (input out-path width) #:transparent)
+
+(define (magick-args j)
+  ;; Imagemagick options from
+  ;; https://www.smashingmagazine.com/2015/06/efficient-image-resizing-with-
+  ;;   imagemagick/
+  `("-filter" "Triangle"
+    "-define" "filter:support=2"
+    "-unsharp" "0.25x0.08+8.3+0.045"
+    "-dither" "None"
+    "-posterize" "136"
+    "-quality" "82"
+    "-define" "jpeg:fancy-upsampling=off"
+    "-define" "png:compression-filter=5"
+    "-define" "png:compression-level=9"
+    "-define" "png:compression-strategy=1"
+    "-define" "png:exclude-chunk=all"
+    "-interlace" "none"
+    "-colorspace" "sRGB"
+    "-thumbnail" ,(number->string (job-width j))
+    "-path" ,(job-out-path j)
+    ,(job-input j)))
+
+(define master-worker
+  (thread
+   (λ ()
+     (define (start-job j)
+       (match-let-values ([(proc _ _ _) (apply subprocess
+                                               (current-output-port)
+                                               (current-input-port)
+                                               (current-error-port)
+                                               mogrify (magick-args j))])
+         proc))
+     ;; N.B: Config parameters set in the main thread are reset here
+     ;; so make sure we do not rely on them. In particular prn1 and
+     ;; prn2 will not output anything.
+     (let ([finish #f]
+           [mailbox (thread-receive-evt)])
+       (let loop ([queue '()]
+                  [procs '()])
+         (let ([res (apply sync mailbox procs)])
+           (cond
+             [(subprocess? res)           ; Process terminated?
+              (let ([status (subprocess-status res)])
+                (unless (zero? status)
+                  (eprintf "~a terminated with non-zero exit code: ~a\n"
+                           mogrify status)))
+              (let ([next-procs (remq res procs)])
+                (if (not (empty? queue))
+                    (begin
+                      (let ([proc (start-job (first queue))])
+                        (loop (rest queue) (cons proc next-procs))))
+                    (unless (and (empty? next-procs) finish)
+                      (loop queue next-procs))))]
+             [(eq? res mailbox)
+              (let ([msg (thread-receive)])
+                (cond
+                  [(eq? msg 'finish)
+                   (set! finish #t)
+                   (unless (empty? procs)
+                     (displayln "Waiting for ImageMagick processes to finish.")
+                     (loop queue procs))]
+                  [(job? msg)
+                   (let ([j msg])
+                     (if (>= (length procs) *max-jobs*)
+                         (loop (append queue (list j)) procs) ; FIFO queue semantics
+                         (let ([proc (start-job j)])
+                           (loop queue (cons proc procs)))))]))]
+             [else
+              (error "Unknown sync result: " res)
+              (loop queue procs)])))))))
+
 (define/contract (resize-image input new-width out-path)
   (path? number? path? . -> . void?)
-  (prn1 "Shrinking ~a to ~a pixels... " (abs->rel/www input) new-width)
-  ;; Imagemagick options from
-  ;; https://www.smashingmagazine.com/2015/06/efficient-image-resizing-with-imagemagick/
-  (define args
-         `("-filter" "Triangle" "-define" "filter:support=2"
-           "-unsharp" "0.25x0.08+8.3+0.045" "-dither" "None" "-posterize" "136"
-           "-quality" "82" "-define" "jpeg:fancy-upsampling=off"
-           "-define" "png:compression-filter=5" "-define" "png:compression-level=9"
-           "-define" "png:compression-strategy=1" "-define" "png:exclude-chunk=all"
-           "-interlace" "none" "-colorspace" "sRGB"
-           "-thumbnail" ,(number->string new-width)
-           "-path" ,out-path ,input))
-  ;; Make simple job server using dispatcher thread and thread mailboxes?
-  ;;
+  (prn1 "Shrinking ~a to ~a pixels asynchronously." (abs->rel/www input) new-width)
   ;; One problem with the async approach is that if Frog is killed before
   ;; subprocesses are finished they will not be triggered again if Frog is
   ;; invoked again and the source post has not been touched. Ideally we would
   ;; trap SIGINT and write out unfinished work to disk, or at least
-  ;; detect that work was finished prematurely and restart everything somehow.
-  (let-values ([(proc in out err) (apply subprocess
-                                         (current-output-port)
-                                         (current-input-port)
-                                         (current-error-port)
-                                         mogrify args)])
-    (set! resize-procs (cons proc resize-procs))
-    (prn2 "Spawned ImageMagick in subprocess for ~a" (abs->rel/www input))))
+  ;; detect that work was finished prematurely and clean and restart everything.
+  (thread-send master-worker (job input out-path new-width)))
 
-(define wait-resize-images
-  (let ([wait-notice-displayed? #f])
-    (λ ()
-      (unless (empty? resize-procs)
-        (unless wait-notice-displayed?
-          ;; Indicate number of processes left?
-          (prn0 "Waiting for any image resize processes to finish.")
-          (set! wait-notice-displayed? #t))
-        (let* ([p (apply sync resize-procs)]
-               [status (subprocess-status p)])
-          (if (eq? status 'running)
-              (wait-resize-images)
-              (begin
-                (unless (zero? status)
-                  (eprintf "~a finished with non-zero exit code: ~a\n"
-                           mogrify status))
-                (set! resize-procs (remq p resize-procs))
-                (wait-resize-images))))))))
+(define (wait-resize-images)
+  (thread-send master-worker 'finish)
+  (thread-wait master-worker))
 
 (module+ test
   (when magick-available?
