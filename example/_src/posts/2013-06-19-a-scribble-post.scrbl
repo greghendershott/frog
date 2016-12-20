@@ -99,3 +99,14 @@ Here's a fancier one:
   (standard-fish 30 30 #:color "red" #:direction 'right)
   (standard-fish 25 20 #:color "blue" #:direction 'left)))
 ]
+
+Here's an example of using Pygments to syntax highlight non-Racket
+code:
+
+@(require frog/scribble)
+
+@pygment-code[#:lang "js"]{
+function foo() {
+  return 7;
+}
+}
