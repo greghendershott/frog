@@ -52,7 +52,7 @@ while 1:
         else:
           sys.stdout.write(highlight(code, lexer, formatter))
         sys.stdout.write('\n__END__\n')
-        sys.stdout.flush
+        sys.stdout.flush()
         lexer = ""
         code = ""
     elif lexer == "":
