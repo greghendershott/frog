@@ -462,6 +462,20 @@ easily. This will also fill in the required meta-data section.
 See the [example Scribble post][] and
 [example Scribble non-post page][] for more information.
 
+### Code blocks in Scribble files
+
+Just like Markdown, Scribble supports Pygments:
+
+```
+@(require frog/scribble)
+
+@pygment-code[#:lang "js"]{
+function foo() {
+  return 7;
+}
+}
+```
+
 ## Automatic post features
 
 Posts are automatically included in various index pages and feeds.
