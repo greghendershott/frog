@@ -36,7 +36,7 @@ lexer = ""
 code = ""
 py_version = sys.version_info.major
 sys.stdout.write("ready\n")
-sys.stdout.flush
+sys.stdout.flush()
 while 1:
     line_raw = sys.stdin.readline()
     if not line_raw:
