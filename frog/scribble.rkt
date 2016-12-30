@@ -21,4 +21,4 @@
   (para #:style (style "brush:"
                        (list (attributes `([class . ,lang]))
                              (alt-tag "pre")))
-        (literal xs)))
+        (apply literal xs)))
