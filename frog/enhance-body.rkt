@@ -13,8 +13,7 @@
          "html.rkt"
          "params.rkt"
          "pygments.rkt"
-         "xexpr-map.rkt"
-         "xexpr2text.rkt")
+         "xexpr-map.rkt")
 
 (provide enhance-body)
 
@@ -29,12 +28,12 @@
 (define (syntax-highlight xs)
   (for/list ([x xs])
     (match x
-      [(or `(pre ([class ,brush]) (code () ,texts ...))
-           `(pre ([class ,brush]) ,texts ...))
+      [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
+           `(pre ([class ,brush]) ,(? string? texts) ...))
        (match brush
          [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
           `(div ([class ,(str "brush: " lang)])
-                ,@(pygmentize (apply string-append (map xexpr->markdown texts)) lang))]
+                ,@(pygmentize (apply string-append texts) lang))]
          [_ `(pre ,@texts)])]
       [x x])))
 
