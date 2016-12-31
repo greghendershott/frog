@@ -2,7 +2,8 @@
 
 (require (only-in scribble/core style)
          (only-in scribble/manual para)
-         (only-in scribble/html-properties attributes alt-tag))
+         (only-in scribble/html-properties attributes alt-tag)
+         (only-in scribble/base literal))
 
 (provide pygment-code)
 
@@ -20,4 +21,4 @@
   (para #:style (style "brush:"
                        (list (attributes `([class . ,lang]))
                              (alt-tag "pre")))
-        xs))
+        (apply literal xs)))
