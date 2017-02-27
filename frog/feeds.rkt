@@ -119,7 +119,7 @@
     ()
     (title ,title)
     (link ,item-uri)
-    (guid () ,(str "urn:"
+    (guid ([isPermaLink "false"]) ,(str "urn:"
                    (our-encode (current-scheme/host))
                    ":"
                    (our-encode uri-path)))
