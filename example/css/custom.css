@@ -11,3 +11,16 @@ pre {
     white-space: pre;
     width: inherit;
 }
+
+article img {
+  /* Make sure that images within blog articles never take more width
+     than the article width; `height: auto` ensures the height is also
+     resized proportionally.
+
+     This is useful given that Markdown itself gives you little
+     control over image resizing, and in particular no way to achieve
+     this "best fit" behavior.
+ */
+  max-width: 100%;
+  height: auto;
+}
