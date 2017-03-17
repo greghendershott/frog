@@ -59,7 +59,8 @@
    (display-to-file* file #:exists 'replace)))
 
 (define (post->atom-feed-entry-xexpr tag x)
-  (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
+  (match-define
+    (post title src-path modtime dest-path uri-path authors date older newer tags blurb more? body) x)
   (define item-uri (full-uri/decorated uri-path #:source tag #:medium "Atom"))
   `(entry
     ()
@@ -112,7 +113,8 @@
    (display-to-file* file #:exists 'replace)))
 
 (define (post->rss-feed-entry-xexpr tag x)
-  (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
+  (match-define
+    (post title src-path modtime dest-path uri-path authors date older newer tags blurb more? body) x)
   (define item-uri (full-uri/decorated uri-path
                                        #:source tag #:medium "RSS"))
   `(item

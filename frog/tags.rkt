@@ -104,7 +104,7 @@
   (prn1 "Generating ~a" (abs->rel/www file))
   (~> (for/list ([x (in-list xs)])
         (match-define
-         (post title src modtime dest-path uri-path date older newer tags blurb more? body) x)
+         (post title src modtime dest-path uri-path authors date older newer tags blurb more? body) x)
         (define content-only (cond [(current-index-full?) body]
                                    [else blurb]))
         (define effectively-more? (and more? (not (current-index-full?))))
@@ -127,6 +127,7 @@
           'date-8601    date
           'date-struct  (date->date-struct date)
           'date         (~> date date->xexpr xexpr->string)
+          'authors      (~> authors tags->xexpr xexpr->string)
           'tags         (~> tags tags->xexpr xexpr->string)
           'date+tags    (~> (date+tags->xexpr date tags) xexpr->string)
           'content      content

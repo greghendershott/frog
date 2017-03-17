@@ -76,7 +76,7 @@
          (define text (render-template path-to (path->string name) {}))
          (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
-    (define-values (title date tags body) (meta-data xs name))
+    (define-values (title authors date tags body) (meta-data xs name))
     (when (member "DRAFT" tags)
       (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
             (abs->rel/src path))
@@ -98,6 +98,7 @@
           (file-or-directory-modify-seconds path)
           dest-path
           (canonicalize-uri (post-path->link dest-path))
+          authors
           date
           #f ;; older
           #f ;; newer
@@ -105,6 +106,26 @@
           (~> blurb enhance-body xexprs->string)
           more?
           (~> body enhance-body xexprs->string))))
+
+(define (read-meta-data-line input)
+  (match input
+         [(pregexp
+           (string-join (list
+                         "^\\s*([^:]+)\\s*"; key (space-trimmed)
+                         ":\\s*([^\n]+)\\s*"; value (space-rimmed)
+                         "(?:\n(.*))?$"; rest (optional)
+                         ) "")
+           (list _ key val rest))
+          (cons (cons key val) rest)]
+         [_ #f]))
+
+(define (read-meta-data-acc acc input)
+  (match (read-meta-data-line input)
+    [(cons binding rest)
+     (read-meta-data-acc (cons binding acc) rest)]
+    [#f (values (reverse acc) input)]))
+
+(define (read-meta-data input) (read-meta-data-acc '() input))
 
 ;; (listof xexpr?) path? -> (values string? string? string? (listof xexpr?))
 (define (meta-data xs path)
@@ -120,26 +141,42 @@
             `(pre . ,metas)              ;Markdown
             `(p () . ,metas))            ;Scribble
        . ,more)
-     ;; In the meta-data we don't want HTML entities like &ndash; we
-     ;; want plain text.
-     (match (string-join (map xexpr->markdown metas) "")
-       [(pregexp "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$"
-                 (list _ title date tags))
-        (values title date (tag-string->tags tags) more)]
-       [_ (err (first xs))])]
-    [(cons x _) (err x)]
-    [_ (err "")]))
+     (let ([input
+            ;; In the meta-data we don't want HTML entities like &ndash; we
+            ;; want plain text.
+            (string-join (map xexpr->markdown metas) "")])
+       (let-values ([(header rest) (read-meta-data input)])
+         (match (for/list
+                 ([key (list "Title" "Authors" "Date" "Tags")])
+                 (match (or (assoc key header) key)
+                   [(cons _ v) v]
+                   ["Authors" ""]
+                   ["Tags" ""]
+                   [_ (raise-user-error
+                        'error
+                        "Metadata of ~a: mandatory field ~v is missing"
+                        path key)]))
+                [(list title authors date tags)
+                 (values title (tag-string->tags authors) date (tag-string->tags tags) more)])))]
+    [_ (raise-user-error
+        'error
+        "Unable to find metadata for ~a:~a"
+        path
+        (if (empty? xs)
+            "file is empty"
+            (format "found ~a instead" (car xs))))]))
 
 (module+ test
   (define p (string->path "/"))
   (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
   (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
+  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nAuthors: Foo Bar\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
   (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
   (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
   (check-exn exn? (thunk (meta-data '((p () "not meta data")) p)))
   ;; https://github.com/greghendershott/frog/issues/142
-  (let-values ([(title date tags more)
+  (let-values ([(title authors date tags more)
                 (meta-data '((p
                               ()
                               "Title: A Beginner"
@@ -184,7 +221,7 @@
 
 (define/contract (write-post-page p older newer)
   (post? (or/c post? #f) (or/c post? #f) . -> . void)
-  (match-define (post title _ _ dest-path uri-path date _ _ tags blurb _ body) p)
+  (match-define (post title _ _ dest-path uri-path authors date _ _ tags blurb _ body) p)
   (prn1 "Generating post ~a" (abs->rel/www dest-path))
   (define older-uri (and older (post-uri-path older)))
   (define newer-uri (and newer (post-uri-path newer)))
@@ -197,6 +234,7 @@
         'full-uri (full-uri uri-path)
         'date-8601 date
         'date-struct (date->date-struct date)
+        'authors (~> authors tags->xexpr xexpr->string)
         'date (~> date date->xexpr xexpr->string)
         'tags (~> tags tags->xexpr xexpr->string)
         'date+tags (~> (date+tags->xexpr date tags) xexpr->string)

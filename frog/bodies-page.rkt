@@ -81,6 +81,7 @@
        (a ([href ,(atom-feed-uri "all")])
           (img ([src ,(canonicalize-uri "/img/feed.png")])))))))
 
+
 (define (tags-list-items)
   (for/list ([(k v) (in-dict (tags-alist))])
                `(li ,(tag->xexpr k))))
