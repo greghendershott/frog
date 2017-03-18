@@ -11,6 +11,7 @@
          rackjure/str
          rackjure/threading
          (only-in srfi/1 break)
+         "author.rkt"
          "bodies-page.rkt"
          "enhance-body.rkt"
          "html.rkt"
@@ -76,7 +77,7 @@
          (define text (render-template path-to (path->string name) {}))
          (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
-    (define-values (title date tags body) (meta-data xs name))
+    (match-define (list title date tags body) (meta-data xs name))
     (when (member "DRAFT" tags)
       (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
             (abs->rel/src path))
@@ -106,53 +107,81 @@
           more?
           (~> body enhance-body xexprs->string))))
 
-;; (listof xexpr?) path? -> (values string? string? string? (listof xexpr?))
+;; (listof xexpr?) path? -> (list string? string? string? (listof xexpr?))
 (define (meta-data xs path)
   (define (err x)
-    (raise-user-error
-     'error
-     "Post file ~a.\nMust start with Title/Date/Tags, but found:\n~v"
-     path
-     x))
+    (raise-user-error 'error "~a: Must start with metadata but ~a" path x))
+  (define (warn x)
+    (prn0 (format "~a: Ignoring unknown metadata: ~v" path x)))
   (match xs
     [`(,(or `(pre () (code () . ,metas)) ;Markdown
             `(pre () . ,metas)           ;Markdown
             `(pre . ,metas)              ;Markdown
             `(p () . ,metas))            ;Scribble
        . ,more)
-     ;; In the meta-data we don't want HTML entities like &ndash; we
-     ;; want plain text.
-     (match (string-join (map xexpr->markdown metas) "")
-       [(pregexp "^Title:\\s*(.+?)\nDate:\\s*(.+?)\nTags:\\s*(.*?)\n*$"
-                 (list _ title date tags))
-        (values title date (tag-string->tags tags) more)]
-       [_ (err (first xs))])]
-    [(cons x _) (err x)]
-    [_ (err "")]))
+     ;; We don't want HTML entities like &ndash;
+     (define plain-text (string-join (map xexpr->markdown metas) ""))
+     (define h
+       (for/fold ([h (hash)])
+                 ([s (string-split plain-text "\n")])
+         (match s
+           [(pregexp "^(.+?):(.+?)$" (list _ k v))
+            #:when (member k '("Title" "Date" "Tags" "Authors"))
+            (hash-set h (string-trim k) (string-trim v))]
+           [s (warn s) h])))
+     (list (hash-ref h "Title" (λ _ (err "missing `Title`")))
+           (hash-ref h "Date" (λ _ (err "missing `Date`")))
+           (append (~>> (hash-ref h "Tags" (λ _ (err "missing `Tags`")))
+                        tag-string->tags)
+                   (~>> (hash-ref h "Authors" "")
+                        tag-string->tags
+                        (map make-author-tag)))
+           more)]
+    [(cons x _) (err (str "found:\n" (format "~v" x)))]
+    [_ (err "none found")]))
 
 (module+ test
   (define p (string->path "/"))
-  (check-not-exn (thunk (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)))
-  (check-not-exn (thunk (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)))
-  (check-not-exn (thunk (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)))
-  (check-not-exn (thunk (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)))
-  (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
-  (check-exn exn? (thunk (meta-data '((p () "not meta data")) p)))
-  ;; https://github.com/greghendershott/frog/issues/142
-  (let-values ([(title date tags more)
-                (meta-data '((p
-                              ()
-                              "Title: A Beginner"
-                              rsquo
-                              "s Scribble Post\nDate: 2013-06-19T00:00:00\nTags: Racket, blogging"))
-                           (string->path "/"))])
-    (check-equal? title "A Beginner's Scribble Post")))
+  (test-case "Various HTML \"envelopes\" and HTML entities"
+    (check-equal? (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)
+                  (list "title" "date" '("DRAFT") '()))
+    (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags: DRAFT\n")) p)
+                  (list "title" "date" '("DRAFT") '()))
+    (check-equal? (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)
+                  (list "title" "date" '("DRAFT") '()))
+    (check-equal? (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)
+                  (list "title-hyphen" "date" '("DRAFT") '())))
+  (test-case "Authors meta data is converted to prefixed tags"
+    (check-equal? (meta-data `((p () "Title: title\nDate: date\nTags: DRAFT\nAuthors:Alice Baker,Charlie Dan\n")) p)
+                  (list "title"
+                        "date"
+                        (list "DRAFT"
+                              (make-author-tag "Alice Baker")
+                              (make-author-tag "Charlie Dan"))
+                        '())))
+  (test-case "Error raised for missing metadata"
+    (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
+    (check-exn exn? (thunk (meta-data '((p () "not meta data")) p))))
+  (test-case "https://github.com/greghendershott/frog/issues/142"
+    (check-equal? (meta-data '((p
+                                ()
+                                "Title: A Beginner"
+                                rsquo
+                                "s Scribble Post\nDate: 2013-06-19T00:00:00\nTags: Racket, blogging"))
+                             (string->path "/"))
+                  (list "A Beginner's Scribble Post"
+                        "2013-06-19T00:00:00"
+                        '("Racket" "blogging")
+                        '()))))
 
 (define (tag-string->tags s)
-  (~>> (regexp-split #px"," s)
-       (map string-trim)))
+  (match (regexp-split #px"," (string-trim s))
+    ['("") '()]
+    [ss    (map string-trim ss)]))
 
 (module+ test
+  (check-equal? (tag-string->tags "  ")
+                '())
   (check-equal? (tag-string->tags " some, post ,   tags ")
                 '("some" "post" "tags")))
 
@@ -191,18 +220,19 @@
   (~> (render-template
        (src-path)
        "post-template.html"
-       {'title (title->htmlstr title)
-        'uri-prefix (or (current-uri-prefix) "")
-        'uri-path uri-path
-        'full-uri (full-uri uri-path)
-        'date-8601 date
+       {'title       (title->htmlstr title)
+        'uri-prefix  (or (current-uri-prefix) "")
+        'uri-path    uri-path
+        'full-uri    (full-uri uri-path)
+        'date-8601   date
         'date-struct (date->date-struct date)
-        'date (~> date date->xexpr xexpr->string)
-        'tags (~> tags tags->xexpr xexpr->string)
-        'date+tags (~> (date+tags->xexpr date tags) xexpr->string)
-        'content body
-        'older-uri older-uri
-        'newer-uri newer-uri
+        'date        (~> date date->xexpr xexpr->string)
+        'tags        (~> tags tags->xexpr xexpr->string)
+        'authors     (~> tags author-tags->xexpr xexpr->string)
+        'date+tags   (~> (date+tags->xexpr date tags) xexpr->string)
+        'content     body
+        'older-uri   older-uri
+        'newer-uri   newer-uri
         'older-title (and older (title->htmlstr (post-title older)))
         'newer-title (and newer (title->htmlstr (post-title newer)))})
       (bodies->page #:title title

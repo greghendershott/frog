@@ -8,6 +8,7 @@
          racket/string
          rackjure/str
          rackjure/threading
+         "author.rkt"
          "feeds.rkt"
          "html.rkt"
          "params.rkt"
@@ -20,7 +21,7 @@
          bodies->page
          xexprs->string
          tags->xexpr
-         tag->xexpr
+         author-tags->xexpr
          blurb->description
          title->htmlstr
          date->date-struct
@@ -94,14 +95,54 @@
       (sort string-ci<=? #:key car)))
 
 (define (tags->xexpr tags)
-  `(span ([class "tags"])
-         ,@(add-between (map tag->xexpr
-                             (filter (λ (x) (not (equal? x "UNLINKED")))
-                                     tags))
-                        ", ")))
+  `(span
+    ([class "tags"])
+    ,@(add-between (for/list ([t (in-list tags)]
+                              #:when (and (not (equal? t "UNLINKED"))
+                                          (not (author-tag t))))
+                     (tag->xexpr t values))
+                   ", ")))
 
-(define (tag->xexpr s)
-  `(a ([href ,(canonicalize-uri (str "/tags/" (our-encode s) ".html"))]) ,s))
+(define (author-tags->xexpr tags)
+  `(span
+    ([class "authors"])
+    ,@(match (add-between (for/list ([t (in-list tags)]
+                                     #:when (and (not (equal? t "UNLINKED"))
+                                                 (author-tag t)))
+                            (tag->xexpr t author-tag))
+                          ", ")
+        [(list) (list (current-author))]
+        [as     as])))
+
+(module+ test
+  (define tags (list "foo" "bar"
+                     (make-author-tag "Alice Baker")
+                     (make-author-tag "Charlie Dean")))
+  (test-case "tags->xexpr produces xexpr for non-author tags"
+    (check-equal? (tags->xexpr tags)
+                  `(span
+                    ((class "tags"))
+                    (a ((href "/tags/foo.html")) "foo")
+                    ", "
+                    (a ((href "/tags/bar.html")) "bar"))))
+  (test-case "author-tags->xexpr produces xexpr for author tags"
+    (check-equal? (author-tags->xexpr tags)
+                  `(span
+                    ((class "authors"))
+                    (a ((href "/tags/Author-Alice-Baker.html")) "Alice Baker")
+                    ", "
+                    (a ((href "/tags/Author-Charlie-Dean.html")) "Charlie Dean"))))
+  (test-case "No author tags results in default author"
+    (parameterize ([current-author "Default"])
+      (check-equal? (author-tags->xexpr '())
+                    `(span
+                      ((class "authors"))
+                      ,(current-author))))))
+
+
+(define (tag->xexpr s [display values])
+  `(a ([href ,(canonicalize-uri (str "/tags/" (our-encode s) ".html"))])
+      ,(display s)))
 
 (define (blurb->description s)
   (~> (with-input-from-string s read-html-as-xexprs)

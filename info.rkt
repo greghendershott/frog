@@ -1,5 +1,5 @@
 #lang setup/infotab
-(define version "0.25")
+(define version "0.26")
 (define collection 'multi)
 (define deps '("base"
                "find-parent-dir"

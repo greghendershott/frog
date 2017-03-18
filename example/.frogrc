@@ -9,9 +9,15 @@ uri-prefix = /
 # The title of the blog. Used when generating feeds.
 title = My Awesome Blog
 
-# The author. Used when generating feeds, and provided to
+# The default author. Used when generating feeds, and provided to
 # `page-template.html` as the template variable `@author`.
-author = The Unknown Author
+#
+# Note that each post may have `Authors:` metadata naming one or more
+# authors. In that case those author(s) are used for feed data. Both
+# `index-template.html` and `post-template.html` get an `authors`
+# template variable that is either post-specific author(s) or the
+# default author here.
+author = The Default Author
 
 # What editor to launch with --edit. $EDITOR means to use $EDITOR from
 # the environment

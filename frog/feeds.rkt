@@ -9,6 +9,7 @@
          rackjure/str
          rackjure/threading
          (only-in markdown xexpr->string)
+         "author.rkt"
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
@@ -72,7 +73,15 @@
                  (our-encode uri-path)))
     (published () ,(rfc-8601/universal date))
     (updated () ,(rfc-8601/universal date))
-    (author (name ,(current-author)))
+    ;; When > 1 author, list them individually
+    ,@(match (post-authors x)
+        [(list) (list)]
+        [(list _) (list)]
+        [as (for/list ([a (in-list as)])
+              `(author ,a))])
+    ;; And to support readers that ignore all but the last one, have a final
+    ;; element with the author(s) in one possibly comma-separated string.
+    (author (name ,(post-author x)))
     (content
      ([type "html"])
      ,(cond [(current-feed-full?) body] ;but don't enhance-body
@@ -124,6 +133,7 @@
                    ":"
                    (our-encode uri-path)))
     (pubDate () ,(~> date rfc-8601->rfc-822))
+    (author ,(post-author x))
     (description
      ,(cond [(current-feed-full?) body] ;but don't enhance-body
             [more? (string-append blurb
