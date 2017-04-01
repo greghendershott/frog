@@ -25,7 +25,8 @@
          "tags.rkt"
          "util.rkt"
          "verbosity.rkt"
-         "watch-dir.rkt")
+         "watch-dir.rkt"
+         "responsive-images.rkt")
 (provide serve)
 
 (module+ test
@@ -64,7 +65,12 @@
                                [output-dir "."]
                                [python-executable "python"]
                                [pygments-linenos? #t]
-                               [pygments-cssclass "source"])
+                               [pygments-cssclass "source"]
+                               [responsive-images? #f]
+                               [image-output-dir "resized"]
+                               [image-sizes-attr #f]
+                               [image-sizes '(320 768 1024)]
+                               [image-default-size 768])
       (define watch? #f)
       (define port 3000)
       (define root
@@ -312,7 +318,9 @@
                (map full-uri
                     (append (map post-uri-path (filter linked-post?
                                                        (hash-values new-posts)))
-                            non-post-pages))))))
+                            non-post-pages)))))
+  (when (current-responsive-images?)
+    (wait-resize-images)))
 
 ;;----------------------------------------------------------------------------
 
@@ -351,7 +359,8 @@
   (clean-post-output-files)
   (clean-non-post-output-files)
   (clean-tag-output-files)
-  (clean-serialized-posts))
+  (clean-serialized-posts)
+  (clean-resized-images))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

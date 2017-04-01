@@ -1,4 +1,6 @@
-# Required: Should NOT end in trailing slash.
+# -*- conf -*-
+
+# Required: Should NOT end in trailing slash.  
 scheme/host = http://www.example.com
 
 # A path prepended to URIs, including those specified here in .frogrc
@@ -123,3 +125,20 @@ python-executable = python
 pygments-linenos? = true
 ## CSS class for the wrapping <div> tag (default: 'highlight').
 pygments-cssclass = source
+
+# Serve responsive images.
+#
+# Make use of the img srcset attribute to serve images inside elements
+# of class "figure" (such as image referenced from Markdown) at three
+# different sizes. Depends on having ImageMagick installed.
+responsive-images? = true
+
+# Subdirectory of where to put resized images. Defaults to "resized".
+# The directory will be created but the parent "img" directory must exist.
+#image-output-dir = resized
+
+# Value of the img "sizes" attribute.
+# Defaults to "(max-width: <image width>px) 100vw, <image width>px"
+# If your blog's main column is narrower than the page width on wide
+# clients you may want to have something like:
+#image-sizes-attr = (max-width: <columnn width>) 100vw, <column width>
