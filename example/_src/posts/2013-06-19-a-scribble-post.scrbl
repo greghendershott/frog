@@ -110,3 +110,9 @@ function foo() {
   return 7;
 }
 }
+
+@subsection[#:style 'unnumbered]{B SubSection}
+
+A responsive big black image:
+
+@image["img/800px-image.gif" #:style "img-responsive"]

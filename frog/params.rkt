@@ -40,3 +40,8 @@
 (define current-python-executable (make-parameter "python"))
 (define current-pygments-linenos? (make-parameter #t))
 (define current-pygments-cssclass (make-parameter "source"))
+(define current-responsive-images? (make-parameter #f))
+(define current-image-output-dir (make-parameter "resized"))
+(define current-image-sizes-attr (make-parameter #f))
+(define current-image-sizes (make-parameter '(320 768 1024)))
+(define current-image-default-size (make-parameter 768))
