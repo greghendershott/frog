@@ -1,5 +1,6 @@
 .DS_Store
 compiled/
+frog/doc/
 
 # Generated files under example/
 example/.frog/

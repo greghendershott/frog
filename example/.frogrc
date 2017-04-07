@@ -1,3 +1,5 @@
+# Frog configuration file.  -*- conf -*-
+
 # Required: Should NOT end in trailing slash.
 scheme/host = http://www.example.com
 
