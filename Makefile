@@ -8,7 +8,7 @@ clean:
 	rm -rf frog/doc
 
 setup:
-	raco setup --tidy $(COLLECTS)
+	raco setup --tidy --check-pkg-deps $(COLLECTS)
 
 link:
 	raco pkg install --link -n $(PACKAGENAME) $$(pwd)
