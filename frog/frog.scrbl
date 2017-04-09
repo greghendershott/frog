@@ -1,20 +1,24 @@
 #lang scribble/manual
 
 @(require (for-label racket/base
+                     racket/date
                      web-server/templates
                      scribble/text)
           scribble/core)
 
-@(define (comment . contents)
-   (elem #:style (style #f (list (color-property "gray")))
+@(define (grey . contents)
+   (elem #:style (style #f (list (color-property "grey")))
          contents))
 
+@(define (comment . contents)
+   (grey contents))
+
 @(define (pre #:title [title #f] . contents)
-   (let* ([title    (and title (comment (italic (tt title))))]
-          [contents (if title (append (list title "\n") contents) contents)]
-          [contents (apply verbatim contents)]
-          [rows     (list (list contents))])
-     (tabular #:style 'boxed rows)))
+   (let* ([title    (cond [title (list (grey (italic (tt title))) "\n")]
+                          [else  (list)])]
+          [contents (append title contents)]
+          [contents (apply verbatim contents)])
+     (nested #:style 'code-inset contents)))
 
 @(define-syntax-rule (deftv id contract contents ...)
   (defthing #:kind "template variable"
@@ -245,6 +249,10 @@ uri-prefix = /   @comment{#yes}
 uri-prefix = "/" @comment{#no}
 }}
 
+@subsubsection{Required configuration}
+
+There are just a few things you need to change, to start.
+
 @defcfg[title string? "My Awesome Blog"]{The title of the blog. Used
 when generating feeds.}
 
@@ -262,6 +270,10 @@ is either post-specific author(s) or the default author here.}
 @italic{not} end in trailing slash. Used to form full URIs for various
 purposes including @tt{urn:}s in feeds and the @tt|{@full-uri}|
 variable supplied to @secref["templates"].}
+
+@subsubsection{Optional configuration}
+
+You probably won't need to change any of these to get started.
 
 @defcfg[uri-prefix (or/c string? #f) false]{A path prepended to URIs,
 including those specified here in @secref["config"] such as
