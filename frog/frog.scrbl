@@ -53,7 +53,7 @@ The default templates use
 
 Why "Frog"? @bold{Fr}ozen bl@bold{og}.
 
-The repo is @url["https://github.com/greghendershott/rackjure"].
+The repo is @url["https://github.com/greghendershott/frog"].
 
 Please use
 @hyperlink["https://github.com/greghendershott/frog/issues"]{GitHub
