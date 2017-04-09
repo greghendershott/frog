@@ -4,21 +4,40 @@
 
 Thanks to the following people for contributing pull requests!
 
-- [Jens Axel Søgaard](https://github.com/soegaard).
+- [Jens Axel Søgaard](https://github.com/soegaard)
 
-- [Jose A. Ortega Ruiz](https://github.com/jaor).
+- [Jose A. Ortega Ruiz](https://github.com/jaor)
 
-- [WillemDeGroef](https://github.com/WillemDeGroef).
+- [WillemDeGroef](https://github.com/WillemDeGroef)
 
-- [voila](https://github.com/voila).
+- [voila](https://github.com/voila)
 
-- [Eric Hanchow](https://github.com/offby1).
+- [Eric Hanchow](https://github.com/offby1)
 
 - [William J. Bowman](https://github.com/bluephoenix47)
 
 - [Jordan Johnson](https://github.com/RenaissanceBug)
 
 - [Tim Bradshaw](https://github.com/tfeb)
+
+- [Tobias Gerdin](https://github.com/tger)
+
+- [Gabriel Scherer](https://github.com/gasche)
+
+- [sorawee](https://github.com/sorawee)
+
+- [Leif Andersen](https://github.com/LeifAndersen)
+
+- [Konrad Hinsen](https://github.com/khinsen)
+
+- [Dionna Amalie Glaze](https://github.com/deeglaze)
+
+- [Kartik Singhal](https://github.com/k4rtik)
+
+- [Brian Mastenbrook](https://github.com/bmastenbrook)
+
+- [Nolan Prescott](https://github.com/NPrescott)
+
 
 ## Issues
 
