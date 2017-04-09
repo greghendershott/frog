@@ -88,11 +88,11 @@ Install Frog:
 Optional: Install Pygments if you want syntax highlighting for
 fenced code blocks:
 
+@pre{$ sudo easy_install --upgrade Pygments}
+
 @margin-note{Why @litchar{--upgrade}? You probably want the most
 recent version of Pygments because new languages are constantly being
 added. For example, Racket is supported starting in Pygments 1.6.}
-
-@pre{$ sudo easy_install --upgrade Pygments}
 
 If that fails, try again after installing @tt{easy_install}:
 
@@ -273,7 +273,8 @@ variable supplied to @secref["templates"].}
 
 @subsubsection{Optional configuration}
 
-You probably won't need to change any of these to get started.
+You probably won't need to change any of these. If you're just getting
+started, you could skip ahead to @secref["create-posts"].
 
 @defcfg[uri-prefix (or/c string? #f) false]{A path prepended to URIs,
 including those specified here in @secref["config"] such as
@@ -383,7 +384,7 @@ include line numbers in its HTML output.}
 should use for the wrapping @tt{<div>} tag.}
 
 
-@subsection{Creating blog posts}
+@subsection[#:tag "create-posts"]{Creating blog posts}
 
 A typical workflow:
 
@@ -898,20 +899,22 @@ those!)}
 
 ]
 
-The @tt{@literal{--}preview} flag should open on your blog's index
-page at @tt{/blog/index.html}, automatically. (But there's also a
-@tt{@literal{--}root} flag in case you need to control it more
-specifically.)
+Using
+
+@pre{raco frog -p}
+
+should open on your blog's index page at @tt{/blog/index.html},
+automatically. But you can add a @litchar{--root} flag in case
+you need to control it more specifically.
 
 @subsection{Tilde Club members}
 
 Will your blog be hosted at @tt{http://example.com/~user}?
 
-@margin-note*{Tip: Use @litchar{mkdir \~user}. Note the @litchar{\~} to allow
-using @tt{~} in the name.}
-
 In your Frog project directory, create an output directory named
-@tt{~user}.
+@tt{~user}:
+
+@pre{$ mkdir \~user  @comment{#use @litchar{\~} in shell for literal @tt{~}}}
 
 Then follow the steps above, including setting @litchar{output-dir = ~user}
 and @litchar{uri-prefix = /~user}, and adjusting your
