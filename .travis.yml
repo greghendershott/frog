@@ -21,7 +21,6 @@ env:
     # Supply more than one RACKET_VERSION (as in the example below) to
     # create a Travis-CI build matrix to test against multiple Racket
     # versions.
-    - RACKET_VERSION=6.0.1
     - RACKET_VERSION=6.1
     - RACKET_VERSION=6.1.1
     - RACKET_VERSION=6.2
@@ -53,13 +52,9 @@ install:
 before_script:
 
 script:
-  - cd ..   # Travis did a cd into the dir, go back up
-  - raco pkg install --deps search-auto --link frog
-  - raco test -x -p frog
-  # Let's confirm that we can at least create and build the initial blog
-  - mkdir test-blog
-  - cd test-blog
-  - raco frog --init
-  - raco frog -b
+  - make install
+  - make check-pkg-deps
+  - make test
+  - make create-build-example
 
 after_script:

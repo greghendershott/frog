@@ -164,7 +164,7 @@
   ;; Because (require "../info.rkt") (#%info-lookup version) errors in
   ;; some cases with Racket 6, resort to regexp-ing info.rkt as text.
   (match (file->string info.rkt #:mode 'text)
-    [(pregexp "^#lang setup/infotab\n\\(define version \"([^\"]+)\""
+    [(pregexp "^#lang info\n+\\(define version \"([^\"]+)\""
               (list _ v))
      v]))
 

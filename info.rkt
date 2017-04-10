@@ -1,13 +1,12 @@
-#lang setup/infotab
+#lang info
 (define version "0.26")
 (define collection 'multi)
-(define deps '("base"
+(define deps '(["base" #:version "6.1"]
                "find-parent-dir"
                "html-lib"
-               ["markdown" "0.24"]
+               ["markdown" #:version "0.24"]
                "racket-index"
-               ["racket" "6.0.1"]
-               ["rackjure" "0.9"]
+               ["rackjure" #:version "0.9"]
                "scribble-lib"
                "srfi-lite-lib"
                "web-server-lib"))
