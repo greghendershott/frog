@@ -3,7 +3,10 @@
 @(require (for-label racket/base
                      racket/date
                      web-server/templates
-                     scribble/text)
+                     scribble/text
+                     scribble/manual
+                     "scribble.rkt"
+                     "widgets.rkt")
           scribble/core)
 
 @(define (grey . contents)
@@ -55,7 +58,7 @@ The default templates use
 @hyperlink["https://en.wikipedia.org/wiki/Responsive_web_design"]{"responsive"}
 (adapts to various screen sizes).
 
-Why "Frog"? @bold{Fr}ozen bl@bold{og}.
+Why ``Frog''? @bold{Fr}ozen bl@bold{og}.
 
 The repo is @url["https://github.com/greghendershott/frog"].
 
@@ -310,14 +313,14 @@ previous blog URI.}
 page for posts.}
 
 @defcfg[index-full? boolean? true]{Should index page items contain
-full posts -- more than just the portion above "the jump"
+full posts -- more than just the portion above ``the jump''
 @litchar{<!-- more -->} marker (if any)?}
 
 @defcfg[index-newest-first? boolean? true]{Should index page items be
 sorted newest first?}
 
 @defcfg[feed-full? boolean? true]{Should feed items contain full posts
--- more than just the portion above "the jump" @litchar{<!-- more
+-- more than just the portion above ``the jump'' @litchar{<!-- more
 -->} marker (if any)?}
 
 @defcfg[posts-per-page exact-positive-integer? 10]{How many posts per
@@ -425,14 +428,14 @@ contain these three lines.
 
 Everything from here to the end is your post's contents.
 
-If you put `<!-- more -->` on a line, that is the "above-the-fold"
-marker. Contents above the line are the "summary" for index pages and
-Atom feeds.
+If you put `<!-- more -->` on a line, that is the ``above-the-fold''
+marker. Contents above the line are the ``summary'' for index pages
+and Atom feeds.
 
 <!-- more -->
 
 Contents below `<!-- more -->` are omitted from index pages and Atom
-feeds. A "Continue reading..." link is provided instead.
+feeds. A ``Continue reading...'' link is provided instead.
 }|
 
 @subsubsection[#:tag "metadata"]{Post metadata}
@@ -467,7 +470,7 @@ is being used as the source of a post. The template evaluation occurs
 prior to the extraction of the post metadata.
 
 
-@subsubsection{Code blocks in markdown files}
+@subsubsection[#:tag "markdown-code-blocks"]{Code blocks in markdown files}
 
 Frog optionally uses @hyperlink["http://pygments.org/"]{Pygments} to
 do syntax highlighting. Pygments has lexers for many, many languages.
@@ -519,6 +522,26 @@ See the
 Scribble post} and
 @hyperlink["https://github.com/greghendershott/frog/blob/master/example/_src/A-Non-Post-Scribble-Page.scrbl"]{example
 Scribble non-post page} for more information.
+
+@subsubsection{Pygments code blocks}
+
+@defmodule[frog/scribble]
+
+@defproc[(pygment-code [#:lang lang string?][str string?] ...) paragraph?]{
+In Scribble source files of course you can use @racket[codeblock],
+@racket[racketblock], and friends to write code blocks for languages
+that have DrRacket style syntax-coloring parsers.
+
+For other languages, you can emit a @tt{<pre>} block with a language
+tag (as happens with @secref["markdown-code-blocks"]) so that it can
+be highlighted by Pygments.
+
+Example usage:
+@pre|{
+@(require frog/scribble)
+@pygment-code[#:lang "js"]{function foo() {return 1;}}
+}|
+}
 
 @subsection{Automatic post features}
 
@@ -836,7 +859,7 @@ See also @secref["Gotchas" #:doc
 @subsection{Widgets}
 
 In addition to the variables described above for each template, some
-predefined functions are available for templates to use: "widgets".
+predefined functions are available for templates to use: ``widgets''.
 
 Anything a widget can do, you could code directly in the
 template. There's no magic. But widgets minimize clutter in the
@@ -844,16 +867,7 @@ templates. Plus they make clearer what are the user-specific
 parameters (as opposed to putting stuff like @litchar{<!-- CHANGE THIS! -->}
 in the template).
 
-For example, @tt{@"@"google-universal-analytics["UA-xxxxx"]} returns
-text for a @tt{<script>} element to insert Google Analytics tracking
-code. You supply it the two user-specific pieces of information, which
-it plugs into the boilerplate and returns.
-
-Likewise there are widgets for things like Twitter and Google+ share
-buttons, Twitter follow button, Disqus comments, older/newer post
-links.
-
-See @tt{widgets.rkt} for the complete list. See the
+See the
 @hyperlink["https://github.com/greghendershott/frog/blob/master/example/_src/page-template.html"]{example
 page template} and
 @hyperlink["https://github.com/greghendershott/frog/blob/master/example/_src/post-template.html"]{example
@@ -861,20 +875,71 @@ post template} for usage examples.
 
 If you'd like to add a widget, pull requests are welcome!
 
+@defmodule[frog/widgets]
 
-@section{MathJax}
+In your templates, this module is already @racket[require]d.
 
-To use MathJax:
+@defproc[(older/newer-links
+[older-uri string?]
+[older-title string?]
+[newer-uri string?]
+[newer-title string?])
+list?]{
+Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
 
-1. Add configuration to the @tt{<head>} of your
-@secref["page-template"]. For a standard MathJax configuration simply
-add @tt{@"@"math-jax[]} (call the @racket[math-jax] function from
-@tt{widgets.rkt}).
+@defproc[(disqus-comments [short-name string?]) list?]{
+Disqus comments. Typically used in @secref["page-template"].
+}
 
-2. In your markdown source files, use @litchar{\\( some math \\)} for
-inline and @litchar{\\[ some math \\]} for display. (Note the
+@defproc[(intense-debate [id-account string?]) list?]{}
+
+
+@defproc[(gist [username string?] [gist-id string?]) list?]{}
+
+@defproc[(math-jax) list?]{
+@itemlist[#:style 'ordered
+@item{Use this in the @tt{<head>} of your @secref["page-template"].}
+
+@item{In your markdown source files, use @litchar{\\( some math \\)} for
+inline and @litchar{\\[ some math \\]} for display. Note the
 @italic{double} backslashes, @litchar{\\}, because in markdown @litchar{\}
-already has a meaning.)
+already has a meaning.}
+]
+}
+
+@defproc[(twitter-follow-button [name string?] [label string? #f]) list?]{}
+
+@defproc[(twitter-share-button [uri string?]) list?]{}
+
+@defproc[(twitter-timeline
+[user string?]
+[widget-id string?]
+[#:width width number? #f]
+[#:height height number? #f]
+[#:lang lang string? #f]
+[#:theme data-theme string? #f]
+[#:link-color data-link-color string? #f]
+[#:border-color data-border-color string? #f]
+[#:tweet-limit data-tweet-limit string? #f]
+[#:chrome data-chrome string? #f]
+[#:aria-polite data-aria-polite string? #f]
+[#:related data-related string? #f])
+list?]{
+See @url["https://dev.twitter.com/docs/embedded-timelines"] for instructions
+how to create a timeline and get its ``widget ID''.
+}
+
+@defproc[(google-universal-analytics [account string?]) list?]{
+For users of ``universal'' analytics (@tt{analytics.js}).
+}
+
+@defproc[(google-analytics [account string?] [domain string?]) list?]{
+For users of ``classic'' analytics (@tt{ga.js}).
+}
+
+@defproc[(google-plus-share-button [full-uri string?]) list?]{}
+
+@defproc[(livefyre [site-id string?]) list?]{}
 
 
 
