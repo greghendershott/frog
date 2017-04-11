@@ -38,6 +38,10 @@
 @title[#:tag "top"]{Frog}
 @author[@hyperlink["https://github.com/greghendershott"]{Greg Hendershott}]
 
+@margin-note{Please use
+@hyperlink["https://github.com/greghendershott/frog/issues"]{GitHub
+Issues} to report bugs or make feature requests.}
+
 Frog is a static web site generator written in
 @hyperlink["http://www.racket-lang.org"]{Racket}.
 
@@ -55,16 +59,12 @@ You can also create non-post pages.
 
 The default templates use
 @hyperlink["http://getbootstrap.com/"]{Bootstrap}, which is
-@hyperlink["https://en.wikipedia.org/wiki/Responsive_web_design"]{"responsive"}
+@hyperlink["https://en.wikipedia.org/wiki/Responsive_web_design"]{``responsive''}
 (adapts to various screen sizes).
 
 Why ``Frog''? @bold{Fr}ozen bl@bold{og}.
 
-The repo is @url["https://github.com/greghendershott/frog"].
-
-Please use
-@hyperlink["https://github.com/greghendershott/frog/issues"]{GitHub
-Issues} to report bugs or make feature requests.
+@table-of-contents[]
 
 
 @section{Quick start}
