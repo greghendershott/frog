@@ -53,7 +53,7 @@ before_script:
 
 script:
   - make install
-  - make check-pkg-deps
+  - make check-deps
   - make test
   - make create-build-example
 
