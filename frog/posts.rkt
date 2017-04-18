@@ -107,7 +107,7 @@
           more?
           (~> body enhance-body xexprs->string))))
 
-;; (listof xexpr?) path? -> (list string? string? string? (listof xexpr?))
+;; (listof xexpr?) path? -> (list string? string? (listof string?) (listof xexpr?))
 (define (meta-data xs path)
   (define (err x)
     (raise-user-error 'error "~a: Must start with metadata but ~a" path x))
@@ -131,7 +131,7 @@
            [s (warn s) h])))
      (list (hash-ref h "Title" (λ _ (err "missing `Title`")))
            (hash-ref h "Date" (λ _ (err "missing `Date`")))
-           (append (~>> (hash-ref h "Tags" (λ _ (err "missing `Tags`")))
+           (append (~>> (hash-ref h "Tags" "")
                         tag-string->tags)
                    (~>> (hash-ref h "Authors" "")
                         tag-string->tags
@@ -172,7 +172,14 @@
                   (list "A Beginner's Scribble Post"
                         "2013-06-19T00:00:00"
                         '("Racket" "blogging")
-                        '()))))
+                        '())))
+  (test-case "https://github.com/greghendershott/frog/issues/189"
+    (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags: \n")) p)
+                  (list "title" "date" '() '()))
+    (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags:\n")) p)
+                  (list "title" "date" '() '()))
+    (check-equal? (meta-data `((pre () "Title: title\nDate: date\n")) p)
+                  (list "title" "date" '() '()))))
 
 (define (tag-string->tags s)
   (match (regexp-split #px"," (string-trim s))
