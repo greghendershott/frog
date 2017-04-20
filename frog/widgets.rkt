@@ -297,3 +297,43 @@
                 src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
         </script>
         })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; KaTeX
+;;
+
+; Must be used before katex-mathjax-compat
+(define (katex)
+  @list{<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css">
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.js">
+        </script>
+       })
+
+; Must be used in <!-- </body> JS --> (or at least after all uses MathJax that you want to render with KaTeX)
+(define (katex-mathjax-compat)
+  @list{<script type="text/javascript">
+        function replaceMathJaxInline(mathtex_node){
+          var katexinline = document.createElement("span");
+          katexinline.setAttribute("class", "inline-equation");
+          katexinline.innerHTML = katex.renderToString(mathtex_node.text);
+          mathtex_node.parentNode.replaceChild(katexinline, mathtex_node);
+        }
+        function replaceMathJaxDisplay(mathtex_node){
+          var katexinline = document.createElement("div");
+          katexinline.setAttribute("class", "equation");
+          katexinline.innerHTML = "\\displaystyle "+katex.renderToString(mathtex_node.text);
+          mathtex_node.parentNode.replaceChild(katexinline, mathtex_node);
+        }
+        var l = document.scripts.length;
+        for(i = 0; i < l; i++) {
+          var s = document.scripts[i]
+          if(s.type === "math/tex"){
+            replaceMathJaxInline(s);
+          }
+          if(s.type === "math/tex; display"){
+            replaceMathJaxDisplay(s);
+          }
+        }
+        </script>
+       })
