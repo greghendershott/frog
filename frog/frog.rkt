@@ -13,7 +13,6 @@
          web-server/servlet-env
          (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
-         setup/getinfo
          "bodies-page.rkt"
          "config.rkt"
          "non-posts.rkt"
@@ -27,35 +26,26 @@
          "util.rkt"
          "verbosity.rkt"
          "watch-dir.rkt"
-         #;"plugin-lib.rkt"
+         (prefix-in plugins: "plugins.rkt")
          )
-(provide serve extend-clean)
+(provide serve)
 
 (module+ test
   (require rackunit))
 
-(define clean-thunks '())
-(define enhance-body-thunks '())
+;; (define clean-thunks '())
+;; (define enhance-body-thunks '())
 
-(define (extend-clean t)
-  (set! clean-thunks (cons t clean-thunks)))
+;; (define (extend-clean t)
+;;   (displayln "Extending clean")
+;;   (set! clean-thunks (cons t clean-thunks)))
 
-(define (extend-enhance-body t)
-  (set! enhance-body-thunks (cons t enhance-body-thunks)))
-
-(define (init-plugins)
-  (define plugins (find-relevant-directories '(frog-plugin)))
-  (unless (null? plugins)
-    (display "Adding plugins:")
-    (for ([p plugins])
-      (define info-proc (get-info/full p))
-      (let ([mod (info-proc 'frog-plugin)])
-        (printf " ~a" (info-proc 'frog-plugin-name))
-        (dynamic-require (build-path p mod) #f)))
-    (newline)))
+;; (define (extend-enhance-body t)
+;;   (set! enhance-body-thunks (cons t enhance-body-thunks)))
 
 (module+ main
   (require racket/cmdline
+           
            "new-post.rkt")
   (when (eq? 'windows (system-type 'os))
     (file-stream-buffer-mode (current-output-port) 'line)
@@ -97,7 +87,7 @@
                [depth (sub1 (length (explode-path prefix)))])
           (simplify-path (apply build-path (list* (www-path)
                                                   (build-list depth (λ _ 'up)))))))
-      (init-plugins)
+      (plugins:init)
       (command-line
        #:program "frog"
        #:once-each
@@ -376,8 +366,7 @@
   (clean-non-post-output-files)
   (clean-tag-output-files)
   (clean-serialized-posts)
-  (for ([c clean-thunks])
-    (c))
+  (plugins:clean)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
