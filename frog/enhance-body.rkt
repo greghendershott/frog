@@ -24,6 +24,7 @@
       syntax-highlight
       add-racket-doc-links
       auto-embed-tweets))
+;;; add plugin hook here
 
 (define (syntax-highlight xs)
   (for/list ([x xs])
