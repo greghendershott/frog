@@ -19,6 +19,7 @@
     <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/pygments.css">
     <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/scribble.css">
     <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/custom.css">
+    @(when nojs <link rel="stylesheet" type="text/css" href="@|uri-prefix|/css/nojs.css">)
     <!-- Feeds -->
     <link rel="alternate" type="application/atom+xml"
           href="@|atom-feed-uri|" title="Atom Feed">
@@ -55,7 +56,7 @@
                   <a href="@|uri|"@|a-attribs|>@|label|</a>
                 </li> })
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <a @(if nojs "href=\"id=nav\"" "href=\"#\"") class="dropdown-toggle" @(if nojs "id=\"nav\"" "data-toggle=\"dropdown\"")>
                 Tags <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="@|uri-prefix|/index.html">All Posts</a></li>
@@ -104,7 +105,8 @@
       </footer>
     </div>
     <!-- </body> JS -->
-    <script type="text/javascript" src="//code.jquery.com/jquery.min.js"></script>
-    <script type="text/javascript" src="@|uri-prefix|/js/bootstrap.min.js"></script>
+    @(unless nojs
+      @list{<script type="text/javascript" src="//code.jquery.com/jquery.min.js"></script>
+            <script type="text/javascript" src="@|uri-prefix|/js/bootstrap.min.js"></script>})
   </body>
 </html>
