@@ -9,6 +9,9 @@
          extend-enhance-body
          enhance-body)
 
+(module+ test
+  (require rackunit))
+
 (define clean-thunks '())
 (define enhance-body-thunks '())
 
@@ -32,14 +35,33 @@
   (define apply0 (curryr apply '()))
   (for-each apply0 clean-thunks))
 
+(module+ test
+  (require racket/port)
+  (extend-clean (thunk (display "foo")))
+  (test-equal? "clean"
+               (with-output-to-string clean)
+               "foo"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (extend-enhance-body t)
   (set! enhance-body-thunks (append enhance-body-thunks (list t))))
 
+;;; foldl??
 (define (enhance-body xs)
   (define (do-it xs ts)
     (if (null? ts)
         xs
         (do-it ((car ts) xs) (cdr ts))))
   (do-it xs enhance-body-thunks))
+
+(module+ test
+  (extend-enhance-body
+   (λ (xs)
+     (map add1 xs)))
+  (extend-enhance-body
+   (λ (xs)
+     (map sub1 xs)))
+  (test-equal? "enhance body"
+               (enhance-body '(1 2 3))
+               '(1 2 3)))
