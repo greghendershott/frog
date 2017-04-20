@@ -328,10 +328,10 @@
         var l = document.scripts.length;
         for(i = 0; i < l; i++) {
           var s = document.scripts[i]
-          if(s.type === "math/tex"){
+          if(s.type.toLowerCase() === "math/tex"){
             replaceMathJaxInline(s);
           }
-          if(s.type === "math/tex; display"){
+          if(s.type.toLowerCase() === "math/tex; mode=display"){
             replaceMathJaxDisplay(s);
           }
         }
