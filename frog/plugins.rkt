@@ -32,8 +32,7 @@
   (set! clean-thunks (append clean-thunks (list t))))
 
 (define (clean)
-  (define apply0 (curryr apply '()))
-  (for-each apply0 clean-thunks))
+  (for ([t clean-thunks]) (t)))
 
 (module+ test
   (require racket/port)
@@ -47,13 +46,8 @@
 (define (extend-enhance-body t)
   (set! enhance-body-thunks (append enhance-body-thunks (list t))))
 
-;;; foldl??
 (define (enhance-body xs)
-  (define (do-it xs ts)
-    (if (null? ts)
-        xs
-        (do-it ((car ts) xs) (cdr ts))))
-  (do-it xs enhance-body-thunks))
+  (foldl (λ (proc v) (proc v)) xs enhance-body-thunks))
 
 (module+ test
   (extend-enhance-body
