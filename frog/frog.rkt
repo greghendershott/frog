@@ -451,7 +451,8 @@
                                [output-dir "."]
                                [python-executable "python"]
                                [pygments-linenos? #t]
-                               [pygments-cssclass "source"])
+                               [pygments-cssclass "source"]
+                               [nojs #t])
       ;; (clean)
       (build)
       (serve #:launch-browser? #t #:watch? #f #:port 3000 #:root "/")

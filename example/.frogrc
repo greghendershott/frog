@@ -125,3 +125,5 @@ python-executable = python
 pygments-linenos? = true
 ## CSS class for the wrapping <div> tag (default: 'highlight').
 pygments-cssclass = source
+## Avoid using JS
+nojs = true
