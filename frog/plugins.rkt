@@ -1,7 +1,12 @@
 #lang racket/base
 
+;;; TODO
+;;; - extend config file
+;;; - extract Pygments to plugin
+
 (require setup/getinfo
-         racket/function)
+         racket/function
+         "verbosity.rkt")
 
 (provide init
          extend-clean
