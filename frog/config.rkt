@@ -33,7 +33,7 @@
          racket/match
          "verbosity.rkt")
 
-(provide parameterize-from-config)
+(provide parameterize-from-config get-config)
 
 (module+ test
   (require rackunit))

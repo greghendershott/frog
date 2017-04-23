@@ -1,12 +1,9 @@
 #lang racket/base
 
 (require racket/contract
-         frog/frog
          frog/plugins)
 
 (provide (contract-out
-          [enhance-body ((any/c . -> . any/c) . -> . any)]
-          [add-cleanup ((-> any) . -> . any)]))
-
-(define enhance-body extend-enhance-body)
-(define add-cleanup extend-clean)
+          [get-config (symbol? any/c . -> . any/c)]
+          [rename extend-enhance-body enhance-body ((any/c . -> . any/c) . -> . any)]
+          [rename extend-clean register-cleanup ((-> any) . -> . any)]))

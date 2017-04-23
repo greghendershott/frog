@@ -33,19 +33,8 @@
 (module+ test
   (require rackunit))
 
-;; (define clean-thunks '())
-;; (define enhance-body-thunks '())
-
-;; (define (extend-clean t)
-;;   (displayln "Extending clean")
-;;   (set! clean-thunks (cons t clean-thunks)))
-
-;; (define (extend-enhance-body t)
-;;   (set! enhance-body-thunks (cons t enhance-body-thunks)))
-
 (module+ main
   (require racket/cmdline
-           
            "new-post.rkt")
   (when (eq? 'windows (system-type 'os))
     (file-stream-buffer-mode (current-output-port) 'line)
@@ -78,6 +67,8 @@
                                [python-executable "python"]
                                [pygments-linenos? #t]
                                [pygments-cssclass "source"])
+      (plugins:init)
+      ;(plugins:parameterize-from-config ".frogrc" (current-namespace))
       (define watch? #f)
       (define port 3000)
       (define root
@@ -87,7 +78,6 @@
                [depth (sub1 (length (explode-path prefix)))])
           (simplify-path (apply build-path (list* (www-path)
                                                   (build-list depth (λ _ 'up)))))))
-      (plugins:init)
       (command-line
        #:program "frog"
        #:once-each

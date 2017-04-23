@@ -6,13 +6,16 @@
 
 (require setup/getinfo
          racket/function
+         (prefix-in config: "config.rkt")
          "verbosity.rkt")
 
 (provide init
          extend-clean
          clean
          extend-enhance-body
-         enhance-body)
+         enhance-body
+         get-config
+         )
 
 (module+ test
   (require rackunit))
@@ -64,3 +67,44 @@
   (test-equal? "enhance body"
                (enhance-body '(1 2 3))
                '(1 2 3)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-config name default)
+  (config:get-config name default ".frogrc"))
+
+(module+ test
+  (check-equal? (get-config 'foo-setting "default") "default"))
+
+;; (define (add-my-parameter name default)
+;;   ;; Add param list to list
+;;   (set! params (cons (cons name default) params)))
+
+;; (define-syntax (add-parameter stx)
+;;   (syntax-parse stx
+;;     [(_ name default)
+;;      (with-syntax ([id ..])
+;;        #'(add-my-parameter ..))])
+  
+;;   (set! params (cons (cons name default) params)))
+
+;; #;(define-syntax (parameterize-from-config stx)
+;;   (syntax-parse stx
+;;     [(_
+;;       body ...)
+;;      (with-syntax
+;;        #'(parameterize ))]))
+
+;; (define (parameterize-from-config cfg-path namespace)
+;;   (namespace-require 'racket/base)      ; for define
+;;   (for ([p params])
+;;     (eval `(define ,(string->symbol (car p))
+;;              (make-parameter ,(get-config (car p)
+;;                                           (cdr p)
+;;                                           ,cfg-path)))
+;;           namespace)))
+
+;; (module+ test
+;;   (add-parameter "current-foo" "bar")
+;;   (parameterize-from-config (current-namespace))
+;;   (check-equal? (eval '(current-foo)) "bar"))
