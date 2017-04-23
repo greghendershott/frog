@@ -13,7 +13,8 @@
          "html.rkt"
          "params.rkt"
          "pygments.rkt"
-         "xexpr-map.rkt")
+         "xexpr-map.rkt"
+         (prefix-in plugins: "plugins.rkt"))
 
 (provide enhance-body)
 
@@ -23,7 +24,8 @@
   (~> xs
       syntax-highlight
       add-racket-doc-links
-      auto-embed-tweets))
+      auto-embed-tweets
+      plugins:enhance-body))
 
 (define (syntax-highlight xs)
   (for/list ([x xs])

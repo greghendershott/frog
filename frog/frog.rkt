@@ -25,7 +25,9 @@
          "tags.rkt"
          "util.rkt"
          "verbosity.rkt"
-         "watch-dir.rkt")
+         "watch-dir.rkt"
+         (prefix-in plugins: "plugins.rkt")
+         )
 (provide serve)
 
 (module+ test
@@ -65,6 +67,8 @@
                                [python-executable "python"]
                                [pygments-linenos? #t]
                                [pygments-cssclass "source"])
+      (plugins:init)
+      ;(plugins:parameterize-from-config ".frogrc" (current-namespace))
       (define watch? #f)
       (define port 3000)
       (define root
@@ -351,7 +355,9 @@
   (clean-post-output-files)
   (clean-non-post-output-files)
   (clean-tag-output-files)
-  (clean-serialized-posts))
+  (clean-serialized-posts)
+  (plugins:clean)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
