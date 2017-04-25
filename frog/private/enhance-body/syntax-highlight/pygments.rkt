@@ -7,9 +7,8 @@
          racket/system
          rackjure/str
          rackjure/conditionals
-         "html.rkt"
-         "params.rkt"
-         "verbosity.rkt")
+         "../../html.rkt"
+         "../../verbosity.rkt")
 
 (provide pygmentize)
 
@@ -24,16 +23,16 @@
 
 (define start
   (let ([start-attempted? #f])
-    (λ ()
+    (λ (python-executable line-numbers? css-class)
       (unless start-attempted?
         (set! start-attempted? #t)
-        (if-let [python (find-executable-path (current-python-executable))]
+        (if-let [python (find-executable-path python-executable)]
           (begin
             (prn0 (str "Launching " python " pipe.py"))
             (match (process
                     (str python " -u " pipe.py
-                         (if (current-pygments-linenos?) " --linenos" "")
-                         " --cssclass " (current-pygments-cssclass)))
+                         (if line-numbers? " --linenos" "")
+                         " --cssclass " css-class))
               [(list in out pid err proc)
                (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
                             (values in out pid err proc))
@@ -42,7 +41,7 @@
                  [(? eof-object?) (say-no-pygments)]
                  [_ (say-pygments)])]
               [_ (say-no-pygments)]))
-          (prn1 "Python not found. Using plain `pre` blocks."))))))
+          (say-no-pygments))))))
 
 (define (say-pygments)
   (prn1 "Using Pygments."))
@@ -68,11 +67,14 @@
      (stop)
      (old-exit-handler v))))
 
-(define (pygmentize code lang) ;; string? string? -> (listof xexpr?)
+(define (pygmentize code lang
+                    #:python-executable python-executable
+                    #:line-numbers? line-numbers?
+                    #:css-class css-class)
   (define (default code)
     `((pre () (code () ,code))))
   (unless (running?)
-    (start))
+    (start python-executable line-numbers? css-class))
   (cond [(running?)
          (displayln lang pyg-out)
          (displayln code pyg-out)

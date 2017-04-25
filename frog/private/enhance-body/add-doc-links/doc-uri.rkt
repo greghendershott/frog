@@ -8,7 +8,7 @@
          scribble/xref
          setup/xref
          syntax/modresolve
-         "verbosity.rkt")
+         "../../verbosity.rkt")
 
 (provide doc-uri
          sym-mods

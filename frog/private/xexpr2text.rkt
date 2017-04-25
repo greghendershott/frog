@@ -1,6 +1,7 @@
 #lang rackjure/base
 
-(require racket/contract
+(require racket/contract/base
+         racket/contract/region
          racket/function
          racket/match
          racket/string

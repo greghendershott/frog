@@ -1,13 +1,14 @@
 #lang at-exp racket/base
 
-(require (for-syntax racket/base)
+(require (for-syntax racket/base
+                     racket/syntax)
+         racket/contract/base
          racket/string
-         racket/function)
-
-(provide (all-defined-out))
-
-(module+ test
-  (require rackunit))
+         racket/function
+         scribble/srcdoc
+         (for-doc racket/base
+                  scribble/manual)
+         "private/define-doc.rkt")
 
 ;; Functions provided by this module are made available by
 ;; `render-template` to templates like `page-template.html` and
@@ -34,12 +35,32 @@
 ;; at different times. Just please do your best to follow the
 ;; indentation style already being used.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Disqus
-;;
+(define/doc (older/newer-links [older-uri (or/c #f string?)]
+                               [older-title (or/c #f string?)]
+                               [newer-uri (or/c #f string?)]
+                               [newer-title (or/c #f string?)]
+                               list?)
+  @{Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
+  @list{
+        <ul class="pager">
+        @(when newer-uri
+          @list{
+                <li class="previous">
+                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
+                </li>
+                })
+        @(when older-uri
+          @list{
+                <li class="next">
+                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
+                </li>
+                })
+        </ul>
+        })
 
-(define (disqus-comments short-name)
+(define/doc (disqus-comments [short-name string?] list?)
+  @{@hyperlink["https://disqus.com/"]{Disqus} comments. Typically used in
+    @secref["post-template"].}
   @list{
         <script type="text/javascript">
           var disqus_shortname = '@|short-name|';
@@ -54,12 +75,8 @@
         <div id="disqus_thread"></div>
         })
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; LiveFyre
-;;
-
-(define (livefyre site-id)
+(define/doc (livefyre [site-id string?] list?)
+  @{@url["http://livefyre.com"]}
   @list{
         <div id="livefyre-comments"></div>
         <script type="text/javascript" src="//zor.livefyre.com/wjs/v3.0/javascripts/livefyre.js"></script>
@@ -80,12 +97,8 @@
         }());
         </script>})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; IntenseDebate
-;;
-
-(define (intense-debate id-account)
+(define/doc (intense-debate [id-account string?] list?)
+  @{@url["https://intensedebate.com/"]}
   @list{
         <script type="text/javascript">
         var idcomments_acct = '@|id-account|';
@@ -95,14 +108,9 @@
         <span id="IDCommentsPostTitle" style="display:none"></span>
         <script type='text/javascript' src='//www.intensedebate.com/js/genericCommentWrapperV2.js'></script>})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Google Analytics
-;;
-
-;; for users of "universal" analytics (analytics.js)
-(define (google-universal-analytics account)
-   @list{
+(define/doc (google-universal-analytics [account string?] list?)
+  @{For users of ``universal'' analytics (@filepath{analytics.js}).}
+  @list{
          <script type="text/javascript">
            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -114,9 +122,11 @@
          </script>
          })
 
-;; for users of "classic" analytics (ga.js)
-(define (google-analytics account domain)
-   @list{
+(define/doc (google-analytics [account string?]
+                              [domain string?]
+                              list?)
+  @{For users of ``classic'' analytics (@filepath{ga.js}).}
+  @list{
          <script type="text/javascript">
            var _gaq = _gaq || [];
            _gaq.push(['_setAccount', '@|account|']);
@@ -133,46 +143,15 @@
          </script>
          })
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Google+
-;;
-
-(define (google-plus-share-button full-uri)
+(define/doc (google-plus-share-button [full-uri string?] list?)
+  @{Typically used in a @secref["post-template"].}
   @list{<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
         <g:plusone size="medium" href="@full-uri"></g:plusone>})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Older/newer post navigation
-;;
-
-(define (older/newer-links older-uri older-title newer-uri newer-title)
-  @list{
-        <ul class="pager">
-        @(when newer-uri
-          @list{
-                <li class="previous">
-                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
-                </li>
-                })
-        @(when older-uri
-          @list{
-                <li class="next">
-                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
-                </li>
-                })
-        </ul>
-        })
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Twitter
-;;
-
-(define (twitter-follow-button name [label #f])
+(define/doc (twitter-follow-button [name string?]
+                                   [label (or/c #f string?) #f]
+                                   list?)
+  @{Typically used in a @secref["page-template"].}
   (let ([label (or label (string-append "Follow " name))])
     @list{
           <a href="https://twitter.com/@|name|"
@@ -194,20 +173,23 @@
           </script>
           }))
 
-;; See https://dev.twitter.com/docs/embedded-timelines for instructions
-;; how to create a timeline and get its "widget ID".
-(define (twitter-timeline user
-                          widget-id
-                          #:width [width #f]
-                          #:height [height #f]
-                          #:lang [lang #f]
-                          #:theme [data-theme #f]
-                          #:link-color [data-link-color #f]
-                          #:border-color [data-border-color #f]
-                          #:tweet-limit [data-tweet-limit #f]
-                          #:chrome [data-chrome #f]
-                          #:aria-polite [data-aria-polite #f]
-                          #:related [data-related #f])
+(define/doc (twitter-timeline
+             [user string?]
+             [widget-id string?]
+             [#:width width (or/c #f number?) #f]
+             [#:height height (or/c #f number?) #f]
+             [#:lang lang (or/c #f string?) #f]
+             [#:theme data-theme (or/c #f string?) #f]
+             [#:link-color data-link-color (or/c #f string?) #f]
+             [#:border-color data-border-color (or/c #f string?) #f]
+             [#:tweet-limit data-tweet-limit (or/c #f string?) #f]
+             [#:chrome data-chrome (or/c #f string?) #f]
+             [#:aria-polite data-aria-polite (or/c #f string?) #f]
+             [#:related data-related (or/c #f string?) #f]
+             list?)
+  @{See @url["https://dev.twitter.com/docs/embedded-timelines"]
+    for instructions how to create a timeline and get its
+    ``widget ID''.}
   ;; Reduce the tedium of translating optional arguments into HTML
   ;; attributes, where #f means no values at all.
   (define-syntax (and/attrs stx)
@@ -227,7 +209,9 @@
                            data-aria-polite
                            data-related))
   @list{<a class="twitter-timeline" href="https://twitter.com/@|user|"
-           data-widget-id="@|widget-id|" @|attrs|></a>
+           data-widget-id="@|widget-id|"
+           @|attrs|>
+        </a>
         <script>
           !function(d,s,id){
               var js,fjs=d.getElementsByTagName(s)[0];
@@ -241,7 +225,8 @@
         </script>
         })
 
-(define (twitter-share-button uri)
+(define/doc (twitter-share-button [uri string?] list?)
+  @{Typically used in a @secref["post-template"].}
   @list{
         <script type="text/javascript">
           !function(d,s,id){
@@ -261,39 +246,36 @@
           "Tweet"</a>
           })
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Gittip
-;;
-
+(provide gittip-receiving)
 (define (gittip-receiving username)
   @list{
         <script data-gittip-username="@|username|" src="//gttp.co/v1.js">
         })
 
+(provide gittip-button)
 (define (gittip-button username)
   @list{
         <script data-gittip-username="@|username|"
         data-gittip-widget="button" src="//gttp.co/v1.js"></script>
         })
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Gist
-;;
-
-(define (gist username id)
+(define/doc (gist [username string?]
+                  [id string?]
+                  list?)
+  @{Include a @hyperlink["https://gist.github.com/"]{gist.}}
   @list{
         <script src="//gist.github.com/@|username|/@|id|.js"></script>
        })
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; MathJax
-;;
-
-(define (math-jax)
-  @list{<script type="text/javascript" async
+(define/doc (math-jax list?)
+  @{@itemlist[#:style 'ordered
+              @item{Use this in the @tt{<head>} of your @secref["page-template"].}
+              @item{In your markdown source files, use @litchar{\\( some math \\)}
+                    for inline and @litchar{\\[ some math \\]} for display. Note
+                    the @italic{double} backslashes, @litchar{\\}, because in
+                    markdown @litchar{\} already has a meaning.}]}
+  @list{
+        <script type="text/javascript" async
                 src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
         </script>
-        })
+       })

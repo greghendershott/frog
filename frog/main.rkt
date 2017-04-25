@@ -1,5 +1,8 @@
-#lang racket
+#lang racket/base
 
-(require "frog.rkt")
+(require (only-in "private/main.rkt" main serve))
 
 (provide serve)
+
+(module+ main
+  (main))

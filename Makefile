@@ -37,9 +37,12 @@ test:
 # Unique to Frog:
 TEST-PROJECT=test-blog
 create-build-example:
-	mkdir $(TEST-PROJECT) && \
-		cd $(TEST-PROJECT) && \
-		raco frog --init && \
-		raco frog -b && \
-		cd .. && \
-		rm -rf $(TEST-PROJECT)
+	mkdir $(TEST-PROJECT)                && \
+	cd $(TEST-PROJECT)                   && \
+	raco frog --init                     && \
+	raco frog --verbose --build          && \
+	raco frog --new-markdown "Blah Blah" && \
+	raco frog --new-scribble "Blah Blah" && \
+	raco frog --verbose --build          && \
+	cd ..                                && \
+	rm -rf $(TEST-PROJECT)

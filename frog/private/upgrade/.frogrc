@@ -1,4 +1,9 @@
-# Frog configuration file.  -*- conf -*-
+# -*- conf -*-
+
+#########################################################################
+# THIS FILE IS OBSOLETE. It is auto-upgraded to an equivalent frog.rkt. #
+# Moved here from example project; keeping for testing convenience.     #
+#########################################################################
 
 # Required: Should NOT end in trailing slash.
 scheme/host = http://www.example.com
