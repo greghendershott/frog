@@ -8,6 +8,7 @@
          racket/path ;moved to racket/base only as of Racket 6
          racket/runtime-path
          racket/set
+         racket/vector
          rackjure/threading
          web-server/dispatchers/dispatch
          web-server/servlet-env
@@ -35,11 +36,14 @@
 (module+ main
   (require racket/cmdline
            "new-post.rkt")
-  (when (eq? 'windows (system-type 'os))
-    (file-stream-buffer-mode (current-output-port) 'line)
-    (file-stream-buffer-mode (current-error-port) 'line))
   (printf "Frog ~a\n" (frog-version))
-  (parameterize* ([top (find-frog-root)])
+  (parameterize ([top (find-frog-root)])
+    (when (vector-member "--init" (current-command-line-arguments))
+      (init-project)
+      (exit 0))
+    (when (eq? 'windows (system-type 'os))
+      (file-stream-buffer-mode (current-output-port) 'line)
+      (file-stream-buffer-mode (current-error-port) 'line))
     (upgrade-from-frogrc (top))
     (blog.rkt:load (top))
     (blog.rkt:init)
@@ -59,7 +63,7 @@
       (""
        "Initialize current directory as a new Frog project, creating"
        "default files as a starting point.")
-      (init-project)]
+      (void)] ;; handled above
      [("--edit")
       (""
        "Opens the file created by -n or -N in editor as specified in .frogrc"
@@ -145,6 +149,24 @@
     [(pregexp "^#lang info\n+\\(define version \"([^\"]+)\""
               (list _ v))
      v]))
+
+(define (init-project)
+  (define (copy path)
+    (define from (~> (build-path example path) simplify-path))
+    (define to   (~> (build-path (top) path) simplify-path))
+    (prn0 "~a" to)
+    (make-directories-if-needed to)
+    (copy-directory/files from to))
+  (prn0 "Creating files in ~a:" (build-path (top)))
+  (copy "blog.rkt")
+  (copy "_src/About.md")
+  (copy "_src/page-template.html")
+  (copy "_src/post-template.html")
+  (copy "_src/posts/2012-01-01-a-2012-blog-post.md")
+  (copy "css/")
+  (copy "js/")
+  (copy "img/")
+  (prn0 "Project ready. Try `raco frog -bp` to build and preview."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -379,25 +401,3 @@
     (unless (get-preference 'external-browser)
       ((dynamic-require 'browser/external
                         'update-browser-preference) #f))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (init-project)
-  (define (copy path)
-    (define from (~> (build-path example path) simplify-path))
-    (define to   (~> (build-path (top) path) simplify-path))
-    (prn0 "~a" to)
-    (make-directories-if-needed to)
-    (copy-directory/files from to))
-  (prn0 "Creating files in ~a:" (build-path (top)))
-  (copy "blog.rkt")
-  (copy "_src/About.md")
-  (copy "_src/page-template.html")
-  (copy "_src/post-template.html")
-  (copy "_src/posts/2012-01-01-a-2012-blog-post.md")
-  (copy "css/")
-  (copy "js/")
-  (copy "img/")
-  (prn0 "Project ready. Try `raco frog -bp` to build and preview."))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
