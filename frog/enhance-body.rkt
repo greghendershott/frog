@@ -11,7 +11,6 @@
          rackjure/threading
          "doc-uri.rkt"
          "html.rkt"
-         "params.rkt"
          "pygments.rkt"
          "xexpr-map.rkt")
 
@@ -21,7 +20,10 @@
 
 (module+ test (require rackunit))
 
-(define (syntax-highlight xs)
+(define (syntax-highlight xs
+                          #:python-executable python-executable
+                          #:line-numbers? line-numbers?
+                          #:css-class css-class)
   (for/list ([x xs])
     (match x
       [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
@@ -29,7 +31,10 @@
        (match brush
          [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
           `(div ([class ,(str "brush: " lang)])
-                ,@(pygmentize (apply string-append texts) lang))]
+                ,@(pygmentize (apply string-append texts) lang
+                              #:python-executable python-executable
+                              #:line-numbers? line-numbers?
+                              #:css-class css-class))]
          [_ `(pre ,@texts)])]
       [x x])))
 
@@ -73,7 +78,7 @@
          [style "color: inherit"])
         "displayln"))))
 
-(define (add-racket-doc-links xs)
+(define (add-racket-doc-links xs #:code? code? #:prose? prose?)
   (for/list ([x (in-list xs)])
     (xexpr-map (lambda (x parents)
                  ;; Not necessarily (tag () "string"). For example it
@@ -85,7 +90,7 @@
                     ;; (code ([class "brush: racket"]) "symbol")
                     [(_
                       `(code ([class "brush: racket"]) . ,xs))
-                     (if (current-racket-doc-link-prose?)
+                     (if prose?
                          `(code () ,@(->racket-doc-links xs))
                          x)]
                     ;; Only spans from Pygments lexed as Racket
@@ -94,7 +99,7 @@
                         ,_ ... ;varies: line numbers?
                         (div ([class "brush: racket"]) . ,_))
                       `(span ([class ,(and c (not "c1"))]) . ,xs))
-                     (if (current-racket-doc-link-code?)
+                     (if code?
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
                          x)]
                     [(_ x) x])))
@@ -104,32 +109,29 @@
 ;; alone in a <p>. (In Markdown source this means for example an
 ;; <http://auto-link> alone with blank lines above and below.) Why?
 ;; The embedded tweet is a block element.
-(define (auto-embed-tweets xs)
-  (define (do-it xs)
-    (for/list ([x xs])
-      (match x
-        [`(p ,_ ...
-             (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
-                                 (list uri))])
-                . ,_))
-         ;; Note: Although v1.0 API stopped working June 2013,
-         ;; /statuses/oembed is an exception. See
-         ;; <https://dev.twitter.com/docs/faq#17750>. That's good
-         ;; because v1.1 requires authentication, which would
-         ;; complicate this (we would sometimes need to launch a
-         ;; browser to do an OAuth flow, yada yada yada).
-         (define oembed-url
-           (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
-                             "url=" (uri-encode uri)
-                             "&align=center"
-                             (if (current-embed-tweet-parents?)
-                                 ""
-                                 "&hide_thread=true"))))
-         (define js (call/input-url oembed-url get-pure-port read-json))
-         (define html ('html js))
-         (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
-                          (append '(div ([class "embed-tweet"]))))]
-               [else x])]
-        [_ x])))
-  (cond [(current-auto-embed-tweets?) (do-it xs)]
-        [else xs]))
+(define (auto-embed-tweets xs #:parents? parents?)
+  (for/list ([x xs])
+    (match x
+      [`(p ,_ ...
+           (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
+                               (list uri))])
+              . ,_))
+       ;; Note: Although v1.0 API stopped working June 2013,
+       ;; /statuses/oembed is an exception. See
+       ;; <https://dev.twitter.com/docs/faq#17750>. That's good
+       ;; because v1.1 requires authentication, which would
+       ;; complicate this (we would sometimes need to launch a
+       ;; browser to do an OAuth flow, yada yada yada).
+       (define oembed-url
+         (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
+                           "url=" (uri-encode uri)
+                           "&align=center"
+                           (if parents?
+                               ""
+                               "&hide_thread=true"))))
+       (define js (call/input-url oembed-url get-pure-port read-json))
+       (define html ('html js))
+       (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
+                        (append '(div ([class "embed-tweet"]))))]
+             [else x])]
+      [_ x])))

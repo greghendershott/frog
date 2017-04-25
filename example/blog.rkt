@@ -1,8 +1,9 @@
-#lang racket/base ;;#lang frog ??
+#lang racket/base
 
 (require frog/params
          frog/enhance-body
-         frog/verbosity)
+         frog/verbosity
+         rackjure/threading)
 
 (provide init
          enhance-body
@@ -13,25 +14,20 @@
 ;; Called early when Frog launches. Use this to set parameters defined
 ;; in frog/params.
 (define (init)
-  (void
-   (displayln "My project's blog.rkt `init` was called.")))
+  (displayln "My project's blog.rkt `init` was called.")
+  (current-scheme/host "http://www.example.com"))
 
 ;; enhance-body : (Listof Xexpr) -> (Listof Xexpr)
 ;;
 ;; Called once per post and non-post page, on the contents -- a list
 ;; of xexprs.
 (define (enhance-body xs)
-  ;; FIXME: Delete the parameters current-python-executable,
-  ;; current-pygments-linenos?, and current-pygments-cssclass. Instead
-  ;; have syntax-highlight take as args. Also probably rename it to
-  ;; something like pgyments-highlight.
-  (syntax-highlight
-   ;; FIXME: Delete the current-embed-tweet-parents? parameter. Instead
-   ;; auto-embed-tweets takes arg.
-   (auto-embed-tweets
-    ;; FIXME: Delete the parameters current-racket-doc-link-code? and
-    ;; current-racket-doc-link-prose?. Instead racket-doc-links arg.
-    (add-racket-doc-links xs))))
+  (~> xs
+      (syntax-highlight #:python-executable "python"
+                        #:line-numbers? #t
+                        #:css-class "source")
+      (auto-embed-tweets #:parents? #t)
+      (add-racket-doc-links #:code? #t #:prose? #f)))
 
 ;; clean : -> Void
 ;;

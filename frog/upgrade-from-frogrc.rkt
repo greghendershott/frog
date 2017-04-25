@@ -19,11 +19,12 @@
       blog.rkt (λ () (default frogrc)))))
 
 (define (default frogrc)
+  (define (get k d) (get-config k d frogrc))
   (define (pw v)
     (pretty-write v)
     (newline))
   (displayln "#lang racket/base\n")
-  (pw `(require frog/params frog/enhance-body))
+  (pw `(require frog/params frog/enhance-body rackjure/threading))
   (pw `(define (init)
          ,@(for/list ([x (in-list '([scheme/host "http://www.example.com"]
                                     [uri-prefix #f]
@@ -38,24 +39,38 @@
                                     [max-feed-items 999]
                                     [decorate-feed-uris? #t]
                                     [feed-image-bugs? #f]
-                                    [auto-embed-tweets? #t]
-                                    [embed-tweet-parents? #t]
-                                    [racket-doc-link-code? #t]
-                                    [racket-doc-link-prose? #f]
                                     [posts-per-page 10]
                                     [index-newest-first? #t]
                                     [posts-index-uri "/index.html"]
                                     [source-dir "_src"]
-                                    [output-dir "."]
-                                    [python-executable "python"]
-                                    [pygments-linenos? #t]
-                                    [pygments-cssclass "source"]))])
+                                    [output-dir "."]))])
              (match-define (list sym def) x)
              `(,(string->symbol (format "current-~a" sym))
-               ,(get-config sym def frogrc)))))
+               ,(get sym def)))))
+  ;; Some things in .frogrc that we used to read into global
+  ;; parameters, but now are simply passed as arguments to functions.
+  (define python-executable (get 'python-executable "python"))
+  (define pygments-linenos? (get 'pygments-linenos? #t))
+  (define pygments-cssclass (get 'pygments-cssclass "source"))
+  (define auto-embed-tweets? (get 'auto-embed-tweets? #t))
+  (define embed-tweet-parents? (get 'embed-tweet-parents? #t))
+  (define racket-doc-link-code? (get 'racket-doc-link-code? #t))
+  (define racket-doc-link-prose? (get 'racket-doc-link-prose? #f))
   (pw `(define (enhance-body xs)
-         (auto-embed-tweets (add-racket-doc-links (syntax-highlight xs)))))
+         (~> xs
+             (syntax-highlight #:python-executable ,python-executable
+                               #:line-numbers? ,pygments-linenos?
+                               #:css-class ,pygments-cssclass)
+             ,@(if auto-embed-tweets?
+                   `((auto-embed-tweets #:parents? ,embed-tweet-parents?))
+                   `())
+             ,@(if (or racket-doc-link-code? racket-doc-link-prose?)
+                   `((add-racket-doc-links #:code? ,racket-doc-link-code?
+                                           #:prose? ,racket-doc-link-prose?))
+                   `()))))
   (pw `(define (clean)
          (void))))
 
-(default "/Users/greg/src/racket/collects/frog/example/.frogrc")
+;; (default "/Users/greg/src/racket/collects/frog/example/.frogrc")
+
+
