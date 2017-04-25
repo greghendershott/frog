@@ -24,28 +24,15 @@
 ;;                           ([twaddle-level 10])
 ;;    ....)
 
-(require (for-syntax racket/base
-                     racket/syntax
-                     syntax/parse
-                     syntax/stx)
-         racket/dict
+(require racket/dict
          racket/file
          racket/match
          "verbosity.rkt")
 
-(provide parameterize-from-config)
+(provide get-config)
 
 (module+ test
   (require rackunit))
-
-(define-syntax (parameterize-from-config stx)
-  (syntax-parse stx
-    [(_ cfg-path:expr ([name:id default:expr] ...)
-        body ...)
-     (with-syntax ([(id ...) (stx-map (λ (x) (format-id stx "current-~a" x))
-                                      #'(name ...))])
-       #'(parameterize ([id (get-config (quote name) default cfg-path)] ...)
-           body ...))]))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)

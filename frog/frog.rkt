@@ -14,7 +14,7 @@
          (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
          "bodies-page.rkt"
-         "config.rkt"
+         (prefix-in blog.rkt: "blog.rkt")
          "non-posts.rkt"
          "params.rkt"
          "paths.rkt"
@@ -23,6 +23,7 @@
          "serialize-posts.rkt"
          "stale.rkt"
          "tags.rkt"
+         "upgrade-from-frogrc.rkt"
          "util.rkt"
          "verbosity.rkt"
          "watch-dir.rkt")
@@ -39,120 +40,97 @@
     (file-stream-buffer-mode (current-error-port) 'line))
   (printf "Frog ~a\n" (frog-version))
   (parameterize* ([top (find-frog-root)])
-    (parameterize-from-config (build-path (top) ".frogrc")
-                              ([scheme/host "http://www.example.com"]
-                               [uri-prefix #f]
-                               [title "Untitled Site"]
-                               [author "The Unknown Author"]
-                               [editor "$EDITOR"]
-                               [editor-command "{editor} {filename}"]
-                               [show-tag-counts? #t]
-                               [permalink "/{year}/{month}/{title}.html"]
-                               [index-full? #f]
-                               [feed-full? #f]
-                               [max-feed-items 999]
-                               [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f]
-                               [auto-embed-tweets? #t]
-                               [embed-tweet-parents? #t]
-                               [racket-doc-link-code? #t]
-                               [racket-doc-link-prose? #f]
-                               [posts-per-page 10]
-                               [index-newest-first? #t]
-                               [posts-index-uri "/index.html"]
-                               [source-dir "_src"]
-                               [output-dir "."]
-                               [python-executable "python"]
-                               [pygments-linenos? #t]
-                               [pygments-cssclass "source"])
-      (define watch? #f)
-      (define port 3000)
-      (define root
-        ;; Default the server root to be the number of parent dirs
-        ;; above (www-path) as there are dirs in current-uri-prefix.
-        (let* ([prefix (or (current-uri-prefix) "/")]
-               [depth (sub1 (length (explode-path prefix)))])
-          (simplify-path (apply build-path (list* (www-path)
-                                                  (build-list depth (λ _ 'up)))))))
-      (command-line
-       #:program "frog"
-       #:once-each
-       [("--init")
-        (""
-         "Initialize current directory as a new Frog project, creating"
-         "default files as a starting point.")
-        (init-project)]
-       [("--edit")
-        (""
-         "Opens the file created by -n or -N in editor as specified in .frogrc"
-         "Supply this flag before one of those flags.")
-        (enable-editor? #t)]
-       #:multi
-       [("-n" "--new") title
-        (""
-         "Create a .md file for a new post based on today's date and <title>.")
-        (new-post title 'markdown)]
-       [("-N" "--new-scribble") title
-        (""
-         "Create a .scrbl file for a new post based on today's date and <title>.")
-        (new-post title 'scribble)]
-       [("-b" "--build")
-        (""
-         "Generate files.")
-        (build)]
-       [("-c" "--clean")
-        (""
-         "Delete generated files.")
-        (clean)]
-       #:once-each
-       [("-w" "--watch")
-        (""
-         "(Experimental: Only rebuilds some files.)"
-         "Supply this flag before -s/--serve or -p/--preview."
-         "Watch for changed files, and generate again."
-         "(You'll need to refresh the browser yourself.")
-        (set! watch? #t)]
-       [("--port") number
-        (""
-         "The port number for -s/--serve or -p/--preview."
-         "Supply this flag before one of those flags."
-         "Default: 3000.")
-        (set! port (string->number number))]
-       [("--root") path
-        (""
-         "The root directory for -s/--serve or -p/--preview."
-         "Supply this flag before one of those flags."
-         "If .frogrc has uri-prefix = /path/to/site/blog, try --root /path/to/site"
-         "Default: One less than the number of dirs in uri-prefix, above output-dir.")
-        (set! root path)]
-       #:once-any
-       [("-s" "--serve")
-        (""
-         "Run a local web server.")
-        (serve #:launch-browser? #f
-               #:watch? watch?
-               #:watch-callback watch-callback
-               #:watch-path (src-path)
-               #:port port
-               #:root root)]
-       [("-p" "--preview")
-        (""
-         "Run a local web server and start your browser on blog home page.")
-        (serve #:launch-browser? #t
-               #:watch? watch?
-               #:watch-callback watch-callback
-               #:watch-path (src-path)
-               #:port port
-               #:root root)]
-       #:once-any
-       [("-S" "--silent") "Silent. Put first."
-        (current-verbosity -1)]
-       [("-v" "--verbose") "Verbose. Put first."
-        (current-verbosity 1)
-        (prn1 "Verbose mode")]
-       [("-V" "--very-verbose") "Very verbose. Put first."
-        (current-verbosity 2)
-        (prn2 "Very verbose mode")]))))
+    (upgrade-from-frogrc (top))
+    (blog.rkt:load (top))
+    (blog.rkt:init)
+    (define watch? #f)
+    (define port 3000)
+    (define root
+      ;; Default the server root to be the number of parent dirs
+      ;; above (www-path) as there are dirs in current-uri-prefix.
+      (let* ([prefix (or (current-uri-prefix) "/")]
+             [depth (sub1 (length (explode-path prefix)))])
+        (simplify-path (apply build-path (list* (www-path)
+                                                (build-list depth (λ _ 'up)))))))
+    (command-line
+     #:program "frog"
+     #:once-each
+     [("--init")
+      (""
+       "Initialize current directory as a new Frog project, creating"
+       "default files as a starting point.")
+      (init-project)]
+     [("--edit")
+      (""
+       "Opens the file created by -n or -N in editor as specified in .frogrc"
+       "Supply this flag before one of those flags.")
+      (enable-editor? #t)]
+     #:multi
+     [("-n" "--new") title
+      (""
+       "Create a .md file for a new post based on today's date and <title>.")
+      (new-post title 'markdown)]
+     [("-N" "--new-scribble") title
+      (""
+       "Create a .scrbl file for a new post based on today's date and <title>.")
+      (new-post title 'scribble)]
+     [("-b" "--build")
+      (""
+       "Generate files.")
+      (build)]
+     [("-c" "--clean")
+      (""
+       "Delete generated files.")
+      (clean)]
+     #:once-each
+     [("-w" "--watch")
+      (""
+       "(Experimental: Only rebuilds some files.)"
+       "Supply this flag before -s/--serve or -p/--preview."
+       "Watch for changed files, and generate again."
+       "(You'll need to refresh the browser yourself.")
+      (set! watch? #t)]
+     [("--port") number
+      (""
+       "The port number for -s/--serve or -p/--preview."
+       "Supply this flag before one of those flags."
+       "Default: 3000.")
+      (set! port (string->number number))]
+     [("--root") path
+      (""
+       "The root directory for -s/--serve or -p/--preview."
+       "Supply this flag before one of those flags."
+       "If .frogrc has uri-prefix = /path/to/site/blog, try --root /path/to/site"
+       "Default: One less than the number of dirs in uri-prefix, above output-dir.")
+      (set! root path)]
+     #:once-any
+     [("-s" "--serve")
+      (""
+       "Run a local web server.")
+      (serve #:launch-browser? #f
+             #:watch? watch?
+             #:watch-callback watch-callback
+             #:watch-path (src-path)
+             #:port port
+             #:root root)]
+     [("-p" "--preview")
+      (""
+       "Run a local web server and start your browser on blog home page.")
+      (serve #:launch-browser? #t
+             #:watch? watch?
+             #:watch-callback watch-callback
+             #:watch-path (src-path)
+             #:port port
+             #:root root)]
+     #:once-any
+     [("-S" "--silent") "Silent. Put first."
+      (current-verbosity -1)]
+     [("-v" "--verbose") "Verbose. Put first."
+      (current-verbosity 1)
+      (prn1 "Verbose mode")]
+     [("-V" "--very-verbose") "Very verbose. Put first."
+      (current-verbosity 2)
+      (prn2 "Very verbose mode")])))
 
 (define (find-frog-root)
   (or (let ([x (find-parent-containing (current-directory) ".frogrc")])
@@ -351,7 +329,8 @@
   (clean-post-output-files)
   (clean-non-post-output-files)
   (clean-tag-output-files)
-  (clean-serialized-posts))
+  (clean-serialized-posts)
+  (blog.rkt:clean))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -411,7 +390,7 @@
     (make-directories-if-needed to)
     (copy-directory/files from to))
   (prn0 "Creating files in ~a:" (build-path (top)))
-  (copy ".frogrc")
+  (copy "blog.rkt")
   (copy "_src/About.md")
   (copy "_src/page-template.html")
   (copy "_src/post-template.html")
@@ -422,38 +401,3 @@
   (prn0 "Project ready. Try `raco frog -bp` to build and preview."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; For interactive development
-(define (build/preview)
-  (parameterize* ([top example]
-                  [current-verbosity 99])
-    (parameterize-from-config (build-path (top) ".frogrc")
-                              ([scheme/host "http://www.example.com"]
-                               [title "Untitled Site"]
-                               [author "The Unknown Author"]
-                               [editor "$EDITOR"]
-                               [editor-command "{editor} {filename}"]
-                               [show-tag-counts? #t]
-                               [permalink "/{year}/{month}/{title}.html"]
-                               [index-full? #f]
-                               [feed-full? #f]
-                               [max-feed-items 999]
-                               [decorate-feed-uris? #t]
-                               [feed-image-bugs? #f]
-                               [auto-embed-tweets? #t]
-                               [embed-tweet-parents? #t]
-                               [racket-doc-link-code? #t]
-                               [racket-doc-link-prose? #f]
-                               [posts-per-page 2] ;small, for testing
-                               [index-newest-first? #t]
-                               [posts-index-uri "/index.html"]
-                               [source-dir "_src"]
-                               [output-dir "."]
-                               [python-executable "python"]
-                               [pygments-linenos? #t]
-                               [pygments-cssclass "source"])
-      ;; (clean)
-      (build)
-      (serve #:launch-browser? #t #:watch? #f #:port 3000 #:root "/")
-      ;; (watch)
-      )))

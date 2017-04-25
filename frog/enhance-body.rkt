@@ -15,15 +15,11 @@
          "pygments.rkt"
          "xexpr-map.rkt")
 
-(provide enhance-body)
+(provide syntax-highlight
+         add-racket-doc-links
+         auto-embed-tweets)
 
 (module+ test (require rackunit))
-
-(define (enhance-body xs)
-  (~> xs
-      syntax-highlight
-      add-racket-doc-links
-      auto-embed-tweets))
 
 (define (syntax-highlight xs)
   (for/list ([x xs])

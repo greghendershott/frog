@@ -6,8 +6,8 @@
          racket/path
          racket/string
          rackjure/threading
+         "blog.rkt"
          "bodies-page.rkt"
-         "enhance-body.rkt"
          "paths.rkt"
          "post-struct.rkt"
          "read-scribble.rkt"

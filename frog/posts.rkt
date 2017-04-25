@@ -12,8 +12,8 @@
          rackjure/threading
          (only-in srfi/1 break)
          "author.rkt"
+         "blog.rkt"
          "bodies-page.rkt"
-         "enhance-body.rkt"
          "html.rkt"
          "params.rkt"
          "paths.rkt"

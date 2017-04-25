@@ -42,7 +42,7 @@
                  [(? eof-object?) (say-no-pygments)]
                  [_ (say-pygments)])]
               [_ (say-no-pygments)]))
-          (prn1 "Python not found. Using plain `pre` blocks."))))))
+          (say-no-pygments))))))
 
 (define (say-pygments)
   (prn1 "Using Pygments."))

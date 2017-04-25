@@ -17,11 +17,11 @@
                          (match (regexp-replace #px"/+$" v "")
                            ["" #f]
                            [v v])))))
-(define current-title (make-parameter #f))
-(define current-author (make-parameter #f))
-(define current-editor (make-parameter #f))
-(define current-editor-command (make-parameter #f))
-(define current-permalink (make-parameter #f))
+(define current-title (make-parameter "Untitled Site"))
+(define current-author (make-parameter "The Unknown Author"))
+(define current-editor (make-parameter "$EDITOR"))
+(define current-editor-command (make-parameter "{editor} {filename}"))
+(define current-permalink (make-parameter "/{year}/{month}/{title}.html"))
 (define current-index-full? (make-parameter #f)) ;index pages: full posts?
 (define current-feed-full? (make-parameter #f))  ;feeds: full posts?
 (define current-show-tag-counts? (make-parameter #t))
