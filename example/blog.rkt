@@ -2,26 +2,26 @@
 
 (require frog/params
          frog/enhance-body
-         frog/verbosity
-         rackjure/threading)
+         racket/contract
+         rackjure/threading
+         xml/xexpr)
 
 (provide init
          enhance-body
          clean)
 
-;; init : -> Void
-;;
 ;; Called early when Frog launches. Use this to set parameters defined
 ;; in frog/params.
-(define (init)
-  (displayln "My project's blog.rkt `init` was called.")
-  (current-scheme/host "http://www.example.com"))
+(define/contract (init)
+  (-> any)
+  (current-scheme/host "http://www.example.com")
+  (current-title "My Blog")
+  (current-author "The Unknown Author"))
 
-;; enhance-body : (Listof Xexpr) -> (Listof Xexpr)
-;;
-;; Called once per post and non-post page, on the contents -- a list
-;; of xexprs.
-(define (enhance-body xs)
+;; Called once per post and non-post page, on the contents.
+(define/contract (enhance-body xs)
+  (-> (listof xexpr/c) (listof xexpr/c))
+  ;; Here we pass the xexprs through a series of functions.
   (~> xs
       (syntax-highlight #:python-executable "python"
                         #:line-numbers? #t
@@ -31,8 +31,12 @@
 
 ;; clean : -> Void
 ;;
-;; Called from `raco frog --clean`. If your `enhance-body` generated
-;; extra files, this is your chance to delete them.
-(define (clean)
-  (void
-   (prn1 "My project's blog.rkt `clean` was called.")))
+;; Called from `raco frog --clean`.
+;;
+;; In `enhance-body`, you can call a function that has the side-effect
+;; of creating extra files (for example responsive images in a variety
+;; of sizes). Such a function should provide a companion you can call
+;; to delete those files; call it here.
+(define/contract (clean)
+  (-> any)
+  (void))
