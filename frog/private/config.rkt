@@ -1,28 +1,7 @@
 #lang racket/base
 
-;; Provide a form that's like `parameterize`, except:
-;;
-;; - Try to read the values from the specified configuration file. The
-;; value supplied for each parameter in the form is used only as a
-;; default if present in the config file.
-;;
-;; - The parameters are assumed to be named with a "current-"
-;; prefix. But in the form, the parameter names are specified without
-;; the "current-" prefix. Likewise the configuration file doesn't use
-;; any "current-" prefix (would be unnecessarily verbose for users).
-;;
-;; - The defaults supplied in the form act as lite types: If the
-;; default is a number, then the config file value must be a number.
-;;
-;; - Booleans may be specified in the config file as any of `#t`,
-;; `#f`, `true`, or `false`.
-;;
-;; Example:
-;;
-;; (define current-twaddle-level (make-parameter 0))
-;; (parameterize-from-config "foo.cfg"
-;;                           ([twaddle-level 10])
-;;    ....)
+;; This is only used to read the deprecated .frogrc -- from which we attempt
+;; to create an equivalent blog.rkt for users.
 
 (require racket/dict
          racket/file
@@ -30,9 +9,6 @@
          "verbosity.rkt")
 
 (provide get-config)
-
-(module+ test
-  (require rackunit))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)
