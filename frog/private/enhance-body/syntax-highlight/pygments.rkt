@@ -7,8 +7,8 @@
          racket/system
          rackjure/str
          rackjure/conditionals
-         "html.rkt"
-         "verbosity.rkt")
+         "../../html.rkt"
+         "../../verbosity.rkt")
 
 (provide pygmentize)
 

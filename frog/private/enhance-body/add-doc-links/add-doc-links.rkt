@@ -1,4 +1,4 @@
-#lang rackjure/base
+#lang racket/base
 
 (require json
          net/uri-codec
@@ -9,34 +9,10 @@
          racket/string
          rackjure/str
          rackjure/threading
-         "doc-uri.rkt"
-         "html.rkt"
-         "pygments.rkt"
-         "xexpr-map.rkt")
+         "../../xexpr-map.rkt"
+         "doc-uri.rkt")
 
-(provide syntax-highlight
-         add-racket-doc-links
-         auto-embed-tweets)
-
-(module+ test (require rackunit))
-
-(define (syntax-highlight xs
-                          #:python-executable python-executable
-                          #:line-numbers? line-numbers?
-                          #:css-class css-class)
-  (for/list ([x xs])
-    (match x
-      [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
-           `(pre ([class ,brush]) ,(? string? texts) ...))
-       (match brush
-         [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-          `(div ([class ,(str "brush: " lang)])
-                ,@(pygmentize (apply string-append texts) lang
-                              #:python-executable python-executable
-                              #:line-numbers? line-numbers?
-                              #:css-class css-class))]
-         [_ `(pre ,@texts)])]
-      [x x])))
+(provide add-racket-doc-links)
 
 (define (->racket-doc-links xs)
   (define (not-empty-string s)
@@ -59,6 +35,7 @@
     " ")))
 
 (module+ test
+  (require rackunit)
   (check-equal?
    (->racket-doc-links '("printf "))
    '((a ((href "http://docs.racket-lang.org/reference/Writing.html#(def._((quote._~23~25kernel)._printf))") (style "color: inherit")) "printf")
@@ -104,34 +81,3 @@
                          x)]
                     [(_ x) x])))
                x)))
-
-;; This intentionally only works for an <a> element that's nested
-;; alone in a <p>. (In Markdown source this means for example an
-;; <http://auto-link> alone with blank lines above and below.) Why?
-;; The embedded tweet is a block element.
-(define (auto-embed-tweets xs #:parents? parents?)
-  (for/list ([x xs])
-    (match x
-      [`(p ,_ ...
-           (a ([href ,(pregexp "^https://twitter.com/[^/]+/status/\\d+$"
-                               (list uri))])
-              . ,_))
-       ;; Note: Although v1.0 API stopped working June 2013,
-       ;; /statuses/oembed is an exception. See
-       ;; <https://dev.twitter.com/docs/faq#17750>. That's good
-       ;; because v1.1 requires authentication, which would
-       ;; complicate this (we would sometimes need to launch a
-       ;; browser to do an OAuth flow, yada yada yada).
-       (define oembed-url
-         (string->url (str "https://api.twitter.com/1/statuses/oembed.json?"
-                           "url=" (uri-encode uri)
-                           "&align=center"
-                           (if parents?
-                               ""
-                               "&hide_thread=true"))))
-       (define js (call/input-url oembed-url get-pure-port read-json))
-       (define html ('html js))
-       (cond [html (~>> (with-input-from-string html read-html-as-xexprs)
-                        (append '(div ([class "embed-tweet"]))))]
-             [else x])]
-      [_ x])))
