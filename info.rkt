@@ -7,6 +7,7 @@
                ["markdown" #:version "0.24"]
                "racket-index"
                ["rackjure" #:version "0.9"]
+               "reprovide-lang"
                "scribble-lib"
                "srfi-lite-lib"
                "web-server-lib"))

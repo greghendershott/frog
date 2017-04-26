@@ -5,6 +5,7 @@
                      web-server/templates
                      scribble/text
                      scribble/manual
+                     "params.rkt"
                      "scribble.rkt"
                      "widgets.rkt")
           scribble/core)

@@ -1,6 +1,7 @@
 #lang rackjure/base
 
-(require racket/contract/base
+(require racket/cmdline
+         racket/contract/base
          racket/contract/region
          racket/file
          racket/function
@@ -16,6 +17,7 @@
          (only-in find-parent-dir find-parent-containing)
          "bodies-page.rkt"
          (prefix-in blog.rkt: "blog.rkt")
+         "new-post.rkt"
          "non-posts.rkt"
          "params.rkt"
          "paths.rkt"
@@ -28,14 +30,14 @@
          "util.rkt"
          "verbosity.rkt"
          "watch-dir.rkt")
-(provide serve)
+
+(provide main
+         serve)
 
 (module+ test
   (require rackunit))
 
-(module+ main
-  (require racket/cmdline
-           "new-post.rkt")
+(define (main)
   (printf "Frog ~a\n" (frog-version))
   (parameterize ([top (find-frog-root)])
     (when (vector-member "--init" (current-command-line-arguments))
@@ -141,7 +143,7 @@
         (and x (simplify-path x)))
       (current-directory)))
 
-(define-runtime-path info.rkt "../info.rkt")
+(define-runtime-path info.rkt "../../info.rkt")
 (define (frog-version)
   ;; Because (require "../info.rkt") (#%info-lookup version) errors in
   ;; some cases with Racket 6, resort to regexp-ing info.rkt as text.

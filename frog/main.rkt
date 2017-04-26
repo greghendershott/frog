@@ -1,5 +1,8 @@
 #lang racket
 
-(require "frog.rkt")
+(require (only-in "private/frog.rkt" main serve))
 
 (provide serve)
+
+(module+ main
+  (main))
