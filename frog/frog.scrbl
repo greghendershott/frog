@@ -5,9 +5,12 @@
                      web-server/templates
                      scribble/text
                      scribble/manual
-                     "params.rkt"
-                     "scribble.rkt"
-                     "widgets.rkt")
+                     xml/xexpr
+                     frog/enhance-body
+                     frog/params
+                     frog/scribble
+                     frog/widgets
+                     frog/verbosity)
           scribble/core)
 
 @(define (grey . contents)
@@ -29,12 +32,6 @@
             #:link-target? #f
             id contract contents ...))
 
-@(define-syntax-rule (defcfg id contract default contents ...)
-  (defthing #:kind "configuration variable"
-            #:link-target? #f
-            id contract
-            #:value default
-            contents ...))
 
 @title[#:tag "top"]{Frog}
 @author[@hyperlink["https://github.com/greghendershott"]{Greg Hendershott}]
@@ -127,9 +124,8 @@ Creating a new blog project is 3 easy steps:
 @item{Tell Frog to create default files and directories.
 @pre{
 $ raco frog --init
-Configuration /tmp/frog-project/.frogrc not found; using defaults.
 Creating files in /tmp/frog-project/:
-/tmp/frog-project/.frogrc
+/tmp/frog-project/blog.rkt
 /tmp/frog-project/_src/About.md
 /tmp/frog-project/_src/page-template.html
 /tmp/frog-project/_src/post-template.html
@@ -148,7 +144,6 @@ starting point:
 @pre{
 $ raco frog -bp
 Frog 0.26
-Using configuration /Users/greg/src/racket/collects/frog/example/.frogrc
 Launching /usr/bin/python pipe.py
 Your Web application is running at http://localhost:3000/index.html.
 Stop this program at any time to terminate the Web Server.
@@ -165,8 +160,8 @@ you and Frog expects:
 @pre{
 project/
   @comment{# Files provided by you:}
-  .frogrc       @comment{# the @secref["config"]}
-  _src/         @comment{# default; see @tt{source-dir} in @secref["config"]}
+  blog.rkt      @comment{# @secref["config"]}
+  _src/         @comment{# default; see @racket[current-source-dir] in @secref["config"]}
     page-template.html  @comment{# entire page layout: @secref["page-template"]}
     post-template.html  @comment{# @tt{<article>} layout: @secref["post-template"]}
     index-template.html @comment{# index pages: @secref["index-template"]}
@@ -196,7 +191,7 @@ Here are the files created by Frog when you run @tt{raco frog -b} to
 (re)build the blog:
 
 @pre{
-project/  @comment{# default; see @tt{output-dir} in @secref["config"]}
+project/  @comment{# default; see @racket[current-output-dir] in @secref["config"]}
   .frog/build   @comment{# a cache to support minimal rebuilds}
   index*.html
   sitemap.txt
@@ -235,157 +230,45 @@ For examples of @tt{pygments.css} code highlighting styles see
 @hyperlink["https://github.com/richleland/pygments-css"]{https://github.com/richleland/pygments-css}.
 
 
-@subsubsection[#:tag "config"]{Configuration file}
+@subsubsection[#:tag "config"]{@tt{blog.rkt}}
 
 When you used @tt{raco frog @literal{--}init} it created a
-@tt{.frogrc} file in your project directory.
+@tt{blog.rkt} file in your project directory.
+@margin-note*{If you upgrade from an older version of Frog that used a
+@tt{.frogrc} file: The first time the newer version of Frog runs, it
+will automatically create an equivalent @tt{blog.rkt} from your
+@tt{.frogrc}. Thereafter the @tt{.frogrc} is ignored.}
 
-This is a simple @tt{conf} file with @tt{@italic{variable} =
-@italic{value}} lines. A @litchar{#} is a comment to the end of the line.
+Your @tt{blog.rkt} lets you use simple Racket code to configure and
+customize your blog. It must @racket[provide] three functions for
+Frog:
 
-@margin-note{For each configuration variable we show a Racket contract
-like @racket[string?] or @racket[boolean?]. But don't quote a
-@racket[string?] value (unless you want the quotes to be in the
-value itself).
+@defproc[#:link-target? #f
+         (init) any]{
 
-@verbatim{
-uri-prefix = /   @comment{#yes}
-uri-prefix = "/" @comment{#no}
-}}
+This is called once, early when Frog starts.
 
-@subsubsection{Required configuration}
+You can set various @secref["parameters"]. Although there are many you
+can experiment with, to start you only need to set a few:
 
-There are just a few things you need to change, to start.
+@itemlist[
+@item{@racket[current-title]}
+@item{@racket[current-author]}
+@item{@racket[current-scheme/host]}]}
 
-@defcfg[title string? "My Awesome Blog"]{The title of the blog. Used
-when generating feeds.}
+@defproc[#:link-target? #f
+         (enhance-body [xs (listof xexpr/c)]) (listof xexpr/c)]{
 
-@defcfg[author string? "The Default Author"]{The default author. Used
-when generating feeds, and provided to @secref["page-template"] as the
-template variable @tt|{@author}|.
+This is called once for each post or non-post page, giving you the
+opportunity to modify the x-expressions representing the content. You
+can use some enhancers supplied by @racket[frog/enhance-body]. You may
+also @racket[require] and use a function provided by a third-party
+package. You may even define a function locally in @tt{blog.rkt}.}
 
-Note that each post may have @tt{Authors} @secref["metadata"] naming
-one or more authors. In that case those author(s) are used for feed
-data. Similarly, both @secref["index-template"] and
-@secref["post-template"] get an @tt|{@authors}| template variable that
-is either post-specific author(s) or the default author here.}
+@defproc[#:link-target? #f
+         (clean) any]{
 
-@defcfg[scheme/host string? "http://www.example.com"]{Should
-@italic{not} end in trailing slash. Used to form full URIs for various
-purposes including @tt{urn:}s in feeds and the @tt|{@full-uri}|
-variable supplied to @secref["templates"].}
-
-@subsubsection{Optional configuration}
-
-You probably won't need to change any of these. If you're just getting
-started, you could skip ahead to @secref["create-posts"].
-
-@defcfg[uri-prefix (or/c string? #f) false]{A path prepended to URIs,
-including those specified here in @secref["config"] such as
-@tt{permalink} and @tt{posts-index-uri}. Changing this from the
-default @racket["/"] is useful when you want to embed your blog in
-another web site.}
-
-@defcfg[editor string? "$EDITOR"]{What editor to launch with @tt{raco
-frog @literal{--}edit}. @racket["$EDITOR"] means to use the
-@tt{$EDITOR} environment variable.}
-
-@defcfg[editor-command string? "{editor} {filename}"]{The command to
-run, in case you need to customize how the editor is called. For
-example, @racket["{editor} {filename}"] will do
-@racket[(system "$EDITOR 2012-01-01-a-blog-post.md")]. See the test
-submodule in @tt{paths.rkt} for more examples.}
-
-@defcfg[show-tag-counts? boolean? true]{Whether to show the count of
-posts next to each tag in the @secref["page-template"] variable
-@tt{tags/feeds}.}
-
-@defcfg[permalink string? "/{year}/{month}/{title}.html"]{Pattern for
-blog post permalinks. An example of the Jekyll "pretty" style would be
-@racket["/blog/{year}/{month}/{day}/{title}/index.html"].
-
-Another available pattern is @tt{{filename}}, which is the
-@tt{this-part} portion of your post's @tt{YYYY-MM-DD-this-part.md}
-file name. This is in case you don't like Frog's encoding of your post
-title and want to specify it exactly yourself, e.g. to match a
-previous blog URI.}
-
-@defcfg[posts-index-uri string? "/index.html"]{URI of the first index
-page for posts.}
-
-@defcfg[index-full? boolean? true]{Should index page items contain
-full posts -- more than just the portion above ``the jump''
-@litchar{<!-- more -->} marker (if any)?}
-
-@defcfg[index-newest-first? boolean? true]{Should index page items be
-sorted newest first?}
-
-@defcfg[feed-full? boolean? true]{Should feed items contain full posts
--- more than just the portion above ``the jump'' @litchar{<!-- more
--->} marker (if any)?}
-
-@defcfg[posts-per-page exact-positive-integer? 10]{How many posts per
-page for index pages?}
-
-@defcfg[max-feed-items exact-positive-integer? 20]{How many items to
-include in feeds? Older items in excess of this will not appear in the
-feed at all.}
-
-@defcfg[decorate-feed-uris? boolean? true]{Decorate feed URIs with
-Google Analytics query parameters like @tt{utm_source}?}
-
-@defcfg[feed-image-bugs? boolean? true]{Insert in each feed item an image bug
-whose URI is decorated with Google Analytics query parameters like
-@tt{utm_source}?}
-
-@defcfg[auto-embed-tweets? boolean? true]{Replace links to tweets with
-embedded tweets? In markdown, must be auto-links alone in a
-pargraph (blank lines above and below), for example:
-
-@verbatim{<https://twitter.com/racketlang/status/332176422003163138>}}
-
-@defcfg[embed-tweet-parents? boolean? true]{When embedding tweets that
-are replies, show the parent tweet along #with the reply?}
-
-@defcfg[racket-doc-link-code? boolean? true]{Try to automatically link
-to Racket documentation, symbols in @litchar{```racket} markdown
-fenced code blocks?}
-
-@defcfg[racket-doc-link-prose? boolean? true]{Try to automatically
-link to Racket documentation, symbols in markdown of the form
-@litchar{`symbol`[racket]}? i.e. This is similar to the
-@tt|{@racket[]}| form in Scribble.}
-
-@defcfg[source-dir string? "_src"]{
-The source directory.
-
-If you deploy to GitHub pages then it is simplest to keep this under
-the repo/project top directory.
-
-This may be an absolute or relative path. If relative, it's relative
-to the project top directory, i.e. to where the @secref["config"] is
-located.}
-
-@defcfg[output-dir string? "."]{
-The output directory where generated HTML and other files should go.
-
-If you deploy to e.g. GitHub pages then it is simplest to put the
-output in the repo/project top directory, which is why this defaults
-to @racket["."]. But you may change it if you prefer to copy the
-output files to their final destination.
-
-This may be an absolute or relative path. If relative, it's relative
-to the project top directory, i.e. to where the @secref["config"] is
-located.}
-
-@defcfg[python-executable path-string? "python"]{Where to find
-Python.}
-
-@defcfg[pygments-linenos? boolean? true]{Whether Pygments should
-include line numbers in its HTML output.}
-
-@defcfg[pygments-cssclass string? "source"]{The CSS class Pygments
-should use for the wrapping @tt{<div>} tag.}
+Called during @tt{raco frog @literal{--}clean}.}
 
 
 @subsection[#:tag "create-posts"]{Creating blog posts}
@@ -957,7 +840,7 @@ structure, e.g. @tt{example.com/blog/}. To do so:
 @item{In your @secref["post-template"] change URIs from @tt{/} to
 @tt{/blog/} as appropriate.}
 
-@item{In the @secref["config"] set @litchar{uri-prefix = /blog}. This
+@item{In @secref["config"] set @litchar{uri-prefix = /blog}. This
 causes URIs generated by Frog to be prefixed with @tt{/blog}. (Other
 URIs --- such as @tt{posts-index-uri} and @tt{permalink} --- will
 automatically be prefixed with @tt{blog/}, so @italic{don't} change
@@ -985,3 +868,152 @@ In your Frog project directory, create an output directory named
 Then follow the steps above, including setting @litchar{output-dir = ~user}
 and @litchar{uri-prefix = /~user}, and adjusting your
 @secref["page-template"] and so on.
+
+
+@section[#:tag "parameters"]{Parameters}
+
+You may set these parameters in the @racket[init] function in your
+@secref["config"].
+
+@defmodule[frog/params]
+
+@defparam[current-title v string? #:value "My Awesome Blog"]{The title
+of the blog. Used when generating feeds.}
+
+@defparam[current-author v string? #:value "The Default Author"]{The
+default author. Used when generating feeds, and provided to
+@secref["page-template"] as the template variable @tt|{@author}|.
+
+Note that each post may have @tt{Authors} @secref["metadata"] naming
+one or more authors. In that case those author(s) are used for feed
+data. Similarly, both @secref["index-template"] and
+@secref["post-template"] get an @tt|{@authors}| template variable that
+is either post-specific author(s) or the default author here.}
+
+@defparam[current-scheme/host v string? #:value "http://www.example.com"]{
+Should @italic{not} end in trailing slash. Used to form full URIs for
+various purposes including @tt{urn:}s in feeds and the
+@tt|{@full-uri}| variable supplied to @secref["templates"].}
+
+@defparam[current-uri-prefix v (or/c string? #f) #:value #f]{A path
+prepended to URIs, including those specified here in @secref["config"]
+such as @tt{permalink} and @tt{posts-index-uri}. Changing this from
+the default @racket["/"] is useful when you want to embed your blog in
+another web site.}
+
+@defparam[current-editor v string? #:value "$EDITOR"]{What editor to
+launch with @tt{raco frog @literal{--}edit}. @racket["$EDITOR"] means
+to use the @tt{$EDITOR} environment variable.}
+
+@defparam[current-editor-command v string? #:value "{editor} {filename}"]{
+The command to run, in case you need to customize how the editor is
+called. For example, @racket["{editor} {filename}"] will do
+@racket[(system "$EDITOR 2012-01-01-a-blog-post.md")]. See the test
+submodule in @tt{paths.rkt} for more examples.}
+
+@defparam[current-show-tag-counts? v boolean? #:value #t]{Whether to
+show the count of posts next to each tag in the
+@secref["page-template"] variable @tt{tags/feeds}.}
+
+@defparam[current-permalink v string? #:value "/{year}/{month}/{title}.html"]{
+Pattern for blog post permalinks. An example of the Jekyll "pretty"
+style would be
+@racket["/blog/{year}/{month}/{day}/{title}/index.html"].
+
+Another available pattern is @tt{{filename}}, which is the
+@tt{this-part} portion of your post's @tt{YYYY-MM-DD-this-part.md}
+file name. This is in case you don't like Frog's encoding of your post
+title and want to specify it exactly yourself, e.g. to match a
+previous blog URI.}
+
+@defparam[current-posts-index-uri v string? #:value "/index.html"]{
+URI of the first index page for posts.}
+
+@defparam[current-index-full? v boolean? #:value #t]{Should index page
+items contain full posts -- more than just the portion above ``the
+jump'' @litchar{<!-- more -->} marker (if any)?}
+
+@defparam[current-index-newest-first? v boolean? #:value #t]{Should
+index page items be sorted newest first?}
+
+@defparam[current-feed-full? v boolean? #:value #t]{Should feed items
+contain full posts -- more than just the portion above ``the jump''
+@litchar{<!-- more -->} marker (if any)?}
+
+@defparam[current-posts-per-page n exact-positive-integer? #:value 10]{
+How many posts per page for index pages?}
+
+@defparam[current-max-feed-items n exact-positive-integer? #:value 20]{
+How many items to include in feeds? Older items in excess of this will
+not appear in the feed at all.}
+
+@defparam[current-decorate-feed-uris? v boolean? #:value #t]{Decorate
+feed URIs with Google Analytics query parameters like
+@tt{utm_source}?}
+
+@defparam[current-feed-image-bugs? v boolean? #:value #t]{Insert in
+each feed item an image bug whose URI is decorated with Google
+Analytics query parameters like @tt{utm_source}?}
+
+@defparam[current-source-dir v path-string? #:value "_src"]{
+The source directory.
+
+If you deploy to GitHub pages then it is simplest to keep this under
+the repo/project top directory.
+
+This may be an absolute or relative path. If relative, it's relative
+to the project top directory, i.e. to where @secref["config"] is
+located.}
+
+@defparam[current-output-dir v path-string? #:value "."]{
+The output directory where generated HTML and other files should go.
+
+If you deploy to e.g. GitHub pages then it is simplest to put the
+output in the repo/project top directory, which is why this defaults
+to @racket["."]. But you may change it if you prefer to copy the
+output files to their final destination.
+
+This may be an absolute or relative path. If relative, it's relative
+to the project top directory, i.e. to where @secref["config"] is
+located.}
+
+
+@section[#:tag "body-enhancers"]{Body enhancers}
+
+@defmodule[frog/enhance-body]
+
+@defproc[(syntax-highlight
+          [xs (listof xexpr/c)]
+          [#:python-executable python-executable string?]
+          [#:line-numbers? line-numbers? boolean?]
+          [#:css-class css-class string?])
+         (listof xexpr/c)]{
+Use Pygments to highlight markdown code blocks.
+
+In Scribble sources, you can use @racket[pygment-code].}
+
+@defproc[(auto-embed-tweets
+          [xs (listof xexpr/c)]
+          [#:parents? parents? boolean?])
+         (listof xexpr/c)]{
+
+Replace links to tweets with embedded tweets. In markdown, must be
+auto-links alone in a pargraph (blank lines above and below), for
+example:
+
+@verbatim{<https://twitter.com/racketlang/status/332176422003163138>}
+
+When @racket[parents?] also embeds parent tweets.}
+
+@defproc[(add-racket-doc-links
+          [xs (listof xexpr/c)]
+          [#:code? code? boolean?]
+          [#:prose? prose? boolean?])
+         (listof xexpr/c)]{
+
+When @racket[code?] try to automatically link to Racket documentation
+from symbols in @litchar{```racket} markdown fenced code blocks.
+
+When @racket[prose?] try to automatically link to Racket documentation
+from symbols in markdown of the form @litchar{`symbol`[racket]}? i.e.
+This is similar to the @tt|{@racket[]}| form in Scribble.}
