@@ -94,7 +94,7 @@
        "(Experimental: Only rebuilds some files.)"
        "Supply this flag before -s/--serve or -p/--preview."
        "Watch for changed files, and generate again."
-       "(You'll need to refresh the browser yourself.")
+       "(You'll need to refresh the browser yourself.)")
       (set! watch? #t)]
      [("--port") number
       (""

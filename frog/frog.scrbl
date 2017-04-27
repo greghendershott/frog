@@ -990,13 +990,17 @@ located.}
 
 @defproc[(syntax-highlight
           [xs (listof xexpr/c)]
-          [#:python-executable python-executable string?]
+          [#:python-executable python-executable path-string?]
           [#:line-numbers? line-numbers? boolean?]
           [#:css-class css-class string?])
          (listof xexpr/c)]{
 Use Pygments to highlight markdown code blocks.
+@margin-note*{Tip: In Scribble format sources, you can use
+@racket[pygment-code].}
 
-In Scribble sources, you can use @racket[pygment-code].}
+The value of @racket[python-executable] is given to
+@racket[find-executable-path], so @racket["python"] is likely
+to work fine.}
 
 @defproc[(auto-embed-tweets
           [xs (listof xexpr/c)]
