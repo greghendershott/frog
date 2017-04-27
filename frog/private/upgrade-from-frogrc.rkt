@@ -23,7 +23,8 @@
   (define (pw v)
     (pretty-write v)
     (newline))
-  (displayln "#lang racket/base\n")
+  (displayln "#lang racket/base")
+  (newline)
   (pw `(require frog/params frog/enhance-body rackjure/threading))
   (pw `(define (init)
          ,@(for/list ([x (in-list '([scheme/host "http://www.example.com"]
@@ -70,7 +71,5 @@
                    `()))))
   (pw `(define (clean)
          (void))))
-
-;; (default "/Users/greg/src/racket/collects/frog/example/.frogrc")
 
 

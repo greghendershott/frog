@@ -75,9 +75,8 @@ Why ``Frog''? @bold{Fr}ozen bl@bold{og}.
 Install @hyperlink["http://racket-lang.org/download/"]{Racket}.
 
 On macOS you will need to add @litchar{/Applications/Racket\
-6.8/bin} (or similar) to your @tt{PATH} in order to be able to run
-things like @tt{racket} or @tt{raco} at the command line.
-}
+6.8/bin} (or similar) to your @envvar{PATH} in order to be able to run
+things like @exec{racket} or @exec{raco} at the command line. }
 
 @item{
 Install Frog:
@@ -91,11 +90,11 @@ fenced code blocks:
 
 @pre{$ sudo easy_install --upgrade Pygments}
 
-@margin-note{Why @litchar{--upgrade}? You probably want the most
-recent version of Pygments because new languages are constantly being
-added. For example, Racket is supported starting in Pygments 1.6.}
+@margin-note{Why @DFlag{upgrade}? You probably want the most recent
+version of Pygments because new languages are constantly being added.
+For example, Racket is supported starting in Pygments 1.6.}
 
-If that fails, try again after installing @tt{easy_install}:
+If that fails, try again after installing @exec{easy_install}:
 
 @pre{$ sudo apt-get install python-setuptools}
 
@@ -154,7 +153,7 @@ Web Server stopped.
 
 @subsubsection{Project file tree}
 
-Here is the file tree that @tt{raco frog @literal{--}init} creates for
+Here is the file tree that @exec{raco frog @DFlag{init}} creates for
 you and Frog expects:
 
 @pre{
@@ -166,7 +165,7 @@ project/
     post-template.html  @comment{# @tt{<article>} layout: @secref["post-template"]}
     index-template.html @comment{# index pages: @secref["index-template"]}
     posts/
-      @comment{# You'll create these using @tt{raco frog -n <post-title>}}
+      @comment{# You'll create these using @exec{raco frog @Flag{n} <post-title>}}
       2013-01-01-a-blog-post.md
       2013-02-15-another-blog-post.md
       @comment{...}
@@ -187,8 +186,8 @@ project/
   favicon.ico
 }
 
-Here are the files created by Frog when you run @tt{raco frog -b} to
-(re)build the blog:
+Here are the files created by Frog when you run @exec{raco frog
+@Flag{b}} to (re)build the blog:
 
 @pre{
 project/  @comment{# default; see @racket[current-output-dir] in @secref["config"]}
@@ -198,7 +197,7 @@ project/  @comment{# default; see @racket[current-output-dir] in @secref["config
   tags/
   feeds/
   @comment{# Post pages are in subdirs.}
-  @comment{# Exact layout depends on @tt{permalink} in @secref["config"].}
+  @comment{# Exact layout depends on @racket[current-permalink] in @secref["config"].}
   blog/
     2013/
       01/
@@ -226,21 +225,22 @@ Magic}. Also,
 @hyperlink["http://bootswatch.com/"]{http://bootswatch.com/} has some
 ready-made themes.
 
-For examples of @tt{pygments.css} code highlighting styles see
+For examples of @filepath{pygments.css} code highlighting styles see
 @hyperlink["https://github.com/richleland/pygments-css"]{https://github.com/richleland/pygments-css}.
 
 
 @subsubsection[#:tag "config"]{@tt{blog.rkt}}
 
-When you used @tt{raco frog @literal{--}init} it created a
-@tt{blog.rkt} file in your project directory.
-@margin-note*{If you upgrade from an older version of Frog that used a
-@tt{.frogrc} file: The first time the newer version of Frog runs, it
-will automatically create an equivalent @tt{blog.rkt} from your
-@tt{.frogrc}. Thereafter the @tt{.frogrc} is ignored.}
+When you used @exec{raco frog @DFlag{init}} it created a
+@filepath{blog.rkt} file in your project directory. @margin-note*{If
+you upgrade from an older version of Frog that used a
+@filepath{.frogrc} file: The first time the newer version of Frog
+runs, it will automatically create an equivalent @filepath{blog.rkt}
+from your @filepath{.frogrc}. Thereafter the @filepath{.frogrc} is
+ignored.}
 
-Your @tt{blog.rkt} lets you use simple Racket code to configure and
-customize your blog. It must @racket[provide] three functions for
+Your @filepath{blog.rkt} lets you use simple Racket code to configure
+and customize your blog. It must @racket[provide] three functions for
 Frog:
 
 @defproc[#:link-target? #f
@@ -263,25 +263,27 @@ This is called once for each post or non-post page, giving you the
 opportunity to modify the x-expressions representing the content. You
 can use some enhancers supplied by @racket[frog/enhance-body]. You may
 also @racket[require] and use a function provided by a third-party
-package. You may even define a function locally in @tt{blog.rkt}.}
+package. You may even define a function locally in
+@filepath{blog.rkt}.}
 
 @defproc[#:link-target? #f
          (clean) any]{
 
-Called during @tt{raco frog @literal{--}clean}.}
+Called during @exec{raco frog @DFlag{clean}}.}
 
 
 @subsection[#:tag "create-posts"]{Creating blog posts}
 
 A typical workflow:
 
-1. Create a new post with @tt{raco frog -n "My Post Title"}. The
-name of the new @tt{.md} file is displayed to stdout.
+1. Create a new post with @exec{raco frog @Flag{n} "My Post Title"}.
+The name of the new @tt{.md} file is displayed to stdout.
 
 2. Edit the @tt{.md} file in your preferred plain text editor.
 
-3. Regenerate your site and preview it with @tt{raco frog -bp}. (You
-might repeat steps 2 and 3 a few times until you're satisfied.)
+3. Regenerate your site and preview it with @exec{raco frog
+@Flag{bp}}. (You might repeat steps 2 and 3 a few times until you're
+satisfied.)
 
 4. Deploy. If you're using GitHub Pages, you can commit and push to
 update your site. If you're using some other method, you can copy or
@@ -290,16 +292,16 @@ rsync the files to your static file server.
 
 @section{Posts}
 
-You create new posts in @tt{_src/posts/}. There are several source
-formats.
+You create new posts in @filepath{_src/posts/}. There are several
+source formats.
 
 @subsection{Markdown source files}
 
 Post source files in markdown format should be named
-@tt{YYYY-MM-DD-TITLE.md} and need to have some metadata in the first
-few lines.
+@filepath{@italic{YYYY-MM-DD-TITLE}.md} and need to have some metadata
+in the first few lines.
 
-You can do @tt{raco frog -n "My Title"} to create such a file
+You can do @exec{raco frog @Flag{n} "My Title"} to create such a file
 easily. This will also fill in the required metadata section. The
 markdown file starts with a code block (indented 4 spaces) that must
 contain these three lines.
@@ -373,13 +375,14 @@ When using fenced code blocks, you can specify a language (as on
 
 That @litchar{language} is given to Pygments as the lexer to use.
 
-The colors are controlled by your @tt{css/pygments.css} file. There
-are @hyperlink["https://github.com/richleland/pygments-css"]{examples
-of many styles}.
+The colors are controlled by your @filepath{css/pygments.css} file.
+There are
+@hyperlink["https://github.com/richleland/pygments-css"]{examples of
+many styles}.
 
 If you use larger font sizes, code may wrap and get out of alignment
 with the line numbers. To avoid the wrapping, add the following to
-your @tt{css/custom.css}:
+your @filepath{css/custom.css}:
 
 @pre[#:title "custom.css"]|{
 /* When highlighted code blocks are too wide, they */
@@ -398,7 +401,7 @@ Post source files in Scribble format should be named
 @tt{YYYY-MM-DD-TITLE.scrbl} and need to have some @secref["metadata"]
 in the first few lines.
 
-You can do @tt{raco frog -N "My Title"} to create such a file
+You can do @exec{raco frog @Flag{N} "My Title"} to create such a file
 easily. This will also fill in the required metadata section.
 
 See the
@@ -431,12 +434,14 @@ Example usage:
 
 Posts are automatically included in various index pages and feeds.
 
-All posts go on the home page @tt{/index.html}, in an Atom feed
-@tt{/feeds/all.atom.xml}, and in an RSS feed @tt{/feeds/all.rss.xml}.
+All posts go on the home page @filepath{/index.html}, in an Atom feed
+@filepath{/feeds/all.atom.xml}, and in an RSS feed
+@filepath{/feeds/all.rss.xml}.
 
-Posts for each tag go on an index page @tt{/tags/<tag>.html}, in an
-Atom feed @tt{/feeds/<tag>.atom.xml}, and in an RSS feed
-@tt{/feeds/<tag>.rss.xml}.
+Posts for each tag go on an index page
+@filepath{/tags/@italic{<tag>}.html}, in an Atom feed
+@filepath{/feeds/@italic{<tag>}.atom.xml}, and in an RSS feed
+@filepath{/feeds/@italic{<tag>}.rss.xml}.
 
 The default @secref["post-template"] provides:
 
@@ -456,10 +461,12 @@ post pages) also provides:
 
 @section{Non-post pages}
 
-You can put @tt{.md}, @tt{.mdt}, and @tt{.scrbl} files in @tt{_src/}
-and its subdirs --- @italic{except} @tt{_src/posts/} --- and they will
-be converted to HTML pages. For example, @tt{_src/About.md} will be
-@tt{/About.html} in the site.
+You can put @tt{.md}, @tt{.mdt}, and @tt{.scrbl} files in
+@filepath{_src/} and its subdirs --- @italic{except}
+@filepath{_src/posts/} --- and they will be converted to HTML pages.
+
+For example, @filepath{_src/About.md} will be @filepath{/About.html}
+in the site.
 
 Non-post pages are @italic{not} included in any automatically
 generated index pages or feeds. You can manually add links to them in
@@ -468,9 +475,9 @@ the nav bar by editing that portion of your @secref["page-template"].
 
 @section{sitemap.txt}
 
-A @tt{/sitemap.txt} file (for web crawlers) is automatically generated
-and includes all post and non-post pages. It does @italic{not} include
-index pages for tags.
+A @filepath{/sitemap.txt} file (for web crawlers) is automatically
+generated and includes all post and non-post pages. It does
+@italic{not} include index pages for tags.
 
 
 @section[#:tag "templates"]{Templates}
@@ -496,7 +503,7 @@ to minimize repetition.
 
 @subsection[#:tag "page-template"]{Page template}
 
-The @tt{page-template.html} template specifies an @tt{<html>}
+The @filepath{page-template.html} template specifies an @tt{<html>}
 element used by Frog to generate every page on your site.
 
 Anything in the file that looks like @tt{@"@variable"} or
@@ -541,16 +548,16 @@ Previous related page, if any.
 
 @subsection[#:tag "post-template"]{Post template}
 
-The @tt{post-template.html} template determines how blog posts are
-laid out on pages that are dedicated to one post. The default template
-defines an @tt{<article>} element.
+The @filepath{post-template.html} template determines how blog posts
+are laid out on pages that are dedicated to one post. The default
+template defines an @tt{<article>} element.
 
-For pages that are blog posts, the result of @tt{post-template.html}
-becomes most of the @tt|{@|contents|}| variable in the
-@secref["page-template"]. In other words, the post template is
-effectively nested in the page template. (They are two separate
-templates so that the page template can also be used for pages that
-are not blog post pages.)
+For pages that are blog posts, the result of
+@filepath{post-template.html} becomes most of the @tt|{@|contents|}|
+variable in the @secref["page-template"]. In other words, the post
+template is effectively nested in the page template. (They are two
+separate templates so that the page template can also be used for
+pages that are not blog post pages.)
 
 
 @nested[#:style 'inset
@@ -565,9 +572,10 @@ are not blog post pages.)
 +---------------------------+
 }]
 
-This template does @italic{not} control how a blog post is laid
-out on an index page such as @tt{/index.html} or
-@tt{/tags/<some-tag>.html} --- for that, see @secref["index-template"].
+This template does @italic{not} control how a blog post is laid out on
+an index page such as @filepath{/index.html} or
+@filepath{/tags/@italic{<some-tag>}.html} --- for that, see
+@secref["index-template"].
 
 The main purpose of this template is to specify things like Disqus
 comments, Tweet and +1 sharing buttons, and older/newer links ---
@@ -608,7 +616,7 @@ they are used in the default template.
 
 @subsection[#:tag "index-template"]{Index template}
 
-The @tt{index-template.html} template determines how blog posts
+The @filepath{index-template.html} template determines how blog posts
 are laid out on index pages.
 
 Typically it would be similar to your @secref["post-template"], but
@@ -840,34 +848,31 @@ structure, e.g. @tt{example.com/blog/}. To do so:
 @item{In your @secref["post-template"] change URIs from @tt{/} to
 @tt{/blog/} as appropriate.}
 
-@item{In @secref["config"] set @litchar{uri-prefix = /blog}. This
-causes URIs generated by Frog to be prefixed with @tt{/blog}. (Other
-URIs --- such as @tt{posts-index-uri} and @tt{permalink} --- will
-automatically be prefixed with @tt{blog/}, so @italic{don't} change
-those!)}
+@item{In @secref["config"] use @racket[(current-uri-prefix "/blog")].
+This causes URIs generated by Frog to be prefixed with
+@tt{/blog}. (Other URIs --- such as @racket[current-posts-index-uri]
+and @racket[current-permalink] --- will automatically be prefixed with
+@tt{blog/}, so @italic{don't} change those!)}
 
 ]
 
-Using
-
-@pre{raco frog -p}
-
-should open on your blog's index page at @tt{/blog/index.html},
-automatically. But you can add a @litchar{--root} flag in case
-you need to control it more specifically.
+Using @exec{raco frog @Flag{p}} should open on your blog's index page
+at @filepath{/blog/index.html}, automatically. But you can add a
+@DFlag{root} flag in case you need to control it more specifically.
 
 @subsection{Tilde Club members}
 
 Will your blog be hosted at @tt{http://example.com/~user}?
 
 In your Frog project directory, create an output directory named
-@tt{~user}:
+@filepath{~user}:
 
 @pre{$ mkdir \~user  @comment{#use @litchar{\~} in shell for literal @tt{~}}}
 
-Then follow the steps above, including setting @litchar{output-dir = ~user}
-and @litchar{uri-prefix = /~user}, and adjusting your
-@secref["page-template"] and so on.
+Then follow the steps above, including
+@racket[(current-output-dir "~user")] and
+@racket[(current-uri-prefix "/~user")]} in your @secref["config"], and
+adjusting your @secref["page-template"] and so on.
 
 
 @section[#:tag "parameters"]{Parameters}
@@ -896,22 +901,23 @@ various purposes including @tt{urn:}s in feeds and the
 @tt|{@full-uri}| variable supplied to @secref["templates"].}
 
 @defparam[current-uri-prefix v (or/c string? #f) #:value #f]{A path
-prepended to URIs, including those specified here in @secref["config"]
-such as @tt{permalink} and @tt{posts-index-uri}. Changing this from
-the default @racket["/"] is useful when you want to embed your blog in
-another web site.}
+prepended to URIs, including @racket[current-permalink] and
+@racket[current-posts-index-uri]. Changing this from the default
+@racket["/"] is useful when you want to embed your blog in another web
+site.}
 
 @defparam[current-editor v string? #:value "$EDITOR"]{What editor to
-launch with @tt{raco frog @literal{--}edit}. @racket["$EDITOR"] means
-to use the @tt{$EDITOR} environment variable.}
+launch with @exec{raco frog @DFlag{edit}}. @racket["$EDITOR"] means to
+use the @envvar{$EDITOR} environment variable.}
 
 @defparam[current-editor-command v string? #:value "{editor} {filename}"]{
 The command to run, in case you need to customize how the editor is
 called. For example, @racket["{editor} {filename}"] will do
-@racket[(system "$EDITOR 2012-01-01-a-blog-post.md")]. See the test
-submodule in @tt{paths.rkt} for more examples.}
+@racket[(system "$EDITOR 2012-01-01-a-blog-post.md")]. For more
+examples, in Frog's source code see the @tt{test} submodule in
+@filepath{paths.rkt}.}
 
-@defparam[current-show-tag-counts? v boolean? #:value #t]{Whether to
+@defparam[current-show-tag-counts? v boolean? #:value #t]{When true,
 show the count of posts next to each tag in the
 @secref["page-template"] variable @tt{tags/feeds}.}
 
@@ -929,31 +935,31 @@ previous blog URI.}
 @defparam[current-posts-index-uri v string? #:value "/index.html"]{
 URI of the first index page for posts.}
 
-@defparam[current-index-full? v boolean? #:value #t]{Should index page
+@defparam[current-index-full? v boolean? #:value #t]{When true, index
+page items contain full posts -- more than just the portion above
+``the jump'' @litchar{<!-- more -->} marker (if any).}
+
+@defparam[current-index-newest-first? v boolean? #:value #t]{When
+true, sort index page items newest first.}
+
+@defparam[current-feed-full? v boolean? #:value #t]{When true, feed
 items contain full posts -- more than just the portion above ``the
-jump'' @litchar{<!-- more -->} marker (if any)?}
-
-@defparam[current-index-newest-first? v boolean? #:value #t]{Should
-index page items be sorted newest first?}
-
-@defparam[current-feed-full? v boolean? #:value #t]{Should feed items
-contain full posts -- more than just the portion above ``the jump''
-@litchar{<!-- more -->} marker (if any)?}
+jump'' @litchar{<!-- more -->} marker (if any).}
 
 @defparam[current-posts-per-page n exact-positive-integer? #:value 10]{
-How many posts per page for index pages?}
+The number of posts on each index page.}
 
 @defparam[current-max-feed-items n exact-positive-integer? #:value 20]{
-How many items to include in feeds? Older items in excess of this will
-not appear in the feed at all.}
+The number of items to include in feeds. Older items in excess of
+this will not appear in the feed at all.}
 
-@defparam[current-decorate-feed-uris? v boolean? #:value #t]{Decorate
-feed URIs with Google Analytics query parameters like
-@tt{utm_source}?}
+@defparam[current-decorate-feed-uris? v boolean? #:value #t]{When
+true, decorate feed URIs with Google Analytics query parameters like
+@tt{utm_source}.}
 
-@defparam[current-feed-image-bugs? v boolean? #:value #t]{Insert in
-each feed item an image bug whose URI is decorated with Google
-Analytics query parameters like @tt{utm_source}?}
+@defparam[current-feed-image-bugs? v boolean? #:value #t]{When true,
+insert in each feed item an image bug whose URI is decorated with
+Google Analytics query parameters like @tt{utm_source}.}
 
 @defparam[current-source-dir v path-string? #:value "_src"]{
 The source directory.
@@ -1011,9 +1017,11 @@ When @racket[parents?] also embeds parent tweets.}
           [#:prose? prose? boolean?])
          (listof xexpr/c)]{
 
-When @racket[code?] try to automatically link to Racket documentation
-from symbols in @litchar{```racket} markdown fenced code blocks.
+When @racket[code?] is true, try to automatically link to Racket
+documentation from symbols in @litchar{```racket} markdown fenced code
+blocks.
 
-When @racket[prose?] try to automatically link to Racket documentation
-from symbols in markdown of the form @litchar{`symbol`[racket]}? i.e.
-This is similar to the @tt|{@racket[]}| form in Scribble.}
+When @racket[prose?] is true, try to automatically link to Racket
+documentation from symbols in markdown of the form
+@litchar{`symbol`[racket]}? i.e. This is similar to the
+@tt|{@racket[]}| form in Scribble.}

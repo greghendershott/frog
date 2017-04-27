@@ -106,8 +106,10 @@
       (""
        "The root directory for -s/--serve or -p/--preview."
        "Supply this flag before one of those flags."
-       "If .frogrc has uri-prefix = /path/to/site/blog, try --root /path/to/site"
-       "Default: One less than the number of dirs in uri-prefix, above output-dir.")
+       "If blog.rkt says (current-uri-prefix \"/path/to/site/blog\"),
+       try using `--root /path/to/site`."
+       "Default: One less than the number of dirs in current-uri-prefix,
+        above current-output-dir.")
       (set! root path)]
      #:once-any
      [("-s" "--serve")

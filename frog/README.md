@@ -9,5 +9,4 @@ in their:
 
 Everything else should go under the `private` directory.
 
-When in dobut, err on the side of making things private. Once public,
-we need to support forever.
+When in doubt, err on the side of making things private.
