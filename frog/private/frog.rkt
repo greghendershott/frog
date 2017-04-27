@@ -19,6 +19,7 @@
          (prefix-in blog.rkt: "blog.rkt")
          "new-post.rkt"
          "non-posts.rkt"
+         "upgrade/old-config.rkt"
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
@@ -26,7 +27,6 @@
          "serialize-posts.rkt"
          "stale.rkt"
          "tags.rkt"
-         "upgrade-from-frogrc.rkt"
          "util.rkt"
          "verbosity.rkt"
          "watch-dir.rkt")
@@ -46,7 +46,7 @@
     (when (eq? 'windows (system-type 'os))
       (file-stream-buffer-mode (current-output-port) 'line)
       (file-stream-buffer-mode (current-error-port) 'line))
-    (upgrade-from-frogrc (top))
+    (maybe-frogrc->blog.rkt (top))
     (blog.rkt:load (top))
     (blog.rkt:init)
     (define watch? #f)

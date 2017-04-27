@@ -9,6 +9,7 @@
                ["rackjure" #:version "0.9"]
                "reprovide-lang"
                "scribble-lib"
+               "scribble-text-lib"
                "srfi-lite-lib"
                "web-server-lib"))
 (define build-deps '("at-exp-lib"

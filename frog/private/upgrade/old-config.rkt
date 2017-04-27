@@ -6,9 +6,24 @@
 (require racket/dict
          racket/file
          racket/match
-         "verbosity.rkt")
+         racket/runtime-path
+         "../verbosity.rkt")
 
-(provide get-config)
+(provide maybe-frogrc->blog.rkt
+         get-config)
+
+(define-runtime-path template-blog.rkt "template-blog.rkt")
+
+(define (maybe-frogrc->blog.rkt top)
+  (define blog.rkt (build-path top "blog.rkt"))
+  (unless (file-exists? blog.rkt)
+    (prn0 "Creating blog.rkt from .frogrc -- see upgrade documentation.")
+    (flush-output)
+    (with-output-to-file #:mode 'text #:exists 'error
+      blog.rkt
+      (λ ()
+        (parameterize ([current-directory top])
+          (dynamic-require template-blog.rkt #f))))))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)
@@ -33,7 +48,6 @@
 
 (define (read-config p)
   (cond [(file-exists? p)
-         (prn0 "Using configuration ~a" (simplify-path p))
          (for/hasheq ([s (file->lines p)])
            (match s
              [(pregexp "^(.*)#?.*$" (list _ s))
@@ -42,9 +56,7 @@
                  (values (string->symbol k) (maybe-bool v))]
                 [else (values #f #f)])]
              [_ (values #f #f)]))]
-        [else
-         (prn0 "Configuration ~a not found; using defaults." p)
-         (make-hasheq)]))
+        [else (make-hasheq)]))
 
 (define (maybe-bool v) ;; (any/c -> (or/c #t #f any/c))
   (match v
