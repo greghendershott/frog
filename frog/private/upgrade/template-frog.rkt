@@ -1,20 +1,20 @@
 #lang scribble/text
-
-@;; Evaluates to text for a blog.rkt equivalent of a user's old .frogrc.
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@;; Evaluates to text for a frog.rkt equivalent of a user's old .frogrc. ;;
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 @(require racket/format
           racket/function
           "old-config.rkt")
 
-@;; Intended to be used when current directory contains .frogrc.
-@(define frogrc ".frogrc")
+@(define frogrc ".frogrc") @;Intended to run in same dir as .frogrc
 
 @(define (get sym def)
    (get-config sym def frogrc))
 
 @(define get/v (compose1 ~v get))
 
-@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #lang racket/base
 
 (require frog/params
@@ -31,9 +31,11 @@
 ;; in frog/params.
 (define/contract (init)
   (-> any)
-  @;; Many frogrc items directly correspond to parameters that still
-  @;; exist, and the user should set in their `init`, here.
-  @;; (For the rest, see `enhance-body` below.)
+  @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  @;; Many frogrc items directly correspond to parameters that still ;;
+  @;; exist, and the user should set in their `init`, here.          ;;
+  @;; (For the rest, see `enhance-body` below.)                      ;;
+  @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   @(define (p sym def)
      @list{(current-@sym @(get/v sym def))})
   @p['scheme/host "http://www.example.com"]
@@ -58,8 +60,10 @@
 ;; Called once per post and non-post page, on the contents.
 (define/contract (enhance-body xs)
   (-> (listof xexpr/c) (listof xexpr/c))
-  @;; The remaining frogrc items control whether we call certain
-  @;; body-enhancing functions, or, are arguments to them:
+  @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  @;; The remaining frogrc items control whether we call certain ;;
+  @;; body-enhancing functions, or, are arguments to them:       ;;
+  @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Here we pass the xexprs through a series of functions.
   (~> xs
       @(add-newlines

@@ -6,9 +6,9 @@
          clean)
 
 (define (load top)
-  (define blog.rkt (build-path top "blog.rkt"))
+  (define frog.rkt (build-path top "frog.rkt"))
   (define-syntax-rule (-load what)
-    (let ([f (dynamic-require blog.rkt 'what)])
+    (let ([f (dynamic-require frog.rkt 'what)])
       (when f (set! what f))))
   (-load init)
   (-load enhance-body)
@@ -17,7 +17,7 @@
 (define-syntax-rule (def what)
   (define what (λ _
                  (error 'what
-                        "not yet dynamic-required from blog.rkt"))))
+                        "not yet dynamic-required from frog.rkt"))))
 
 (def init)
 (def enhance-body)

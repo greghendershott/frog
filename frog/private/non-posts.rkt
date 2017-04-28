@@ -6,7 +6,7 @@
          racket/path
          racket/string
          rackjure/threading
-         "blog.rkt"
+         "user-frog.rkt"
          "bodies-page.rkt"
          "paths.rkt"
          "post-struct.rkt"

@@ -1,7 +1,7 @@
 #lang racket/base
 
 ;; This is only used to read the deprecated .frogrc -- from which we attempt
-;; to create an equivalent blog.rkt for users.
+;; to create an equivalent frog.rkt for users.
 
 (require racket/dict
          racket/file
@@ -9,21 +9,21 @@
          racket/runtime-path
          "../verbosity.rkt")
 
-(provide maybe-frogrc->blog.rkt
+(provide maybe-frogrc->frog.rkt
          get-config)
 
-(define-runtime-path template-blog.rkt "template-blog.rkt")
+(define-runtime-path template-frog.rkt "template-frog.rkt")
 
-(define (maybe-frogrc->blog.rkt top)
-  (define blog.rkt (build-path top "blog.rkt"))
-  (unless (file-exists? blog.rkt)
-    (prn0 "Creating blog.rkt from .frogrc -- see upgrade documentation.")
+(define (maybe-frogrc->frog.rkt top)
+  (define frog.rkt (build-path top "frog.rkt"))
+  (unless (file-exists? frog.rkt)
+    (prn0 "Creating frog.rkt from .frogrc -- see upgrade documentation.")
     (flush-output)
     (with-output-to-file #:mode 'text #:exists 'error
-      blog.rkt
+      frog.rkt
       (λ ()
         (parameterize ([current-directory top])
-          (dynamic-require template-blog.rkt #f))))))
+          (dynamic-require template-frog.rkt #f))))))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)

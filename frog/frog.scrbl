@@ -124,7 +124,7 @@ Creating a new blog project is 3 easy steps:
 @pre{
 $ raco frog --init
 Creating files in /tmp/frog-project/:
-/tmp/frog-project/blog.rkt
+/tmp/frog-project/frog.rkt
 /tmp/frog-project/_src/About.md
 /tmp/frog-project/_src/page-template.html
 /tmp/frog-project/_src/post-template.html
@@ -159,7 +159,7 @@ you and Frog expects:
 @pre{
 project/
   @comment{# Files provided by you:}
-  blog.rkt      @comment{# @secref["config"]}
+  frog.rkt      @comment{# @secref["config"]}
   _src/         @comment{# default; see @racket[current-source-dir] in @secref["config"]}
     page-template.html  @comment{# entire page layout: @secref["page-template"]}
     post-template.html  @comment{# @tt{<article>} layout: @secref["post-template"]}
@@ -229,17 +229,17 @@ For examples of @filepath{pygments.css} code highlighting styles see
 @hyperlink["https://github.com/richleland/pygments-css"]{https://github.com/richleland/pygments-css}.
 
 
-@subsubsection[#:tag "config"]{@tt{blog.rkt}}
+@subsubsection[#:tag "config"]{@tt{frog.rkt}}
 
 When you used @exec{raco frog @DFlag{init}} it created a
-@filepath{blog.rkt} file in your project directory. @margin-note*{If
+@filepath{frog.rkt} file in your project directory. @margin-note*{If
 you upgrade from an older version of Frog that used a
 @filepath{.frogrc} file: The first time the newer version of Frog
-runs, it will automatically create an equivalent @filepath{blog.rkt}
+runs, it will automatically create an equivalent @filepath{frog.rkt}
 from your @filepath{.frogrc}. Thereafter the @filepath{.frogrc} is
 ignored.}
 
-Your @filepath{blog.rkt} lets you use simple Racket code to configure
+Your @filepath{frog.rkt} lets you use simple Racket code to configure
 and customize your blog. It must @racket[provide] three functions for
 Frog:
 
@@ -264,7 +264,7 @@ opportunity to modify the x-expressions representing the content. You
 can use some enhancers supplied by @racket[frog/enhance-body]. You may
 also @racket[require] and use a function provided by a third-party
 package. You may even define a function locally in
-@filepath{blog.rkt}.}
+@filepath{frog.rkt}.}
 
 @defproc[#:link-target? #f
          (clean) any]{

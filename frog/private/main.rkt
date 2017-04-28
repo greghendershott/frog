@@ -17,7 +17,7 @@
          (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
          "bodies-page.rkt"
-         (prefix-in blog.rkt: "blog.rkt")
+         (prefix-in user-frog.rkt: "user-frog.rkt")
          "new-post.rkt"
          "non-posts.rkt"
          "upgrade/old-config.rkt"
@@ -47,9 +47,9 @@
     (when (eq? 'windows (system-type 'os))
       (file-stream-buffer-mode (current-output-port) 'line)
       (file-stream-buffer-mode (current-error-port) 'line))
-    (maybe-frogrc->blog.rkt (top))
-    (blog.rkt:load (top))
-    (blog.rkt:init)
+    (maybe-frogrc->frog.rkt (top))
+    (user-frog.rkt:load (top))
+    (user-frog.rkt:init)
     (define watch? #f)
     (define port 3000)
     (define root
@@ -111,7 +111,7 @@
       (""
        "The root directory for -s/--serve or -p/--preview."
        "Supply this flag before one of those flags."
-       "If blog.rkt says (current-uri-prefix \"/path/to/site/blog\"),
+       "If frog.rkt says (current-uri-prefix \"/path/to/site/blog\"),
        try using `--root /path/to/site`."
        "Default: One less than the number of dirs in current-uri-prefix,
         above current-output-dir.")
@@ -167,7 +167,7 @@
     (make-directories-if-needed to)
     (copy-directory/files from to))
   (prn0 "Creating files in ~a:" (build-path (top)))
-  (copy "blog.rkt")
+  (copy "frog.rkt")
   (copy "_src/About.md")
   (copy "_src/page-template.html")
   (copy "_src/post-template.html")
@@ -361,7 +361,7 @@
   (clean-non-post-output-files)
   (clean-tag-output-files)
   (clean-serialized-posts)
-  (blog.rkt:clean))
+  (user-frog.rkt:clean))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
