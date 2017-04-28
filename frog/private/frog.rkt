@@ -3,6 +3,7 @@
 (require racket/cmdline
          racket/contract/base
          racket/contract/region
+         racket/help
          racket/file
          racket/function
          racket/match
@@ -59,8 +60,12 @@
         (simplify-path (apply build-path (list* (www-path)
                                                 (build-list depth (λ _ 'up)))))))
     (command-line
-     #:program "frog"
+     #:program "raco frog"
      #:once-each
+     [("--doc")
+      (""
+       "Browse full documentation for Frog.")
+      (help "T:frog")]
      [("--init")
       (""
        "Initialize current directory as a new Frog project, creating"
