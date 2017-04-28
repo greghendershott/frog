@@ -73,7 +73,7 @@
       (void)] ;; handled above
      [("--edit")
       (""
-       "Opens the file created by -n or -N in editor as specified in .frogrc"
+       "Opens the file created by -n or -N in `current-editor` in frog.rkt"
        "Supply this flag before one of those flags.")
       (enable-editor? #t)]
      #:multi
@@ -146,7 +146,10 @@
       (prn2 "Very verbose mode")])))
 
 (define (find-frog-root)
-  (or (let ([x (find-parent-containing (current-directory) ".frogrc")])
+  (define (try file)
+    (find-parent-containing (current-directory) file))
+  (or (let ([x (or (try "frog.rkt")
+                   (try ".frogrc"))])
         (and x (simplify-path x)))
       (current-directory)))
 
