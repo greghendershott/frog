@@ -7,6 +7,7 @@
          racket/file
          racket/match
          racket/runtime-path
+         racket/string
          "../verbosity.rkt")
 
 (provide maybe-frogrc->frog.rkt
@@ -19,11 +20,11 @@
   (unless (file-exists? frog.rkt)
     (prn0 "Creating frog.rkt from .frogrc -- see upgrade documentation.")
     (flush-output)
-    (with-output-to-file #:mode 'text #:exists 'error
-      frog.rkt
-      (λ ()
-        (parameterize ([current-directory top])
-          (dynamic-require template-frog.rkt #f))))))
+    (parameterize ([current-directory top])
+      (with-output-to-file frog.rkt
+        #:mode 'text #:exists 'error
+        (λ () (dynamic-require template-frog.rkt #f)))
+      (add-deprecation-comment-to-.frogrc))))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)
@@ -63,3 +64,16 @@
     [(or "true" "#t") #t]
     [(or "false" "#f") #f]
     [else v]))
+
+(define (add-deprecation-comment-to-.frogrc)
+  (define s (string-join (list (make-string 76 #\#)
+                               "#"
+                               "# THIS FILE IS NO LONGER USED."
+                               "# Use frog.rkt instead."
+                               "#"
+                               (make-string 76 #\#)
+                               (file->string ".frogrc" #:mode 'text))
+                         "\n"))
+  (display-to-file s ".frogrc"
+                   #:mode 'text
+                   #:exists 'replace))
