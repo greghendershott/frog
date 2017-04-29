@@ -59,6 +59,7 @@
              [depth (sub1 (length (explode-path prefix)))])
         (simplify-path (apply build-path (list* (www-path)
                                                 (build-list depth (λ _ 'up)))))))
+    (define edit-new-post? (make-parameter #f))
     (command-line
      #:program "raco frog"
      #:once-each
@@ -75,16 +76,16 @@
       (""
        "Opens the file created by -n or -N in `current-editor` in frog.rkt"
        "Supply this flag before one of those flags.")
-      (enable-editor? #t)]
+      (edit-new-post? #t)]
      #:multi
-     [("-n" "--new") title
+     [("-n" "--new" "--new-markdown") title
       (""
        "Create a .md file for a new post based on today's date and <title>.")
-      (new-post title 'markdown)]
+      (new-post title 'markdown (edit-new-post?))]
      [("-N" "--new-scribble") title
       (""
        "Create a .scrbl file for a new post based on today's date and <title>.")
-      (new-post title 'scribble)]
+      (new-post title 'scribble (edit-new-post?))]
      [("-b" "--build")
       (""
        "Generate files.")

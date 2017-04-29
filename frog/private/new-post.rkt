@@ -1,6 +1,8 @@
-#lang rackjure/base
+#lang at-exp racket/base
 
-(require racket/date
+(require racket/contract
+         racket/date
+         racket/format
          racket/system
          rackjure/str
          rackjure/threading
@@ -8,81 +10,73 @@
          "paths.rkt"
          "util.rkt")
 
-(provide new-post
-         enable-editor?)
+(provide new-post)
 
-(module+ test
-  (require rackunit))
+(define/contract (new-post title type and-edit?)
+  (-> string? (or/c 'markdown 'scribble) boolean? void?)
+  (define-values (extension template)
+    (case type
+      [(markdown) (values ".md"    new-markdown)]
+      [(scribble) (values ".scrbl" new-scribble)]))
+  (define-values (date-only-str date-time-str)
+    (let ([now (current-date)])
+      (parameterize ([date-display-format 'iso-8601])
+        (values (date->string now #f)
+                (date->string now #t)))))
+  (define filename (str (~> (str date-only-str
+                                 "-"
+                                 (~> title string-downcase))
+                            our-encode)
+                        extension))
+  (define pathname (build-path (src/posts-path) filename))
+  (cond [(file-exists? pathname)
+         (unless and-edit?
+           (raise-user-error 'new-post "~a already exists." pathname))]
+        [else (display-to-file* #:exists 'error
+                                (template title date-time-str)
+                                pathname)])
+  (displayln pathname)
+  (when and-edit?
+    (system (editor-command-string
+             (replace-$editor-in-current-editor)
+             (path->string pathname)
+             (current-editor-command)))))
 
-(define new-markdown-post-template
-#<<EOF
-    Title: ~a
-    Date: ~a
-    Tags: DRAFT
+(define (new-markdown title date)
+  @~a{    Title: @title
+          Date: @date
+          Tags: DRAFT
 
-_Replace this with your post text. Add one or more comma-separated
-Tags above. The special tag `DRAFT` will prevent the post from being
-published._
+      _Replace this with your post text. Add one or more comma-separated
+      Tags above. The special tag `DRAFT` will prevent the post from being
+      published._
 
-<!-- more -->
+      <!-- more -->
 
-EOF
-)
 
-(define new-scribble-post-template
-#<<EOF
-#lang scribble/manual
+      })
 
-Title: ~a
-Date: ~a
-Tags: DRAFT
+(define (new-scribble title date)
+  @~a{#lang scribble/manual
 
-Replace this with your post text. Add one or more comma-separated
-Tags above. The special tag `DRAFT` will prevent the post from being
-published.
+      Title: @title
+      Date: @date
+      Tags: DRAFT
 
-<!-- more -->
+      Replace this with your post text. Add one or more comma-separated
+      Tags above. The special tag `DRAFT` will prevent the post from being
+      published.
 
-EOF
-)
+      <!-- more -->
 
-(define enable-editor? (make-parameter #f))
+
+      })
+
 (define (get-editor . _)
   (or (getenv "EDITOR") (getenv "VISUAL")
-      (raise-user-error 'new-post
-        "EDITOR or VISUAL must be defined in the environment to use $EDITOR in .frogrc")))
+      (raise-user-error
+       'new-post
+       "EDITOR or VISUAL must be defined in the environment to use $EDITOR in frog.rkt")))
 
 (define (replace-$editor-in-current-editor)
   (regexp-replaces (current-editor) `([#rx"\\$EDITOR" ,get-editor])))
-
-(define (new-post title [type 'markdown])
-  (let ([extension (case type
-                     [(markdown) ".md"]
-                     [(scribble) ".scrbl"])]
-        [template  (case type
-                     [(markdown) new-markdown-post-template]
-                     [(scribble) new-scribble-post-template])])
-    (parameterize ([date-display-format 'iso-8601])
-      (define d (current-date))
-      (define filename (str (~> (str (date->string d #f) ;omit time
-                                     "-"
-                                     (~> title string-downcase))
-                                our-encode)
-                            extension))
-      (define pathname (build-path (src/posts-path) filename))
-      (cond
-        [(file-exists? pathname)
-         (unless (enable-editor?)
-           (raise-user-error 'new-post "~a already exists." pathname))]
-        [else
-         (display-to-file* (format template
-                                   title
-                                   (date->string d #t)) ;do include time
-                        pathname
-                        #:exists 'error)])
-      (displayln pathname)
-      (when (enable-editor?)
-        (system (editor-command-string 
-                  (replace-$editor-in-current-editor)
-                  (path->string pathname) 
-                  (current-editor-command)))))))
