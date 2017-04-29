@@ -7,7 +7,8 @@
           racket/function
           "old-config.rkt")
 
-@(define frogrc ".frogrc") @;Intended to run in same dir as .frogrc
+@;Intended to run in same dir as .frogrc
+@(define frogrc ".frogrc")
 
 @(define (get sym def)
    (get-config sym def frogrc))
