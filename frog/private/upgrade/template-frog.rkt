@@ -73,7 +73,7 @@
                                  #:line-numbers? @(get/v 'pygments-linenos? #t)
                                  #:css-class @(get/v 'pygments-cssclass "source"))}
          @(when (get 'auto-embed-tweets? #t)
-            @list{(auto-embed-tweets #:parents? @(get/v 'embed-tweet-parents? #f))})
+            @list{(auto-embed-tweets #:parents? @(get/v 'embed-tweet-parents? #t))})
          @(let ([code?  (get 'racket-doc-link-code? #t)]
                 [prose? (get 'racket-doc-link-prose? #f)])
             @(when (or code? prose?)
