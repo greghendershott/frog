@@ -13,8 +13,8 @@
 ;; Caveat: Can only express ->* contracts, not ->i or ->d.
 
 (begin-for-syntax
-  (define-syntax-class required-arg
-   #:attributes (id decl contract proc-doc)
+  (define-syntax-class required-argument
+   #:attributes (decl contract proc-doc)
    (pattern [id:id c:expr]
             #:with decl #'(id)
             #:with contract #'(c)
@@ -24,8 +24,8 @@
             #:with contract #'(kw c)
             #:with proc-doc #'id))
 
-  (define-syntax-class optional-arg
-    #:attributes (id decl contract proc-doc)
+  (define-syntax-class optional-argument
+    #:attributes (decl contract proc-doc)
     (pattern [id:id c:expr default:expr]
              #:with decl #'((id default))
              #:with contract #'(c)
@@ -37,22 +37,25 @@
 
 (define-syntax (define/doc stx)
   (syntax-parse stx
-   [(_ (id:id req:required-arg ... opt:optional-arg ... result-contract)
-       doc:expr
-       body:expr ...+)
-    (define/syntax-parse ((req-decl     ...) ...) #'(req.decl ...))
-    (define/syntax-parse ((opt-decl     ...) ...) #'(opt.decl ...))
-    (define/syntax-parse ((req-contract ...) ...) #'(req.contract ...))
-    (define/syntax-parse ((opt-contract ...) ...) #'(opt.contract ...))
-    (syntax/loc stx
-      (begin
-        (define (id req-decl ... ... opt-decl ... ...)
-          body ...)
-        (provide
-         (proc-doc/names id
-                         (->* (req-contract ... ...)
-                              (opt-contract ... ...)
-                              result-contract)
-                         ((req.proc-doc ...)
-                          (opt.proc-doc ...))
-                         doc))))]))
+    [(_ (id:id req:required-argument ...
+               opt:optional-argument ...
+               result-contract:expr)
+        (doc-expr:expr ...)
+        body:expr ...+)
+     (with-syntax ([((req-decl     ...) ...) #'(req.decl     ...)]
+                   [((opt-decl     ...) ...) #'(opt.decl     ...)]
+                   [((req-contract ...) ...) #'(req.contract ...)]
+                   [((opt-contract ...) ...) #'(opt.contract ...)])
+       (syntax/loc stx
+         (begin
+           (define (id req-decl ... ...
+                       opt-decl ... ...)
+             body ...)
+           (provide
+            (proc-doc/names id
+                            (->* (req-contract ... ...)
+                                 (opt-contract ... ...)
+                                 result-contract)
+                            ((req.proc-doc ...)
+                             (opt.proc-doc ...))
+                            (doc-expr ...))))))]))
