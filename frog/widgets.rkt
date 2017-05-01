@@ -35,8 +35,32 @@
 ;; at different times. Just please do your best to follow the
 ;; indentation style already being used.
 
+(define/doc (older/newer-links [older-uri (or/c #f string?)]
+                               [older-title (or/c #f string?)]
+                               [newer-uri (or/c #f string?)]
+                               [newer-title (or/c #f string?)]
+                               list?)
+  @{Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
+  @list{
+        <ul class="pager">
+        @(when newer-uri
+          @list{
+                <li class="previous">
+                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
+                </li>
+                })
+        @(when older-uri
+          @list{
+                <li class="next">
+                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
+                </li>
+                })
+        </ul>
+        })
+
 (define/doc (disqus-comments [short-name string?] list?)
-  @{Disqus comments. Typically used in @secref["post-template"].}
+  @{@hyperlink["https://disqus.com/"]{Disqus} comments. Typically used in
+    @secref["post-template"].}
   @list{
         <script type="text/javascript">
           var disqus_shortname = '@|short-name|';
@@ -52,7 +76,7 @@
         })
 
 (define/doc (livefyre [site-id string?] list?)
-  @{}
+  @{@url["http://livefyre.com"]}
   @list{
         <div id="livefyre-comments"></div>
         <script type="text/javascript" src="//zor.livefyre.com/wjs/v3.0/javascripts/livefyre.js"></script>
@@ -74,7 +98,7 @@
         </script>})
 
 (define/doc (intense-debate [id-account string?] list?)
-  @{}
+  @{@url["https://intensedebate.com/"]}
   @list{
         <script type="text/javascript">
         var idcomments_acct = '@|id-account|';
@@ -120,37 +144,14 @@
          })
 
 (define/doc (google-plus-share-button [full-uri string?] list?)
-  @{}
+  @{Typically used in a @secref["post-template"].}
   @list{<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
         <g:plusone size="medium" href="@full-uri"></g:plusone>})
-
-(define/doc (older/newer-links [older-uri (or/c #f string?)]
-                               [older-title (or/c #f string?)]
-                               [newer-uri (or/c #f string?)]
-                               [newer-title (or/c #f string?)]
-                               list?)
-  @{Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
-  @list{
-        <ul class="pager">
-        @(when newer-uri
-          @list{
-                <li class="previous">
-                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
-                </li>
-                })
-        @(when older-uri
-          @list{
-                <li class="next">
-                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
-                </li>
-                })
-        </ul>
-        })
 
 (define/doc (twitter-follow-button [name string?]
                                    [label (or/c #f string?) #f]
                                    list?)
-  @{}
+  @{Typically used in a @secref["page-template"].}
   (let ([label (or label (string-append "Follow " name))])
     @list{
           <a href="https://twitter.com/@|name|"
@@ -225,7 +226,7 @@
         })
 
 (define/doc (twitter-share-button [uri string?] list?)
-  @{}
+  @{Typically used in a @secref["post-template"].}
   @list{
         <script type="text/javascript">
           !function(d,s,id){
