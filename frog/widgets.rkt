@@ -6,7 +6,8 @@
          racket/string
          racket/function
          scribble/srcdoc
-         (for-doc scribble/base scribble/manual)
+         (for-doc racket/base
+                  scribble/manual)
          "private/define-doc.rkt")
 
 ;; Functions provided by this module are made available by
@@ -96,7 +97,6 @@
            ga('send', 'pageview');
          </script>
          })
-
 
 (define/doc (google-analytics [account string?]
                               [domain string?]
