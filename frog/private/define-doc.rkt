@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require (for-syntax racket/base)
+(require (for-syntax racket/base
+                     syntax/parse)
          racket/contract
-         scribble/srcdoc
-         syntax/parse/define)
+         scribble/srcdoc)
 
 (provide define/doc)
 
@@ -35,23 +35,24 @@
              #:with contract #'(kw c)
              #:with proc-doc #'(id default))))
 
-(define-syntax-parser define/doc
-  [(_ (id:id req:required-arg ... opt:optional-arg ... result-contract)
-      doc:expr
-      body:expr ...+)
-   (define/syntax-parse ((req-decl     ...) ...) #'(req.decl ...))
-   (define/syntax-parse ((opt-decl     ...) ...) #'(opt.decl ...))
-   (define/syntax-parse ((req-contract ...) ...) #'(req.contract ...))
-   (define/syntax-parse ((opt-contract ...) ...) #'(opt.contract ...))
-   (syntax/loc this-syntax
-     (begin
-       (define (id req-decl ... ... opt-decl ... ...)
-         body ...)
-       (provide
-        (proc-doc/names id
-                        (->* (req-contract ... ...)
-                             (opt-contract ... ...)
-                             result-contract)
-                        ((req.proc-doc ...)
-                         (opt.proc-doc ...))
-                        doc))))])
+(define-syntax (define/doc stx)
+  (syntax-parse stx
+   [(_ (id:id req:required-arg ... opt:optional-arg ... result-contract)
+       doc:expr
+       body:expr ...+)
+    (define/syntax-parse ((req-decl     ...) ...) #'(req.decl ...))
+    (define/syntax-parse ((opt-decl     ...) ...) #'(opt.decl ...))
+    (define/syntax-parse ((req-contract ...) ...) #'(req.contract ...))
+    (define/syntax-parse ((opt-contract ...) ...) #'(opt.contract ...))
+    (syntax/loc stx
+      (begin
+        (define (id req-decl ... ... opt-decl ... ...)
+          body ...)
+        (provide
+         (proc-doc/names id
+                         (->* (req-contract ... ...)
+                              (opt-contract ... ...)
+                              result-contract)
+                         ((req.proc-doc ...)
+                          (opt.proc-doc ...))
+                         doc))))]))
