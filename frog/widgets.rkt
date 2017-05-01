@@ -124,11 +124,11 @@
   @list{<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
         <g:plusone size="medium" href="@full-uri"></g:plusone>})
 
-(define/doc (older/newer-links [older-uri string?]
-                            [older-title string?]
-                            [newer-uri string?]
-                            [newer-title string?]
-                            list?)
+(define/doc (older/newer-links [older-uri (or/c #f string?)]
+                               [older-title (or/c #f string?)]
+                               [newer-uri (or/c #f string?)]
+                               [newer-title (or/c #f string?)]
+                               list?)
   @{Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
   @list{
         <ul class="pager">
