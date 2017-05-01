@@ -11,7 +11,8 @@
                      frog/scribble
                      frog/widgets
                      frog/verbosity)
-          scribble/core)
+          scribble/core
+          scribble/extract)
 
 @(define (grey . contents)
    (elem #:style (style #f (list (color-property "grey")))
@@ -771,68 +772,8 @@ If you'd like to add a widget, pull requests are welcome!
 
 In your templates, this module is already @racket[require]d.
 
-@defproc[(older/newer-links
-[older-uri string?]
-[older-title string?]
-[newer-uri string?]
-[newer-title string?])
-list?]{
-Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
-
-@defproc[(disqus-comments [short-name string?]) list?]{
-Disqus comments. Typically used in @secref["page-template"].
-}
-
-@defproc[(intense-debate [id-account string?]) list?]{}
-
-
-@defproc[(gist [username string?] [gist-id string?]) list?]{}
-
-@defproc[(math-jax) list?]{
-@itemlist[#:style 'ordered
-@item{Use this in the @tt{<head>} of your @secref["page-template"].}
-
-@item{In your markdown source files, use @litchar{\\( some math \\)} for
-inline and @litchar{\\[ some math \\]} for display. Note the
-@italic{double} backslashes, @litchar{\\}, because in markdown @litchar{\}
-already has a meaning.}
-]
-}
-
-@defproc[(twitter-follow-button [name string?] [label string? #f]) list?]{}
-
-@defproc[(twitter-share-button [uri string?]) list?]{}
-
-@defproc[(twitter-timeline
-[user string?]
-[widget-id string?]
-[#:width width number? #f]
-[#:height height number? #f]
-[#:lang lang string? #f]
-[#:theme data-theme string? #f]
-[#:link-color data-link-color string? #f]
-[#:border-color data-border-color string? #f]
-[#:tweet-limit data-tweet-limit string? #f]
-[#:chrome data-chrome string? #f]
-[#:aria-polite data-aria-polite string? #f]
-[#:related data-related string? #f])
-list?]{
-See @url["https://dev.twitter.com/docs/embedded-timelines"] for instructions
-how to create a timeline and get its ``widget ID''.
-}
-
-@defproc[(google-universal-analytics [account string?]) list?]{
-For users of ``universal'' analytics (@tt{analytics.js}).
-}
-
-@defproc[(google-analytics [account string?] [domain string?]) list?]{
-For users of ``classic'' analytics (@tt{ga.js}).
-}
-
-@defproc[(google-plus-share-button [full-uri string?]) list?]{}
-
-@defproc[(livefyre [site-id string?]) list?]{}
-
+@; See widget.rkt define/doc forms.
+@include-extracted[frog/widgets]
 
 
 @section{Embedding a blog in an existing site}
