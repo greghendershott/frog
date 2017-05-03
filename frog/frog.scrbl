@@ -260,12 +260,12 @@ can experiment with, to start you only need to set a few:
 @defproc[#:link-target? #f
          (enhance-body [xs (listof xexpr/c)]) (listof xexpr/c)]{
 
-This is called once for each post or non-post page, giving you the
-opportunity to modify the x-expressions representing the content. You
-can use some enhancers supplied by @racket[frog/enhance-body]. You may
-also @racket[require] and use a function provided by a third-party
-package. You may even define a function locally in
-@filepath{frog.rkt}.}
+This is called for each post or non-post page, giving you the
+opportunity to modify the x-expressions representing the content.
+
+You may @racket[require] and use functions provided by
+@seclink["body-enhancers"]{@racket[frog/enhance-body]} or by a
+third-party package.}
 
 @defproc[#:link-target? #f
          (clean) any]{
@@ -929,44 +929,4 @@ located.}
 
 @defmodule[frog/enhance-body]
 
-@defproc[(syntax-highlight
-          [xs (listof xexpr/c)]
-          [#:python-executable python-executable path-string?]
-          [#:line-numbers? line-numbers? boolean?]
-          [#:css-class css-class string?])
-         (listof xexpr/c)]{
-Use Pygments to highlight markdown code blocks.
-@margin-note*{Tip: In Scribble format sources, you can use
-@racket[pygment-code].}
-
-The value of @racket[python-executable] is given to
-@racket[find-executable-path], so @racket["python"] is likely
-to work fine.}
-
-@defproc[(auto-embed-tweets
-          [xs (listof xexpr/c)]
-          [#:parents? parents? boolean?])
-         (listof xexpr/c)]{
-
-Replace links to tweets with embedded tweets. In markdown, must be
-auto-links alone in a pargraph (blank lines above and below), for
-example:
-
-@verbatim{<https://twitter.com/racketlang/status/332176422003163138>}
-
-When @racket[parents?] also embeds parent tweets.}
-
-@defproc[(add-racket-doc-links
-          [xs (listof xexpr/c)]
-          [#:code? code? boolean?]
-          [#:prose? prose? boolean?])
-         (listof xexpr/c)]{
-
-When @racket[code?] is true, try to automatically link to Racket
-documentation from symbols in @litchar{```racket} markdown fenced code
-blocks.
-
-When @racket[prose?] is true, try to automatically link to Racket
-documentation from symbols in markdown of the form
-@litchar{`symbol`[racket]}? i.e. This is similar to the
-@tt|{@racket[]}| form in Scribble.}
+@include-extracted[frog/enhance-body]
