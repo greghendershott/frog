@@ -49,8 +49,3 @@
          (local-expand (syntax/loc #'(forms ...)
                          (#%module-begin forms ... (provide provides ...)))
                        'module-begin '())))]))
-
-(module* test (submod "..")
-  (define init #f)
-  (define enhance-body #f)
-  (define clean #f))
