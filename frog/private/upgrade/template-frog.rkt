@@ -7,7 +7,7 @@
           racket/function
           "old-config.rkt")
 
-@;Intended to run in same dir as .frogrc
+@;; Intended to run in same dir as .frogrc
 @(define frogrc ".frogrc")
 
 @(define (get sym def)
@@ -16,17 +16,7 @@
 @(define get/v (compose1 ~v get))
 
 @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#lang racket/base
-
-(require frog/params
-         frog/enhance-body
-         racket/contract
-         rackjure/threading
-         xml/xexpr)
-
-(provide init
-         enhance-body
-         clean)
+#lang frog/config
 
 ;; Called early when Frog launches. Use this to set parameters defined
 ;; in frog/params.
@@ -79,14 +69,7 @@
             @(when (or code? prose?)
                @list{(add-racket-doc-links #:code? @~v[code?] #:prose? @~v[prose?])}))))))
 
-;; clean : -> Void
-;;
 ;; Called from `raco frog --clean`.
-;;
-;; In `enhance-body`, you can call a function that has the side-effect
-;; of creating extra files (for example responsive images in a variety
-;; of sizes). Such a function should provide a companion you can call
-;; to delete those files; call it here.
 (define/contract (clean)
   (-> any)
   (void))

@@ -1,14 +1,4 @@
-#lang racket/base
-
-(require frog/params
-         frog/enhance-body
-         racket/contract
-         rackjure/threading
-         xml/xexpr)
-
-(provide init
-         enhance-body
-         clean)
+#lang frog/config
 
 ;; Called early when Frog launches. Use this to set parameters defined
 ;; in frog/params.
@@ -29,14 +19,7 @@
       (auto-embed-tweets #:parents? #t)
       (add-racket-doc-links #:code? #t #:prose? #f)))
 
-;; clean : -> Void
-;;
 ;; Called from `raco frog --clean`.
-;;
-;; In `enhance-body`, you can call a function that has the side-effect
-;; of creating extra files (for example responsive images in a variety
-;; of sizes). Such a function should provide a companion you can call
-;; to delete those files; call it here.
 (define/contract (clean)
   (-> any)
   (void))

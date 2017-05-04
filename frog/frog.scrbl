@@ -236,21 +236,30 @@ When you used @exec{raco frog @DFlag{init}} it created a
 @filepath{frog.rkt} file in your project directory. @margin-note*{If
 you upgrade from an older version of Frog that used a
 @filepath{.frogrc} file: The first time the newer version of Frog
-runs, it will automatically create an equivalent @filepath{frog.rkt}
+runs, it automatically creates an equivalent @filepath{frog.rkt}
 from your @filepath{.frogrc}. Thereafter the @filepath{.frogrc} is
-ignored.}
+ignored, and may be deleted.}
 
 Your @filepath{frog.rkt} lets you use simple Racket code to configure
-and customize your blog. It must @racket[provide] three functions for
-Frog:
+and customize your blog.
 
-@defproc[#:link-target? #f
-         (init) any]{
+@defmodule[frog/config #:lang]
+
+The @racketmodname[frog/config] language provides bindings from
+@racketmodname[racket/base], @racketmodname[racket/contract],
+@racketmodname[rackjure/threading], @racketmodname[xml/xexpr],
+@racketmodname[frog/params], and @racketmodname[frog/enhance-body].
+
+Furthermore, the @racketmodname[frog/config] language ensures that you
+define three functions that are used by Frog:
+
+@defproc[#:link-target? #f (init) any]{
 
 This is called once, early when Frog starts.
 
-You can set various @secref["parameters"]. Although there are many you
-can experiment with, to start you only need to set a few:
+You can set various parameters provided by
+@racketmodname[frog/params]. To start, you might only need to set a
+few:
 
 @itemlist[
 @item{@racket[current-title]}
@@ -261,14 +270,13 @@ can experiment with, to start you only need to set a few:
          (enhance-body [xs (listof xexpr/c)]) (listof xexpr/c)]{
 
 This is called for each post or non-post page, giving you the
-opportunity to modify the x-expressions representing the content.
+opportunity to modify the @racket[xexpr?]s representing the content.
 
-You may @racket[require] and use functions provided by
-@seclink["body-enhancers"]{@racket[frog/enhance-body]} or by a
+You may call functions provided by @racketmodname[frog/enhance-body].
+You may also @racket[require] and use functions provided by a
 third-party package.}
 
-@defproc[#:link-target? #f
-         (clean) any]{
+@defproc[#:link-target? #f (clean) any]{
 
 Called during @exec{raco frog @DFlag{clean}}.}
 
@@ -823,6 +831,9 @@ You may set these parameters in the @racket[init] function in your
 
 @defmodule[frog/params]
 
+(This module is automatically required for you by the
+@racketmodname[frog/config] language used in @secref["config"].)
+
 @defparam[current-title v string? #:value "My Awesome Blog"]{The title
 of the blog. Used when generating feeds.}
 
@@ -928,5 +939,8 @@ located.}
 @section[#:tag "body-enhancers"]{Body enhancers}
 
 @defmodule[frog/enhance-body]
+
+(This module is automatically required for you by the
+@racketmodname[frog/config] language used in @secref["config"].)
 
 @include-extracted[frog/enhance-body]
