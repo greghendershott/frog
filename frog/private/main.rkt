@@ -17,7 +17,7 @@
          (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
          "bodies-page.rkt"
-         (prefix-in user-frog.rkt: "user-frog.rkt")
+         (prefix-in user-frog.rkt: "../config/private/load.rkt")
          "new-post.rkt"
          "non-posts.rkt"
          "upgrade/old-config.rkt"

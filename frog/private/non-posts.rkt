@@ -6,7 +6,7 @@
          racket/path
          racket/string
          rackjure/threading
-         "user-frog.rkt"
+         "../config/private/load.rkt"
          "bodies-page.rkt"
          "paths.rkt"
          "post-struct.rkt"

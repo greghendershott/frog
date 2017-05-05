@@ -11,8 +11,8 @@
          rackjure/str
          rackjure/threading
          (only-in srfi/1 break)
+         "../config/private/load.rkt"
          "author.rkt"
-         "user-frog.rkt"
          "bodies-page.rkt"
          "html.rkt"
          "params.rkt"

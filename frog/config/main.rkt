@@ -5,7 +5,8 @@
                      racket/match
                      racket/syntax
                      syntax/parse)
-         reprovide/reprovide)
+         reprovide/reprovide
+         "private/load.rkt")
 
 (provide (except-out (all-from-out racket/base)
                      #%module-begin
@@ -23,14 +24,17 @@
 (define-syntax (our-#%module-begin stx)
   (syntax-parse stx
     [(_ forms ...)
-     (define provide-syms '(init enhance-body clean))
      (with-syntax ([(provides ...) (map (curry format-id stx "~a") provide-syms)])
-       ;; Simply? #'(#%module-begin forms ... (provide provides ...))
+       ;; If we didn't care about error messages, this could simply be:
+       ;;
+       ;; #'(#%module-begin forms ... (provide provides ...))
        ;;
        ;; But if the user has failed to define one of the mandatory functions
        ;; we want to supply a helpful error message that specifically
-       ;; identifies it. And of course preserve stx srcloc so their editor of
-       ;; choice can open their frog.rkt.
+       ;; identifies it. And of course preserve their frog.rkt stx srcloc.
+       ;;
+       ;; So we local-expand their forms, catch the appropriate syntax errors,
+       ;; and re-raise them in a more-helpful form.
        (define (fail-sym exn)
          (match (exn:fail:syntax-exprs exn)
            [(cons stx _) (syntax-e stx)]
