@@ -269,13 +269,11 @@
 
 (define/doc (math-jax list?)
   @{@itemlist[#:style 'ordered
-
-    @item{Use this in the @tt{<head>} of your @secref["page-template"].}
-
-    @item{In your markdown source files, use @litchar{\\( some math \\)} for
-    inline and @litchar{\\[ some math \\]} for display. Note the
-    @italic{double} backslashes, @litchar{\\}, because in markdown @litchar{\}
-    already has a meaning.}]}
+              @item{Use this in the @tt{<head>} of your @secref["page-template"].}
+              @item{In your markdown source files, use @litchar{\\( some math \\)}
+                    for inline and @litchar{\\[ some math \\]} for display. Note
+                    the @italic{double} backslashes, @litchar{\\}, because in
+                    markdown @litchar{\} already has a meaning.}]}
   @list{
         <script type="text/javascript" async
                 src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
