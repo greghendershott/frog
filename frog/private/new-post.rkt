@@ -1,6 +1,7 @@
 #lang at-exp racket/base
 
-(require racket/contract
+(require racket/contract/base
+         racket/contract/region
          racket/date
          racket/format
          racket/system

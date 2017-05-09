@@ -3,7 +3,7 @@
 (require json
          net/uri-codec
          net/url
-         racket/contract
+         racket/contract/base
          racket/list
          racket/match
          racket/string

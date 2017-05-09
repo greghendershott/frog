@@ -14,7 +14,8 @@
                      provide)
          (rename-out [our-#%module-begin #%module-begin]))
 
-(reprovide racket/contract
+(reprovide racket/contract/base
+           racket/contract/region
            rackjure/threading
            xml/xexpr
            "../params.rkt"

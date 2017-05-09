@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base
                      racket/syntax)
-         racket/contract
+         racket/contract/base
          racket/string
          racket/function
          scribble/srcdoc

@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         racket/contract
+         racket/contract/base
          scribble/srcdoc)
 
 (provide define/doc)

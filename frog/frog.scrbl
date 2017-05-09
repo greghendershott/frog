@@ -245,10 +245,16 @@ and customize your blog.
 
 @defmodule[frog/config #:lang]
 
-The @racketmodname[frog/config] language provides bindings from
-@racketmodname[racket/base], @racketmodname[racket/contract],
-@racketmodname[rackjure/threading], @racketmodname[xml/xexpr],
-@racketmodname[frog/params], and @racketmodname[frog/enhance-body].
+The @racketmodname[frog/config] language provides bindings from:
+@itemlist[
+@item{@racketmodname[racket/base]}
+@item{@racketmodname[racket/contract/base]}
+@item{@racketmodname[racket/contract/region]}
+@item{@racketmodname[rackjure/threading]}
+@item{@racketmodname[frog/params]}
+@item{@racketmodname[frog/enhance-body]}
+@item{@racketmodname[xml/xexpr]}
+]
 
 Furthermore, the @racketmodname[frog/config] language ensures that you
 define three functions that are used by Frog:
