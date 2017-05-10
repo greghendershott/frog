@@ -84,14 +84,19 @@
     (cons uri-path v)))
 
 (define (make-title xs path)
+  (define (x->m el)
+    (define m (xexpr->markdown el))
+    (if (char? m)
+        (string m)
+        m))
   (or (for/or ([x (in-list xs)])
         (match x
           ;; First h1 header, if any -- Scribble style with <a> anchor
           [`(h1 (,_ ...) (a . ,_) . ,els)
-           (string-join (map xexpr->markdown els) "")]
+           (string-join (map x->m els) "")]
           ;; First h1 header, if any -- otherwise
           [`(h1 (,_ ...) . ,els)
-           (string-join (map xexpr->markdown els) "")]
+           (string-join (map x->m els) "")]
           [_ #f]))
       ;; Else name of the source file
       (~> path
