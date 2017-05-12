@@ -1,4 +1,4 @@
-#lang rackjure/base
+#lang racket/base
 
 (require markdown
          racket/file
@@ -55,7 +55,7 @@
                                   (~> path
                                       (path-replace-suffix ".html")
                                       abs->rel/src)))
-    (define uri-path (canonicalize-uri (abs->rel/www dest-path)))
+    (define uri-path (canonical-uri (abs->rel/www dest-path)))
     (unless (stale? dest-path path (page-template.html))
       (prn2 "Already up-to-date: ~a" dest-path)
       (return (cons uri-path v)))
@@ -66,12 +66,12 @@
              (define img-dest (path-replace-suffix dest-path ""))
              (read-scribble-file path
                                  #:img-local-path img-dest
-                                 #:img-uri-prefix (canonicalize-uri
+                                 #:img-uri-prefix (canonical-uri
                                                    (abs->rel/www img-dest)))]
             [(pregexp "\\.(?:md|markdown)$")
              (parse-markdown path)]
             [(pregexp "\\.mdt$")
-             (define text (render-template path-to (path->string name) {}))
+             (define text (render-template path-to (path->string name) '()))
              (parse-markdown text)])
           enhance-body))
     (prn1 "Generating non-post ~a" (abs->rel/www dest-path))

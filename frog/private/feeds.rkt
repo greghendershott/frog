@@ -1,9 +1,7 @@
-#lang rackjure/base
+#lang racket/base
 
 (require net/uri-codec
          racket/date
-         racket/function
-         racket/list
          racket/match
          racket/string
          rackjure/str
@@ -13,8 +11,7 @@
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
-         "take.rkt"
-         "util.rkt"
+         (only-in "util.rkt" display-to-file*)
          "verbosity.rkt")
 
 (provide atom-feed-uri
@@ -25,33 +22,31 @@
 (module+ test
   (require rackunit))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; atom
 
 (define (atom-feed-uri tag)
-  (canonicalize-uri (str "/feeds/" tag ".atom.xml")))
+  (canonical-uri (str "/feeds/" (slug tag) ".atom.xml")))
 
 (define (write-atom-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/www file))
   (define updated
     (match xs
       ['() "N/A"]
-      [_   (rfc-8601/universal (post-date (first xs)))]))
+      [_   (rfc-8601/universal (post-date (car xs)))]))
   (~>
    `(feed
      ([xmlns "http://www.w3.org/2005/Atom"]
       [xml:lang "en"])
      (title ([type "text"]) ,(str (current-title) ": " title))
      (link ([rel "self"]
-            [href ,(full-uri (canonicalize-uri (abs->rel/www file)))]))
+            [href ,(full-uri (canonical-uri (abs->rel/www file)))]))
      (link ([href ,(full-uri of-uri-path)]))
-     (id () ,(str "urn:"
-                 (our-encode (current-scheme/host))
-                 ":"
-                 (our-encode of-uri-path)))
+     (id () ,(urn of-uri-path))
      ;; (etag () ???)
      (updated () ,updated)
-     ,@(map (curry post->atom-feed-entry-xexpr tag)
-            (take<= xs (current-max-feed-items))))
+     ,@(for/list ([x (in-list xs)]
+                  [_ (in-range (current-max-feed-items))])
+         (post->atom-feed-entry-xexpr tag x)))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -67,10 +62,7 @@
     (title ([type "text"]) ,title)
     (link ([rel "alternate"]
            [href ,item-uri]))
-    (id () ,(str "urn:"
-                 (our-encode (current-scheme/host))
-                 ":"
-                 (our-encode uri-path)))
+    (id () ,(urn uri-path))
     (published () ,(rfc-8601/universal date))
     (updated () ,(rfc-8601/universal date))
     ;; When > 1 author, list them individually
@@ -90,17 +82,17 @@
                                                    (em "More" hellip))))]
             [else blurb]))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; rss
 
 (define (rss-feed-uri tag)
-  (canonicalize-uri (str "/feeds/" tag ".rss.xml")))
+  (canonical-uri (str "/feeds/" (slug tag) ".rss.xml")))
 
 (define (write-rss-feed xs title tag of-uri-path file)
   (prn1 "Generating ~a" (abs->rel/www file))
   (define updated
     (match xs
       ['() "N/A"]
-      [_   (~> xs first post-date rfc-8601->rfc-822)]))
+      [_   (~> xs car post-date rfc-8601->rfc-822)]))
   (~>
    `(rss
      ([version "2.0"])
@@ -111,8 +103,9 @@
       (lastBuildDate () ,updated)
       (pubDate ,updated)
       (ttl "1800")
-      ,@(map (curry post->rss-feed-entry-xexpr tag)
-             (take<= xs (current-max-feed-items)))))
+      ,@(for/list ([x (in-list xs)]
+                   [_ (in-range (current-max-feed-items))])
+          (post->rss-feed-entry-xexpr tag x))))
    xexpr->string
    (list "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
    reverse
@@ -122,16 +115,12 @@
 
 (define (post->rss-feed-entry-xexpr tag x)
   (match-define (post title src-path modtime dest-path uri-path date older newer tags blurb more? body) x)
-  (define item-uri (full-uri/decorated uri-path
-                                       #:source tag #:medium "RSS"))
+  (define item-uri (full-uri/decorated uri-path #:source tag #:medium "RSS"))
   `(item
     ()
     (title ,title)
     (link ,item-uri)
-    (guid ([isPermaLink "false"]) ,(str "urn:"
-                   (our-encode (current-scheme/host))
-                   ":"
-                   (our-encode uri-path)))
+    (guid ([isPermaLink "false"]) ,(urn uri-path))
     (pubDate () ,(~> date rfc-8601->rfc-822))
     (author ,(post-author x))
     (description
@@ -140,8 +129,6 @@
                                   (xexpr->string `(a ([href ,item-uri])
                                                    (em "More" hellip))))]
             [else blurb]))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Datetime conversion
 
@@ -190,8 +177,8 @@
 (define (date->rfc-822 d)
   (match d
     [(date sc mn hr dy mo yr wd yd dst? tzo)
-     (str (DAYS wd) ", "
-          (2d dy) " " (MONTHS (sub1 mo)) " " yr " "
+     (str (vector-ref DAYS wd) ", "
+          (2d dy) " " (vector-ref MONTHS (sub1 mo)) " " yr " "
           (2d hr) ":" (2d mn) ":" (2d sc) " UT")]))
 
 (define (date->rfc-8601 d)
@@ -236,7 +223,7 @@
                    "Sat, 11 Oct 2014 04:00:00 UT")]
     [_ (void)]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; footnotes
 
 (define (unlinkify-footnotes xs)
   (map unlinkify-footnotes/xexpr xs))
@@ -280,8 +267,15 @@
     '(p () "there"))
    '(p () "there")))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Feed analytics without FeedBurner
+;;; urn
+
+(define (urn uri-path)
+  ;; Note that URNs have a more restricted syntax than URIs. Here we
+  ;; just rely on `slug` to comply.
+  (str "urn:" (slug (current-scheme/host))
+       ":" (slug uri-path)))
+
+;;; Feed analytics without FeedBurner
 
 ;; If you want readership stats, but you can no longer use
 ;; FeedBurner.com (because Google shut down it and Google Reader):
@@ -292,35 +286,6 @@
 (define (full-uri/decorated uri-path #:source source #:medium medium)
   (str (full-uri uri-path)
        (cond [(current-decorate-feed-uris?)
-              (str "?" "utm_source=" (our-encode source)
-                   "&" "utm_medium=" (our-encode medium))]
+              (str "?" "utm_source=" (uri-encode (slug source))
+                   "&" "utm_medium=" (uri-encode (slug medium)))]
              [else ""])))
-
-;; full-uri/decorated handles the case of someone starting with the
-;; feed and clicking through to the original web page. If you want to
-;; count people reading it in a feed reader but _not_ clicking through
-;; -- especially if you have the feed set to full posts not just
-;; above-the-fold blurbs -- then we need to do an image bug. It is
-;; also decorated with Google Analytics query params.
-(define (feed-image-bug-xexpr uri-path #:source source #:medium medium)
-  (cond [(current-feed-image-bugs?)
-         `((img ([src ,(str (current-scheme/host)
-                            "/img/1x1.gif"
-                            "?" "utm_source=" (our-encode source)
-                            "&" "utm_medium=" (our-encode medium)
-                            "&" "utm_campaign=" (uri-encode uri-path))]
-                 [height "1"]
-                 [width "1"])))]
-        [else '()]))
-
-(module+ test
-  (parameterize ([current-scheme/host "http://www.example.com"]
-                 [current-feed-image-bugs? #t])
-   (check-equal?
-    (full-uri/decorated "/path/to/thing" #:source "all" #:medium "RSS")
-    "http://www.example.com/path/to/thing?utm_source=all&utm_medium=RSS")
-   (check-equal?
-    (feed-image-bug-xexpr "/path/to/thing" #:source "all" #:medium "RSS")
-    '((img ([src "http://www.example.com/img/1x1.gif?utm_source=all&utm_medium=RSS&utm_campaign=%2Fpath%2Fto%2Fthing"]
-           [height "1"]
-           [width "1"]))))))

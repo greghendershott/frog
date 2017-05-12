@@ -1,4 +1,4 @@
-#lang rackjure/base
+#lang racket/base
 
 (require racket/cmdline
          racket/contract/base
@@ -394,7 +394,7 @@
   (when launch-browser?
     (ensure-external-browser-preference))
   (serve/servlet (lambda (_) (next-dispatcher))
-                 #:servlet-path (canonicalize-uri (current-posts-index-uri))
+                 #:servlet-path (canonical-uri (current-posts-index-uri))
                  #:extra-files-paths (list root)
                  #:port port
                  #:listen-ip #f

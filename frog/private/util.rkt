@@ -1,16 +1,23 @@
-#lang rackjure/base
+#lang racket/base
 
-(require racket/file
-         racket/function
+(require racket/contract
+         racket/file
          racket/pretty
          rackjure/threading
          (only-in markdown display-xexpr)
          "verbosity.rkt")
 
-(provide (all-defined-out))
+(provide pp
+         display-to-file*
+         write-to-file*
+         copy-file*
+         make-directories-if-needed
+         delete-file*
+         in-slice
+         split-common-prefix)
 
-;; Less typing, but also returns its value so good for sticking in ~>
-;; for debugging
+;; Less typing, and also returns its value so good for sticking in
+;; threading macros for debugging.
 (define (pp v)
   (pretty-print v)
   v)
@@ -30,41 +37,58 @@
   (copy-file from to exists-ok?))
 
 (define (make-directories-if-needed path)
-  (with-handlers ([exn:fail? (const (void))])
+  (with-handlers ([exn:fail? void])
     (define-values (base name dir?)(split-path path))
     (make-directory* base)))
 
-;; Like delete-file, but (a) doesn't abend if file doesn't exit, and
-;; (b) does a prn1 "Deleted X" message.
-(define (delete-file* path [f values])
+;; Like delete-file, but: (a) Doesn't raise exn when file doesn't
+;; exist. (b) Does a prn1 "Deleted <path>" where the _displayed_ value
+;; of path is transformed by an optional function.
+(define (delete-file* path [display-path-as values])
   (when (file-exists? path)
     (delete-file path)
-    (prn1 "Deleted ~a" (f path))))
+    (prn1 "Deleted ~a" (display-path-as path))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; For Rackets too old to have in-slice
+(define (-in-slice k seq)
+  (make-do-sequence
+   (λ ()
+     (define-values (more? get) (sequence-generate seq))
+     (values
+      (λ (_)
+        (for/list ([i (in-range k)] #:when (more?))
+          (get)))
+      values
+      #f
+      #f
+      (λ (val) (pair? val))
+      #f))))
 
-(define (our-encode s)
-  ;; Extremely conservative.
-  ;;
-  ;; WARNING: Changing this will break blog post permalink pattens that
-  ;; use the {title} variable. Even if this could be improved, doing so
-  ;; would break backward compatability.
-  (~> (list->string (for/list ([c (in-string s)])
-                      (cond [(or (char-alphabetic? c)
-                                 (char-numeric? c)) c]
-                            [else #\-])))
-      (re* #px"-{2,}" "-")              ;only one hyphen in a row
-      (re #px"-{1,}$" "")))             ;no hyphen at end
+(define in-slice
+  (with-handlers ([exn:fail? (λ _ -in-slice)])
+    (dynamic-require 'racket/sequence 'in-slice)))
 
-(define (re* s rx new)
-  (regexp-replace* rx s new))
-(define (re s rx new)
-  (regexp-replace rx s new))
+;; For Rackets too old to have split-common-prefix
+(define/contract (-split-common-prefix as bs [same? equal?])
+  (->* (list? list?) ((-> any/c any/c boolean?)) (values list? list? list?))
+  (let loop ([as as] [bs bs])
+    (if (and (pair? as) (pair? bs) (same? (car as) (car bs)))
+        (let-values ([(prefix atail btail) (loop (cdr as) (cdr bs))])
+          (values (cons (car as) prefix) atail btail))
+        (values null as bs))))
+
+(define split-common-prefix
+  (with-handlers ([exn:fail? (λ _ -split-common-prefix)])
+    (dynamic-require 'racket/list 'split-common-prefix)))
 
 (module+ test
   (require rackunit)
-  (check-equal? (our-encode "Foo? Bar. Baz.")
-                "Foo-Bar-Baz")
-  (check-equal? (our-encode "Here's a question--how many hyphens???")
-                "Here-s-a-question-how-many-hyphens"))
-
+  (define-syntax-rule (check-equal-values? generating-expr expected)
+    (check-equal? (call-with-values (λ () generating-expr) list)
+                  expected))
+  (check-equal-values? (split-common-prefix '(a b c d) '(a b x y z))
+                       '((a b)
+                         (c d)
+                         (x y z)))
+  (check-equal-values? (split-common-prefix '() '())
+                       '(() () ())))

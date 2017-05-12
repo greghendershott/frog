@@ -1,8 +1,9 @@
-#lang rackjure/base
+#lang racket/base
 
 (require markdown
+         net/uri-codec
          racket/dict
-         racket/list
+         (only-in racket/list add-between)
          racket/match
          racket/port
          racket/string
@@ -14,7 +15,6 @@
          "params.rkt"
          "paths.rkt"
          "template.rkt"
-         "util.rkt"
          "xexpr2text.rkt")
 
 (provide all-tags
@@ -48,22 +48,22 @@
   (render-template
    (src-path)
    "page-template.html"
-   {'contents contents
-    'title title
-    'author (current-author)
-    'description description
-    'uri-prefix (or (current-uri-prefix) "")
-    'uri-path uri-path
-    'full-uri (full-uri uri-path)
-    'atom-feed-uri (atom-feed-uri feed)
-    'rss-feed-uri (rss-feed-uri feed)
-    'keywords (string-join keywords ", ")
-    'table-of-contents ""
-    'tag tag
-    'rel-prev rel-prev
-    'rel-next rel-next
-    'tags-list-items (xexprs->string (tags-list-items))
-    'tags/feeds (xexprs->string (tags/feeds))}))
+   (hasheq 'contents          contents
+           'title             title
+           'author            (current-author)
+           'description       description
+           'uri-prefix        (or (current-uri-prefix) "")
+           'uri-path          uri-path
+           'full-uri          (full-uri uri-path)
+           'atom-feed-uri     (atom-feed-uri feed)
+           'rss-feed-uri      (rss-feed-uri feed)
+           'keywords          (string-join keywords ", ")
+           'table-of-contents ""
+           'tag               tag
+           'rel-prev          rel-prev
+           'rel-next          rel-next
+           'tags-list-items   (xexprs->string (tags-list-items))
+           'tags/feeds        (xexprs->string (tags/feeds)))))
 
 (define (xexprs->string xs)
   (string-join (map xexpr->string xs) "\n"))
@@ -76,11 +76,11 @@
                     ,@(if (current-show-tag-counts?) `(,(format "(~a)" v)) '())
                     " "
                     (a ([href ,(atom-feed-uri k)])
-                       (img ([src ,(canonicalize-uri "/img/feed.png")]))))))
+                       (img ([src ,(canonical-uri "/img/feed.png")]))))))
     (p (a ([href ,(current-posts-index-uri)]) "All Posts")
        " "
        (a ([href ,(atom-feed-uri "all")])
-          (img ([src ,(canonicalize-uri "/img/feed.png")])))))))
+          (img ([src ,(canonical-uri "/img/feed.png")])))))))
 
 (define (tags-list-items)
   (for/list ([(k v) (in-dict (tags-alist))])
@@ -141,7 +141,7 @@
 
 
 (define (tag->xexpr s [display values])
-  `(a ([href ,(canonicalize-uri (str "/tags/" (our-encode s) ".html"))])
+  `(a ([href ,(canonical-uri (str "/tags/" (slug s) ".html"))])
       ,(display s)))
 
 (define (blurb->description s)

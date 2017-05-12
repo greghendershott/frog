@@ -1,6 +1,7 @@
-#lang rackjure/base
+#lang racket/base
 
-(require racket/contract/base
+(require net/uri-codec
+         racket/contract/base
          racket/contract/region
          racket/file
          racket/match
@@ -13,12 +14,15 @@
          "params.rkt"
          "paths.rkt"
          "post-struct.rkt"
-         "take.rkt"
          "template.rkt"
-         "util.rkt"
+         (only-in "util.rkt" delete-file* display-to-file* in-slice)
          "verbosity.rkt")
 
-(provide (all-defined-out))
+(provide clean-tag-output-files
+         write-stuff-for-tag
+         index-path-for-tag
+         atom-path-for-tag
+         rss-path-for-tag)
 
 (module+ test
   (require rackunit))
@@ -40,7 +44,7 @@
   (write-index-pages posts
                      title
                      (if (equal? tag "all") #f tag)
-                     (our-encode tag)
+                     (slug tag)
                      (index-path-for-tag tag))
   (define index-uri (index-uri-for-tag tag))
   (write-atom-feed posts
@@ -57,12 +61,12 @@
 (define (index-path-for-tag tag)
   (match tag
     ["all" (www/index-pathname)]
-    [_     (build-path (www/tags-path) (str (our-encode tag) ".html"))]))
+    [_     (build-path (www/tags-path) (str (slug tag) ".html"))]))
 
 (define (index-uri-for-tag tag)
   (match tag
-    ["all" (canonicalize-uri (current-posts-index-uri))]
-    [_     (canonicalize-uri (abs->rel/www (index-path-for-tag tag)))]))
+    ["all" (canonical-uri (current-posts-index-uri))]
+    [_     (canonical-uri (abs->rel/www (index-path-for-tag tag)))]))
 
 (define (title-for-tag tag)
   (match tag
@@ -70,10 +74,10 @@
     [_     (str "Posts tagged '" tag "'")]))
 
 (define (atom-path-for-tag tag)
-  (build-path (www/feeds-path) (str (our-encode tag) ".atom.xml")))
+  (build-path (www/feeds-path) (str (slug tag) ".atom.xml")))
 
 (define (rss-path-for-tag tag)
-  (build-path (www/feeds-path) (str (our-encode tag) ".rss.xml")))
+  (build-path (www/feeds-path) (str (slug tag) ".rss.xml")))
 
 (define (write-index-pages xs    ;(listof post?) -> any
                            title ;string?
@@ -83,7 +87,7 @@
   (define num-posts (length xs))
   (define num-pages (ceiling (/ num-posts (current-posts-per-page))))
   (for ([page-num (in-range num-pages)]
-        [page-posts (in-list (take-every xs (current-posts-per-page)))])
+        [page-posts (in-slice (current-posts-per-page) xs)])
     (write-index-page page-posts
                       (cond [(zero? page-num) title]
                             [else (str title " (page " (add1 page-num) ")")])
@@ -120,19 +124,19 @@
         (render-template
          (src-path)
          tpl
-         {'title        (title->htmlstr title)
-          'uri-prefix   (or (current-uri-prefix) "")
-          'uri-path     uri-path
-          'full-uri     (full-uri uri-path)
-          'date-8601    date
-          'date-struct  (date->date-struct date)
-          'date         (~> date date->xexpr xexpr->string)
-          'tags         (~> tags tags->xexpr xexpr->string)
-          'authors      (~> tags author-tags->xexpr xexpr->string)
-          'date+tags    (~> (date+tags->xexpr date tags) xexpr->string)
-          'content      content
-          'content-only content-only
-          'more?        effectively-more?}))
+         (hasheq 'title        (title->htmlstr title)
+                 'uri-prefix   (or (current-uri-prefix) "")
+                 'uri-path     uri-path
+                 'full-uri     (full-uri uri-path)
+                 'date-8601    date
+                 'date-struct  (date->date-struct date)
+                 'date         (~> date date->xexpr xexpr->string)
+                 'tags         (~> tags tags->xexpr xexpr->string)
+                 'authors      (~> tags author-tags->xexpr xexpr->string)
+                 'date+tags    (~> (date+tags->xexpr date tags) xexpr->string)
+                 'content      content
+                 'content-only content-only
+                 'more?        effectively-more?)))
       (string-join "\n")
       (string-append
        (if (> num-pages 1)
@@ -140,7 +144,7 @@
       (bodies->page #:title title
                     #:description title
                     #:feed feed
-                    #:uri-path (canonicalize-uri (abs->rel/www file))
+                    #:uri-path (canonical-uri (abs->rel/www file))
                     #:keywords (cond [tag (list tag)]
                                      [else (hash-keys (all-tags))])
                     #:tag tag)
@@ -161,17 +165,17 @@
        ,(cond [(zero? page-num) `(li ([class "disabled"])
                                      (a ([href "#"]) 'larr))]
               [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
-                                        abs->rel/www canonicalize-uri)])
+                                        abs->rel/www canonical-uri)])
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
            `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
                 (a ([href ,(~> (file/page base-file n) abs->rel/www
-                               canonicalize-uri)])
+                               canonical-uri)])
                    ,(number->string (add1 n)))))
        ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
                                                   (a ([href "#"]) 'rarr))]
               [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
-                                        abs->rel/www canonicalize-uri)])
+                                        abs->rel/www canonical-uri)])
                             'rarr))]) ))
 
 (define (file/page base-file page-num)

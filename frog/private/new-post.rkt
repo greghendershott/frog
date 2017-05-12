@@ -9,7 +9,7 @@
          rackjure/threading
          "params.rkt"
          "paths.rkt"
-         "util.rkt")
+         (only-in "util.rkt" display-to-file*))
 
 (provide new-post)
 
@@ -24,10 +24,9 @@
       (parameterize ([date-display-format 'iso-8601])
         (values (date->string now #f)
                 (date->string now #t)))))
-  (define filename (str (~> (str date-only-str
-                                 "-"
-                                 (~> title string-downcase))
-                            our-encode)
+  (define filename (str date-only-str
+                        "-"
+                        (~> title string-downcase slug)
                         extension))
   (define pathname (build-path (src/posts-path) filename))
   (cond [(file-exists? pathname)

@@ -1,10 +1,10 @@
-#lang rackjure/base
+#lang racket/base
 
 (require markdown
          racket/contract/base
          racket/contract/region
          racket/file
-         racket/list
+         (only-in racket/list empty?)
          racket/match
          racket/port
          racket/string
@@ -21,7 +21,7 @@
          "read-scribble.rkt"
          "serialize-posts.rkt"
          "template.rkt"
-         "util.rkt"
+         (only-in "util.rkt" delete-file* display-to-file*)
          "verbosity.rkt"
          "xexpr2text.rkt")
 
@@ -57,7 +57,7 @@
                                       (str dt "-" nm)))
          (read-scribble-file path
                              #:img-local-path img-dest
-                             #:img-uri-prefix (canonicalize-uri
+                             #:img-uri-prefix (canonical-uri
                                                (abs->rel/www img-dest)))]
         [(pregexp "\\.html$")
          (define same.scrbl (path-replace-suffix path ".scrbl"))
@@ -74,7 +74,7 @@
          (parse-markdown path footnote-prefix)]
         [(pregexp "\\.mdt$")
          (define footnote-prefix (~> (str dt "-" nm) string->symbol))
-         (define text (render-template path-to (path->string name) {}))
+         (define text (render-template path-to (path->string name) '()))
          (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
     (match-define (list title date tags body) (meta-data xs name))
@@ -90,7 +90,7 @@
     (define day (substring date 8 10))
     (define dest-path
       (permalink-path year month day
-                      (~> title string-downcase our-encode)
+                      (~> title string-downcase slug)
                       (match (path->string name)
                         [(pregexp post-file-px (list _ _ s)) s])
                       (current-permalink)))
@@ -98,7 +98,7 @@
           path
           (file-or-directory-modify-seconds path)
           dest-path
-          (canonicalize-uri (post-path->link dest-path))
+          (canonical-uri (post-path->link dest-path))
           date
           #f ;; older
           #f ;; newer
@@ -227,21 +227,21 @@
   (~> (render-template
        (src-path)
        "post-template.html"
-       {'title       (title->htmlstr title)
-        'uri-prefix  (or (current-uri-prefix) "")
-        'uri-path    uri-path
-        'full-uri    (full-uri uri-path)
-        'date-8601   date
-        'date-struct (date->date-struct date)
-        'date        (~> date date->xexpr xexpr->string)
-        'tags        (~> tags tags->xexpr xexpr->string)
-        'authors     (~> tags author-tags->xexpr xexpr->string)
-        'date+tags   (~> (date+tags->xexpr date tags) xexpr->string)
-        'content     body
-        'older-uri   older-uri
-        'newer-uri   newer-uri
-        'older-title (and older (title->htmlstr (post-title older)))
-        'newer-title (and newer (title->htmlstr (post-title newer)))})
+       (hasheq 'title       (title->htmlstr title)
+               'uri-prefix  (or (current-uri-prefix) "")
+               'uri-path    uri-path
+               'full-uri    (full-uri uri-path)
+               'date-8601   date
+               'date-struct (date->date-struct date)
+               'date        (~> date date->xexpr xexpr->string)
+               'tags        (~> tags tags->xexpr xexpr->string)
+               'authors     (~> tags author-tags->xexpr xexpr->string)
+               'date+tags   (~> (date+tags->xexpr date tags) xexpr->string)
+               'content     body
+               'older-uri   older-uri
+               'newer-uri   newer-uri
+               'older-title (and older (title->htmlstr (post-title older)))
+               'newer-title (and newer (title->htmlstr (post-title newer)))))
       (bodies->page #:title title
                     #:description (blurb->description blurb)
                     #:uri-path uri-path
