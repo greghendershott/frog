@@ -13,6 +13,7 @@
          copy-file*
          make-directories-if-needed
          delete-file*
+         delete-files*
          in-slice
          split-common-prefix)
 
@@ -48,6 +49,11 @@
   (when (file-exists? path)
     (delete-file path)
     (prn1 "Deleted ~a" (display-path-as path))))
+
+(define (delete-files* dir [display-path-as values])
+  (when (directory-exists? dir)
+    (for ([file (directory-list dir)])
+      (delete-file* (build-path dir file) display-path-as))))
 
 ;; For Rackets too old to have in-slice
 (define (-in-slice k seq)

@@ -14,10 +14,7 @@
   (require rackunit))
 
 (define (clean-serialized-posts)
-  (define (maybe-delete path type v)
-    (when (eq? type 'file)
-      (delete-file* path abs->rel/top)))
-  (fold-files maybe-delete '() (obj-path) #f))
+  (delete-files* (obj-path) abs->rel/top))
 
 (define/contract (deserialize-posts)
   (-> (hash/c path? post?))

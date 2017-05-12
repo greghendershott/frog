@@ -15,7 +15,11 @@
          "paths.rkt"
          "post-struct.rkt"
          "template.rkt"
-         (only-in "util.rkt" delete-file* display-to-file* in-slice)
+         (only-in "util.rkt"
+                  delete-file*
+                  delete-files*
+                  display-to-file*
+                  in-slice)
          "verbosity.rkt")
 
 (provide clean-tag-output-files
@@ -32,11 +36,8 @@
 ;; Includes the special tag "all", meaning all posts.
 
 (define (clean-tag-output-files)
-  (define (maybe-delete path type v)
-    (when (eq? type 'file)
-      (delete-file* path abs->rel/www)))
-  (fold-files maybe-delete '() (build-path (www-path) "tags/") #f)
-  (fold-files maybe-delete '() (build-path (www-path) "feeds/") #f))
+  (delete-files* (www/tags-path) abs->rel/www)
+  (delete-files* (www/feeds-path) abs->rel/www))
 
 (define/contract (write-stuff-for-tag tag posts)
   (string? (listof post?) . -> . void)
