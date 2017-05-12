@@ -55,6 +55,6 @@ script:
   - make install
   - make check-deps
   - make test
-  - make create-build-example
+  - make ci-extra-checks
 
 after_script:

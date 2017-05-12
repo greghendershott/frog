@@ -33,16 +33,28 @@ check-deps:
 test:
 	raco test -x -p $(PACKAGE-NAME)
 
-######################################################################
-# Unique to Frog:
+
+## Unique to this project:
+
+# Extra sanity checks that you could run locally but normally would
+# let CI run for you.
+ci-extra-checks: build-example init-build
+
+# Build the example project. Check that an expected URI exists in
+# sitemap.txt and is Unicode NFD normalized and percent-encoded.
+build-example:
+	cd example && raco frog --verbose --clean --build
+	grep 'http://www.example.com/2017/05/la-biblioteca-esta%CC%81-en-el-esto%CC%81mago-de-godzilla.html' example/sitemap.txt
+
+# Exercise raco frog --init
 TEST-PROJECT=test-blog
-create-build-example:
-	mkdir $(TEST-PROJECT)                && \
-	cd $(TEST-PROJECT)                   && \
-	raco frog --init                     && \
-	raco frog --verbose --build          && \
-	raco frog --new-markdown "Blah Blah" && \
-	raco frog --new-scribble "Blah Blah" && \
-	raco frog --verbose --build          && \
-	cd ..                                && \
+init-build:
+	mkdir $(TEST-PROJECT)                 && \
+	cd $(TEST-PROJECT)                    && \
+	raco frog --init                      && \
+	raco frog --verbose --build           && \
+	raco frog --new-markdown "Hey λ está" && \
+	raco frog --new-scribble "Hey λ allí" && \
+	raco frog --verbose --build           && \
+	cd ..                                 && \
 	rm -rf $(TEST-PROJECT)
