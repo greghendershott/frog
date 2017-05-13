@@ -7,6 +7,7 @@
                      scribble/manual
                      xml/xexpr
                      frog/enhance-body
+                     frog/paths
                      frog/params
                      frog/scribble
                      frog/widgets
@@ -250,10 +251,11 @@ The @racketmodname[frog/config] language provides bindings from:
 @item{@racketmodname[racket/base]}
 @item{@racketmodname[racket/contract/base]}
 @item{@racketmodname[racket/contract/region]}
+@item{@racketmodname[xml/xexpr]}
 @item{@racketmodname[rackjure/threading]}
 @item{@racketmodname[frog/params]}
+@item{@racketmodname[frog/paths]}
 @item{@racketmodname[frog/enhance-body]}
-@item{@racketmodname[xml/xexpr]}
 ]
 
 Furthermore, the @racketmodname[frog/config] language ensures that you
@@ -915,9 +917,8 @@ this will not appear in the feed at all.}
 true, decorate feed URIs with Google Analytics query parameters like
 @tt{utm_source}.}
 
-@defparam[current-feed-image-bugs? v boolean? #:value #t]{When true,
-insert in each feed item an image bug whose URI is decorated with
-Google Analytics query parameters like @tt{utm_source}.}
+@defparam[current-feed-image-bugs? v boolean? #:value #t]{This
+parameter is obsolete and has no effect.}
 
 @defparam[current-source-dir v path-string? #:value "_src"]{
 The source directory.
@@ -944,9 +945,31 @@ located.}
 
 @section[#:tag "body-enhancers"]{Body enhancers}
 
+You may call these functions in the @racket[enhance-body] function in
+your @secref["config"].
+
 @defmodule[frog/enhance-body]
 
 (This module is automatically required for you by the
 @racketmodname[frog/config] language used in @secref["config"].)
 
 @include-extracted[frog/enhance-body]
+
+
+@section[#:tag "paths"]{Paths}
+
+Although you may use these definitions in your @secref["config"], they
+are more likely to be used by third-party @secref["body-enhancers"].
+
+@defmodule[frog/paths]
+
+(This module is automatically required for you by the
+@racketmodname[frog/config] language used in @secref["config"].)
+
+These definitions represent locations of certain local directories and
+files --- as well as translating between local filesystem paths and
+URI paths that will work on the deployed web site. One wrinkle is that
+the local file paths might be Windows style, which differs from the
+Unix style used by URI paths.
+
+@include-extracted[frog/paths]

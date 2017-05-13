@@ -13,6 +13,7 @@
                "srfi-lite-lib"
                "web-server-lib"))
 (define build-deps '("at-exp-lib"
+                     "net-doc"
                      "racket-doc"
                      "rackunit-lib"
                      "scribble-doc"
