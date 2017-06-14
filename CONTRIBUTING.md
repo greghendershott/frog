@@ -1,36 +1,40 @@
-Contributing to Frog
-==================
+# Contributing to Frog
 
 Interested in improving Frog? Great!
 
-Trying out your new code
-----------------------
+# One-time setup
 
-First, clone or download the Git repository.
+1. At https://github.com/greghendershott/frog click the `Fork` button.
 
-The entrypoint to the application is the `main` submodule in `frog/frog` module (as is specified in `frog/info.rkt`). After having introduced some change to the code you may thus take your your new and improved version of Frog for drive by invoking it like so:
+2. `git clone` your forked repo to your computer.
 
-	$ racket frog/frog.rkt
-	
-from the repository root. The options will be the same as for the `raco frog` command Try `-h` to convince yourself.
+3. Run `make install`. This installs a few Racket packages needed by
+   Frog. Also it lets you run Frog just like normal users do: `raco
+   frog`.
 
-If you have added any tests (which may be especially useful in the early stages of development when you have not yet hooked them in to the rest of Frog) they can be run using `raco test <file.rkt>` or by invoking the corresponding command in your development environment (such as invoking `racket-test` if your using Emacs' `racket-mode`).
+# Ongoing development
 
-The `example` project
--------------------
+To run day-to-day tests: `make test`. This runs tests in any `test`
+submodule in the project (including any you add).
 
-Frog ships with an example site in the `example` directory. Generating this site can be a good way to test your code, and if you introduce some new feature adding a new post to that site showcasing your code is an excellent idea.
+There are some extra tests (which Travis CI will run against your pull
+request). To run them: `make ci-extra-checks`. See `Makefile` for
+more details if you're curious.
 
-Testing
-------
+# The `example` project
 
-You are encouraged to add tests covering your new code. In addition it is a good idea to make sure that the existing tests also pass. To run the test suite:
+One thing that `make ci-extra-checks` does is build an example Frog
+blog project in the `example` directory. Making Frog build this can be
+a good way to test your code. If you introduce a new feature, consider
+adding a new post to that site that illustrates and exercises your
+feature.
 
-	$ raco test -x -p frog
-	
-from the repository root (or by specifying some specific file as described above).
+# Sharing your change
 
-Upstreaming your change?
------------------------
+To share your bug fix or new feature, please create a [pull request].
 
-If you have fixed a bug or introduced some new feature it is probably relevant to other users of Frog as well. Submit your change by creating a standard GitHub [pull request](https://github.com/greghendershott/frog/pulls).
+If you're contemplating a big change, consider opening an [issue]
+early to discuss it and get feedback before doing all the work.
+
+[pull request]: https://github.com/greghendershott/frog/pulls
+[issue]: https://github.com/greghendershott/frog/issues
