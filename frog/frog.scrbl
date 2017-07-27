@@ -696,7 +696,7 @@ Instead of the default ISO-8601 YYYY-MM-DD format, you want it to be
 the default of Racket's @racket[date->string] function. Here is what
 you could do in your @secref["index-template"]:
 
-@pre[#:title "index-template.rkt"]|{
+@pre[#:title "index-template.html"]|{
 @(local-require racket/date)
 <article>
   <header>
