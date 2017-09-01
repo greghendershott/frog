@@ -159,6 +159,7 @@
                [xs xs]))
   (string-join (map xexpr->string xs) ""))
 
+;; Raises a contract error on invalid date
 (define (date->date-struct YYYY-MM-DD-string)
   (match YYYY-MM-DD-string
     [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})" (list _ y m d))

@@ -129,8 +129,15 @@
             #:when (member k '("Title" "Date" "Tags" "Authors"))
             (hash-set h (string-trim k) (string-trim v))]
            [s (warn s) h])))
+     (define d
+       (with-handlers ([exn:fail:contract?
+                        (λ _
+                          (err "`Date` is malformed, must be yyyy-mm-ddThr:mn:sc format"))])
+         (define d0 (hash-ref h "Date" (λ _ (err "missing `Date`"))))
+         (date->date-struct d0)
+         d0))
      (list (hash-ref h "Title" (λ _ (err "missing `Title`")))
-           (hash-ref h "Date" (λ _ (err "missing `Date`")))
+           d
            (append (~>> (hash-ref h "Tags" "")
                         tag-string->tags)
                    (~>> (hash-ref h "Authors" "")
