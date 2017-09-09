@@ -4,40 +4,30 @@
 
 Thanks to the following people for contributing pull requests!
 
-- [Jens Axel Søgaard](https://github.com/soegaard)
-
 - [Jose A. Ortega Ruiz](https://github.com/jaor)
-
-- [WillemDeGroef](https://github.com/WillemDeGroef)
-
 - [voila](https://github.com/voila)
-
-- [Eric Hanchow](https://github.com/offby1)
-
-- [William J. Bowman](https://github.com/bluephoenix47)
-
-- [Jordan Johnson](https://github.com/RenaissanceBug)
-
-- [Tim Bradshaw](https://github.com/tfeb)
-
-- [Tobias Gerdin](https://github.com/tger)
-
-- [Gabriel Scherer](https://github.com/gasche)
-
-- [sorawee](https://github.com/sorawee)
-
-- [Leif Andersen](https://github.com/LeifAndersen)
-
-- [Konrad Hinsen](https://github.com/khinsen)
-
 - [Dionna Amalie Glaze](https://github.com/deeglaze)
-
-- [Kartik Singhal](https://github.com/k4rtik)
-
+- [William J. Bowman](https://github.com/wilbowma)
+- [Eric Hanchow](https://github.com/offby1)
+- [Tim Bradshaw](https://github.com/tfeb)
+- [Konrad Hinsen](https://github.com/khinsen)
+- [Leif Andersen](https://github.com/LeifAndersen)
+- [sorawee](https://github.com/sorawee)
+- [Jordan Johnson](https://github.com/RenaissanceBug)
+- [Gabriel Scherer](https://github.com/gasche)
 - [Brian Mastenbrook](https://github.com/bmastenbrook)
-
+- [therac25](https://github.com/therac25)
+- [John Clements](https://github.com/jbclements)
+- [Peter Braun](https://github.com/pb82)
+- [Kartik Singhal](https://github.com/k4rtik)
+- [Stevie Strickland](https://github.com/sstrickl)
+- [WillemDeGroef](https://github.com/WillemDeGroef)
+- [Jens Axel Søgaard](https://github.com/soegaard)
+- [Eric Eide](https://github.com/eeide)
+- [phaer](https://github.com/phaer)
 - [Nolan Prescott](https://github.com/NPrescott)
-
+- [Tobias Gerdin](https://github.com/tger)
+- [Royall Spence](https://github.com/royallthefourth)
 
 ## Issues
 
