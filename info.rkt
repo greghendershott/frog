@@ -1,10 +1,10 @@
 #lang info
-(define version "0.28")
+(define version "0.29")
 (define collection 'multi)
 (define deps '(["base" #:version "6.1"]
                "find-parent-dir"
                "html-lib"
-               ["markdown" #:version "0.24"]
+               ["markdown" #:version "0.25"]
                "racket-index"
                ["rackjure" #:version "0.9"]
                "reprovide-lang"
