@@ -40,25 +40,28 @@
 
 (define (main)
   (printf "Frog ~a\n" (frog-version))
+  (define help-passed? (ormap (curryr vector-member (current-command-line-arguments)) '("-h" "--help")))
   (parameterize ([top (find-frog-root)])
-    (when (vector-member "--init" (current-command-line-arguments))
+    (when (and (not help-passed?) (vector-member "--init" (current-command-line-arguments)))
       (init-project)
       (exit 0))
     (when (eq? 'windows (system-type 'os))
       (file-stream-buffer-mode (current-output-port) 'line)
       (file-stream-buffer-mode (current-error-port) 'line))
-    (maybe-frogrc->frog.rkt (top))
-    (user-frog.rkt:load (top))
-    (user-frog.rkt:init)
+    (when (not help-passed?)
+      (maybe-frogrc->frog.rkt (top))
+      (user-frog.rkt:load (top))
+      (user-frog.rkt:init))
     (define watch? #f)
     (define port 3000)
     (define root
       ;; Default the server root to be the number of parent dirs
       ;; above (www-path) as there are dirs in current-uri-prefix.
-      (let* ([prefix (or (current-uri-prefix) "/")]
-             [depth (sub1 (length (explode-path prefix)))])
-        (simplify-path (apply build-path (list* (www-path)
-                                                (build-list depth (λ _ 'up)))))))
+      (and (not help-passed?)
+           (let* ([prefix (or (current-uri-prefix) "/")]
+                  [depth (sub1 (length (explode-path prefix)))])
+             (simplify-path (apply build-path (list* (www-path)
+                                                     (build-list depth (λ _ 'up))))))))
     (define edit-new-post? (make-parameter #f))
     (command-line
      #:program "raco frog"
