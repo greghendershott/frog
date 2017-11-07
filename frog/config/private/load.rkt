@@ -20,11 +20,16 @@
 
         (define (load top)
           (define frog.rkt (build-path top "frog.rkt"))
-          (let ([fn (dynamic-require frog.rkt 'id)])
+          (let ([fn (with-handlers ([exn:fail? cannot-find-frog.rkt])
+                      (dynamic-require frog.rkt 'id))])
             (when fn (set! id fn))) ...)
         (provide load))))
 
 (define-the-things)
+
+(define (cannot-find-frog.rkt . _)
+  (eprintf "Cannot open frog.rkt.\nMaybe you need to `raco frog --init` ?\n")
+  (exit 1))
 
 (module+ test
   (require rackunit
