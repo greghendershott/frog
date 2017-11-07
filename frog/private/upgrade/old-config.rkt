@@ -16,15 +16,16 @@
 (define-runtime-path template-frog.rkt "template-frog.rkt")
 
 (define (maybe-frogrc->frog.rkt top)
-  (define frog.rkt (build-path top "frog.rkt"))
-  (unless (file-exists? frog.rkt)
-    (prn0 "Creating frog.rkt from .frogrc -- see upgrade documentation.")
-    (flush-output)
-    (parameterize ([current-directory top])
-      (with-output-to-file frog.rkt
-        #:mode 'text #:exists 'error
-        (λ () (dynamic-require template-frog.rkt #f)))
-      (add-deprecation-comment-to-.frogrc))))
+  (when (file-exists? (build-path top ".frogrc"))
+    (define frog.rkt (build-path top "frog.rkt"))
+    (unless (file-exists? frog.rkt)
+      (prn0 "Creating frog.rkt from .frogrc -- see upgrade documentation.")
+      (flush-output)
+      (parameterize ([current-directory top])
+        (with-output-to-file frog.rkt
+          #:mode 'text #:exists 'error
+          (λ () (dynamic-require template-frog.rkt #f)))
+        (add-deprecation-comment-to-.frogrc)))))
 
 (define config #f) ;; (hash/c symbol? any/c)
 (define (get-config name default cfg-path) ;; (symbol? any/c path? -> any/c)
