@@ -39,17 +39,35 @@
   (require rackunit))
 
 (define (main)
+  (when (eq? 'windows (system-type 'os))
+    (file-stream-buffer-mode (current-output-port) 'line)
+    (file-stream-buffer-mode (current-error-port) 'line))
   (printf "Frog ~a\n" (frog-version))
   (parameterize ([top (find-frog-root)])
     (when (vector-member "--init" (current-command-line-arguments))
       (init-project)
       (exit 0))
-    (when (eq? 'windows (system-type 'os))
-      (file-stream-buffer-mode (current-output-port) 'line)
-      (file-stream-buffer-mode (current-error-port) 'line))
-    (maybe-frogrc->frog.rkt (top))
-    (user-frog.rkt:load (top))
-    (user-frog.rkt:init)
+    ;; When the user has supplied help args (or no args at all) then
+    ;; we want to just show the help and exit. (We specifically don't
+    ;; want to deal with a missing frog.rkt config file.) But doing so
+    ;; is awkward because `command-line` doesn't expose a `show-help`
+    ;; function we can just call directly and exit. So, mutate
+    ;; current-command-line-arguments as necessary to prevent
+    ;; attempting certain non-help commands below.
+    (define help?
+      (cond [(or (equal? #() (current-command-line-arguments))
+                 (ormap (curryr vector-member (current-command-line-arguments))
+                        '("-h" "--help")))
+             (current-command-line-arguments #("--help"))
+             #t]
+            [(vector-member "--doc" (current-command-line-arguments))
+             (current-command-line-arguments #("--doc"))
+             #t]
+            [else #f]))
+    (unless help?
+      (maybe-frogrc->frog.rkt (top))
+      (user-frog.rkt:load (top))
+      (user-frog.rkt:init))
     (define watch? #f)
     (define port 3000)
     (define root
