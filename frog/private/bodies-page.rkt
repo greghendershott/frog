@@ -145,8 +145,7 @@
                       ,(current-author))))))
 
 (define (tag->pair s [display values])
-  (list (display s)
-        (str "/tags/" (slug s) ".html")))
+  `(,(display s) . ,(canonical-uri (str "/tags/" (slug s) ".html"))))
 
 (define (tag->xexpr s [display values])
   `(a ([href ,(canonical-uri (str "/tags/" (slug s) ".html"))])

@@ -60,10 +60,9 @@
             @(define (craft-tag-links listof-pairs)
               @(map (lambda (pair)
                 @list{
-                <a class="dropdown-item" href="@(car (cdr pair))">
+                <a class="dropdown-item" href="@(cdr pair)">
                   @(car pair)
-                </a>
-                })
+                </a>})
               listof-pairs)
             )
 
