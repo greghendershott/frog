@@ -174,15 +174,14 @@ project/
     @comment{# Zero or more other @tt{.md} files, for non-post pages.}
     @comment{# May be in subdirs.}
   css/
-    bootstrap.css            @comment{# \}
-    bootstrap.min.css        @comment{# get these files}
-    bootstrap-theme.css      @comment{# from @url["http://getbootstrap.com"]}
-    bootstrap-theme.min.css  @comment{# /}
+    bootstrap.min.css        @comment{# get these files
+    bootstrap.min.css.map    @comment{# from @url["http://getbootstrap.com"]}
     pygments.css             @comment{# style code elements from Pygments}
     custom.css               @comment{# other styles you provide; may be empty}
+    scribble.css
   js/
-    bootstrap.js             @comment{# get these files}
-    bootstrap.min.js         @comment{# from @url["http://getbootstrap.com/"]}
+    jquery-3.2.1.slim.min.js @comment{# local copy of jQuery for Bootstrap}
+    bootstrap.bundle.min.js  @comment{# from @url["http://getbootstrap.com/"]}
   img/
     feed.png
   favicon.ico
