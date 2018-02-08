@@ -174,7 +174,7 @@ project/
     @comment{# Zero or more other @tt{.md} files, for non-post pages.}
     @comment{# May be in subdirs.}
   css/
-    bootstrap.min.css        @comment{# get these files
+    bootstrap.min.css        @comment{# get these files}
     bootstrap.min.css.map    @comment{# from @url["http://getbootstrap.com"]}
     pygments.css             @comment{# style code elements from Pygments}
     custom.css               @comment{# other styles you provide; may be empty}
