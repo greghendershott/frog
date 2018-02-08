@@ -28,47 +28,66 @@
     @google-universal-analytics["UA-xxxxx"]
   </head>
   <body>
+
     <!-- A standard Twitter Bootstrap nav bar -->
-    <header class="navbar navbar-default navbar-inverse"
-            role="banner">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
       <div class="container">
-        <div class="navbar-header">
-          <button type="button"
-                  class="navbar-toggle"
-                  data-toggle="collapse"
-                  data-target=".our-nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a href="@|uri-prefix|/index.html" class="navbar-brand">My Blog Brand</a>
-        </div>
-        <div class="collapse navbar-collapse our-nav-collapse"
-             role="navigation">
-          <ul class="nav navbar-nav">
+
+      <a href="@|uri-prefix|/index.html" class="navbar-brand">My Blog Brand</a>
+
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+              data-target="#navbar_collapse" aria-controls="navbar_collapse"
+              aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbar_collapse">
+          <ul class="navbar-nav mr-auto">
             @;{ We can define Racket functions to "DRY". Here's one to
                 emit HMTL for a nav item, adding class="active" iff
                 this page's @|uri-path| is the same as the nav link. }
+
             @(define (ni uri label [a-attribs ""])
               @list{
                 <li@(when (string-ci=? uri uri-path) " class=\"active\"")>
-                  <a href="@|uri|"@|a-attribs|>@|label|</a>
+                  <a class="nav-link" href="@|uri|"@|a-attribs|>@|label|</a>
                 </li> })
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                Tags <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><a href="@|uri-prefix|/index.html">All Posts</a></li>
-                @|tags-list-items|
-              </ul>
+
+
+            @;{ Here we craft the dropdown links from a list of pairs.
+                The pairs are in the format '((name . url) ...) }
+
+            @(define (craft-tag-links listof-pairs)
+              @(map (lambda (pair)
+                @list{<a class="dropdown-item" href="@(cdr pair)">@(car pair)</a>})
+              listof-pairs))
+
+            <li class="nav-item dropdown">
+              <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                Tags <b class="caret"></b>
+              </a>
+
+              <div class="dropdown-menu">
+                @craft-tag-links[(all-tag-pairs)]
+              </div>
             </li>
+
             @ni[(string-append uri-prefix "/About.html") "About"]
-            <li><a href="@|atom-feed-uri|">Atom</a></li>
-            <li><a href="@|rss-feed-uri|">RSS</a></li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="@|atom-feed-uri|">Atom</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="@|rss-feed-uri|">RSS</a>
+            </li>
           </ul>
-        </div>
       </div>
-    </header>
+
+      </div>
+    </nav>
+
+
     <div class="container">
       <div class="row">
         @;{ Remember that Twitter Bootstrap has a 12 cell model. The
@@ -104,7 +123,7 @@
       </footer>
     </div>
     <!-- </body> JS -->
-    <script type="text/javascript" src="//code.jquery.com/jquery.min.js"></script>
-    <script type="text/javascript" src="@|uri-prefix|/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="@|uri-prefix|/js/jquery-3.2.1.slim.min.js"></script>
+    <script type="text/javascript" src="@|uri-prefix|/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

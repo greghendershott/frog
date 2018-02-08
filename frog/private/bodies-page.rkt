@@ -62,6 +62,7 @@
            'tag               tag
            'rel-prev          rel-prev
            'rel-next          rel-next
+           'all-tag-pairs     all-tag-pairs
            'tags-list-items   (xexprs->string (tags-list-items))
            'tags/feeds        (xexprs->string (tags/feeds)))))
 
@@ -81,6 +82,10 @@
        " "
        (a ([href ,(atom-feed-uri "all")])
           (img ([src ,(canonical-uri "/img/feed.png")])))))))
+
+(define (all-tag-pairs)
+  (map tag->pair (dict-keys (tags-alist))))
+
 
 (define (tags-list-items)
   (for/list ([(k v) (in-dict (tags-alist))])
@@ -139,6 +144,8 @@
                       ((class "authors"))
                       ,(current-author))))))
 
+(define (tag->pair s [display values])
+  `(,(display s) . ,(canonical-uri (str "/tags/" (slug s) ".html"))))
 
 (define (tag->xexpr s [display values])
   `(a ([href ,(canonical-uri (str "/tags/" (slug s) ".html"))])

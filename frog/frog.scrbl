@@ -174,15 +174,14 @@ project/
     @comment{# Zero or more other @tt{.md} files, for non-post pages.}
     @comment{# May be in subdirs.}
   css/
-    bootstrap.css            @comment{# \}
     bootstrap.min.css        @comment{# get these files}
-    bootstrap-theme.css      @comment{# from @url["http://getbootstrap.com"]}
-    bootstrap-theme.min.css  @comment{# /}
+    bootstrap.min.css.map    @comment{# from @url["http://getbootstrap.com"]}
     pygments.css             @comment{# style code elements from Pygments}
     custom.css               @comment{# other styles you provide; may be empty}
+    scribble.css
   js/
-    bootstrap.js             @comment{# get these files}
-    bootstrap.min.js         @comment{# from @url["http://getbootstrap.com/"]}
+    jquery-3.2.1.slim.min.js @comment{# local copy of jQuery for Bootstrap}
+    bootstrap.bundle.min.js  @comment{# from @url["http://getbootstrap.com/"]}
   img/
     feed.png
   favicon.ico
@@ -217,11 +216,11 @@ project/  @comment{# default; see @racket[current-output-dir] in @secref["config
 Although the Frog
 @hyperlink["https://github.com/greghendershott/frog/tree/master/example"]{example}
 project has copies for example purposes, for your own project you
-should get the official/latest Bootstrap 3 files directly from
+should get the official/latest Bootstrap 4 files directly from
 Bootstrap.
 
 
-To design a Bootstrap 3 "theme", try
+To design a Bootstrap 4 "theme", try
 @hyperlink["http://pikock.github.io/bootstrap-magic/"]{Bootstrap
 Magic}. Also,
 @hyperlink["http://bootswatch.com/"]{http://bootswatch.com/} has some
