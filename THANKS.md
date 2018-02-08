@@ -28,6 +28,7 @@ Thanks to the following people for contributing pull requests!
 - [Nolan Prescott](https://github.com/NPrescott)
 - [Tobias Gerdin](https://github.com/tger)
 - [Royall Spence](https://github.com/royallthefourth)
+- [Steven L](https://github.com/sleibrock)
 
 ## Issues
 
