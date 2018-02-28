@@ -9,6 +9,33 @@
     @twitter-share-button[full-uri]
     @google-plus-share-button[full-uri]
     @disqus-comments["shortname"]
-    @older/newer-links[older-uri older-title newer-uri newer-title]
+    @;(older/newer-links[older-uri older-title newer-uri newer-title])
+
+    @(define (page-navigation prev-uri prev-title new-uri new-title)
+      @list{
+        <div class="row justify-content-center">
+          <nav aria-label="Page Navigation">
+	    <ul class="pagination">
+	      @(when prev-uri
+	        @list{
+	          <li class="page-item">
+	            <a class="page-link" href="@|prev-uri|" aria-label="Previous">
+		      <span aria-hidden="true">&larr; @|prev-title|</span>
+	            </a>
+	          </li>
+	        })
+	      @(when new-uri
+	        @list{
+	          <li class="page-item">
+	            <a class="page-link" href="@|new-uri|" aria-label="Next">
+		      <span aria-hidden="true">@|new-title| &rarr;</span>
+	            </a>
+	          </li>
+	        })
+	    </ul>
+          </nav>
+	</div>})
+
+    @page-navigation[older-uri older-title newer-uri newer-title]
   </footer>
 </article>
