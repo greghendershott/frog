@@ -125,15 +125,23 @@
        (for/fold ([h (hash)])
                  ([s (string-split plain-text "\n")])
          (match s
-           [(pregexp "^(.+?):(.+?)$" (list _ k v))
+           [(pregexp "^ *(.+?): *(.*?) *$" (list _ k v))
             #:when (member k '("Title" "Date" "Tags" "Authors"))
-            (hash-set h (string-trim k) (string-trim v))]
+            (hash-set h k v)]
            [s (warn s) h])))
-     (list (hash-ref h "Title" (λ _ (err "missing `Title`")))
-           (hash-ref h "Date" (λ _ (err "missing `Date`")))
-           (append (~>> (hash-ref h "Tags" "")
+     (define (required k)
+       (define (fail [pre ""])
+         (err (format "missing ~a~v" pre k)))
+       (match (string-trim (hash-ref h k fail))
+         ["" (fail "non-blank ")]
+         [v  v]))
+     (define (optional k)
+       (hash-ref h k ""))
+     (list (required "Title")
+           (required "Date" )
+           (append (~>> (optional "Tags")
                         tag-string->tags)
-                   (~>> (hash-ref h "Authors" "")
+                   (~>> (optional "Authors")
                         tag-string->tags
                         (map make-author-tag)))
            more)]
@@ -141,7 +149,7 @@
     [_ (err "none found")]))
 
 (module+ test
-  (define p (string->path "/"))
+  (define p (string->path "/path/to/file"))
   (test-case "Various HTML \"envelopes\" and HTML entities"
     (check-equal? (meta-data `((pre () (code () "Title: title\nDate: date\nTags: DRAFT\n"))) p)
                   (list "title" "date" '("DRAFT") '()))
@@ -149,7 +157,7 @@
                   (list "title" "date" '("DRAFT") '()))
     (check-equal? (meta-data `((pre "Title: title\nDate: date\nTags: DRAFT\n")) p)
                   (list "title" "date" '("DRAFT") '()))
-    (check-equal? (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n\n")) p)
+    (check-equal? (meta-data `((p () "Title: title" ndash "hyphen \nDate: date\nTags: DRAFT\n")) p)
                   (list "title-hyphen" "date" '("DRAFT") '())))
   (test-case "Authors meta data is converted to prefixed tags"
     (check-equal? (meta-data `((p () "Title: title\nDate: date\nTags: DRAFT\nAuthors:Alice Baker,Charlie Dan\n")) p)
@@ -159,9 +167,21 @@
                               (make-author-tag "Alice Baker")
                               (make-author-tag "Charlie Dan"))
                         '())))
+  (test-case "Handle spaces (or not) around key: and value"
+    (check-equal? (meta-data `((pre "Title:title\nDate:date\nTags:DRAFT\n")) p)
+                  (list "title" "date" '("DRAFT") '()))
+    (check-equal? (meta-data `((pre " Title:  title  \n  Date: date \nTags: DRAFT  \n")) p)
+                  (list "title" "date" '("DRAFT") '())))
   (test-case "Error raised for missing metadata"
-    (check-exn exn? (thunk (meta-data '((pre "not meta data")) p)))
-    (check-exn exn? (thunk (meta-data '((p () "not meta data")) p))))
+    (check-exn #px"missing \"Title\""
+               (thunk (meta-data '((pre "")) p)))
+    (check-exn #px"missing \"Title\""
+               (thunk (meta-data '((p () "")) p))))
+  (test-case "Error raised for blank Title or Date -- https://github.com/greghendershott/frog/issues/213"
+    (check-exn #px"missing non-blank \"Title\""
+               (thunk (meta-data '((pre "Title: \n")) p)))
+    (check-exn #px"missing non-blank \"Date\""
+               (thunk (meta-data '((pre "Title: Some Title\nDate: \n")) p))))
   (test-case "https://github.com/greghendershott/frog/issues/142"
     (check-equal? (meta-data '((p
                                 ()
@@ -179,6 +199,9 @@
     (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags:\n")) p)
                   (list "title" "date" '() '()))
     (check-equal? (meta-data `((pre () "Title: title\nDate: date\n")) p)
+                  (list "title" "date" '() '())))
+  (test-case "https://github.com/greghendershott/frog/issues/211"
+    (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags:\n")) p)
                   (list "title" "date" '() '()))))
 
 (define (tag-string->tags s)
