@@ -20,7 +20,7 @@
 (define-runtime-path example "../../example/")
 
 (define/contract (permalink-path year month day title filename pattern)
-  (string? string? string? string? string? string? . -> . path?)
+  (-> string? string? string? string? string? string? path?)
   (build-path (www-path)
               (regexp-replaces pattern
                                `([#rx"{year}" ,year]
@@ -46,7 +46,7 @@
 ;; Given a path, return a URI path. Also, if the path ends in
 ;; "/index.html", return the path without the "index.html" suffix.
 (define/contract (post-path->link pp)
-  (path? . -> . string?)
+  (-> path? string?)
   (match (abs->rel/www pp) ;assumes abs->rel/www always returns 'unix style
     [(pregexp "^(.+?)/index.html" (list _ s)) (string-append s "/")]
     [s s]))
@@ -61,7 +61,7 @@
      "/blog/2012/05/31/title-of-post/")))
 
 (define/contract (editor-command-string editor filename pattern)
-  (string? string? string? . -> . string?)
+  (-> string? string? string? string?)
   (regexp-replaces pattern
                    `([#rx"{editor}" ,editor]
                      [#rx"{filename}",filename])))
