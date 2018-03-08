@@ -249,11 +249,20 @@
           (match (explode-path p) [(cons x xs) (cons x (map encode-seg xs))])
           (map encode-seg (explode-path p))))
     (path->string (apply build-path segs)))
-  (encode (reroot uri-path)))
+  (define (dir? p)
+    (define-values (_p _b dir?) (split-path p))
+    dir?)
+  (define (preserve-trailing-slash orig new)
+    ;; Restore trailing slash lost by path->relative-path,
+    ;; explode-path, etc.
+    (string-append new (if (dir? orig) "/" "")))
+  (preserve-trailing-slash uri-path
+                           (encode (reroot uri-path))))
 
 (module+ test
   (parameterize ([current-uri-prefix "/prefix///"])
-    (check-equal? (canonical-uri "/a/λ/p") "/prefix/a/%CE%BB/p")))
+    (check-equal? (canonical-uri "/a/λ/p") "/prefix/a/%CE%BB/p")
+    (check-equal? (canonical-uri "/a/λ/p/") "/prefix/a/%CE%BB/p/")))
 
 (define/doc (full-uri [uri-path string?] string?)
   @{Given a URI path string, prepend the scheme & host to make a full URI.}
