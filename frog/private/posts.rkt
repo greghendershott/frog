@@ -125,7 +125,7 @@
        (for/fold ([h (hash)])
                  ([s (string-split plain-text "\n")])
          (match s
-           [(pregexp "^(.+?):(.+?)$" (list _ k v))
+           [(pregexp "^(.+?):(.*?)$" (list _ k v))
             #:when (member k '("Title" "Date" "Tags" "Authors"))
             (hash-set h (string-trim k) (string-trim v))]
            [s (warn s) h])))
@@ -179,7 +179,13 @@
     (check-equal? (meta-data `((pre () "Title: title\nDate: date\nTags:\n")) p)
                   (list "title" "date" '() '()))
     (check-equal? (meta-data `((pre () "Title: title\nDate: date\n")) p)
-                  (list "title" "date" '() '()))))
+                  (list "title" "date" '() '())))
+  (test-case "https://github.com/greghendershott/frog/issues/211"
+    (check-equal? (meta-data `((pre () (code () "Title: title\nDate: date\nTags:\n"))) p)
+                  (list "title" "date" '() '()))
+    (check-equal? (with-output-to-string
+                    (λ () (meta-data `((pre () (code () "Title: title\nDate: date\nTags:\n"))) p)))
+                  "")))
 
 (define (tag-string->tags s)
   (match (regexp-split #px"," (string-trim s))
