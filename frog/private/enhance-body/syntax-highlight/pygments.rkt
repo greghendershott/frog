@@ -1,12 +1,11 @@
 #lang racket/base
 
-(require racket/function
+(require racket/format
+         racket/function
          racket/match
          racket/port
          racket/runtime-path
          racket/system
-         rackjure/str
-         rackjure/conditionals
          "../../html.rkt"
          "../../verbosity.rkt")
 
@@ -26,27 +25,24 @@
     (λ (python-executable line-numbers? css-class)
       (unless start-attempted?
         (set! start-attempted? #t)
-        (if-let [python (find-executable-path python-executable)]
-          (begin
-            (prn0 (str "Launching " python " pipe.py"))
-            (match (process
-                    (str python " -u " pipe.py
-                         (if line-numbers? " --linenos" "")
-                         " --cssclass " css-class))
-              [(list in out pid err proc)
-               (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
-                            (values in out pid err proc))
-               (file-stream-buffer-mode out 'line)
-               (match (read-line pyg-in 'any)  ;; consume "ready" line or EOF
-                 [(? eof-object?) (say-no-pygments)]
-                 [_ (say-pygments)])]
-              [_ (say-no-pygments)]))
-          (say-no-pygments))))))
-
-(define (say-pygments)
-  (prn1 "Using Pygments."))
-(define (say-no-pygments)
-  (prn1 "Pygments not found. Using plain `pre` blocks."))
+        (define pre " Using plain `pre` blocks.")
+        (match (find-executable-path python-executable)
+          [(? path? python)
+           (prn1 (~a "Launching `" python " " pipe.py "` to use Pygments."))
+           (match (process (~a python
+                               " -u " pipe.py
+                               (if line-numbers? " --linenos" "")
+                               " --cssclass " css-class))
+             [(list in out pid err proc)
+              (set!-values (pyg-in pyg-out pyg-pid pyg-err pyg-proc)
+                           (values in out pid err proc))
+              (file-stream-buffer-mode out 'line)
+              (match (read-line pyg-in 'any)  ;; consume "ready" line or EOF
+                [(? eof-object?) (prn0 (~a "Pygments pipe.py not responding." pre))]
+                [_ (void)])]
+             [_ (prn0 (~a "`" python " " pipe.py "` failed." pre))])]
+          [#f
+           (prn0 (~a "Pygments executable `" python-executable "` not found." pre))])))))
 
 (define (running?)
   (and pyg-proc
@@ -82,7 +78,7 @@
          (let loop ([s ""])
            (match (read-line pyg-in 'any)
              ["__END__" (with-input-from-string s read-html-as-xexprs)]
-             [(? string? v) (loop (str s v "\n"))]
+             [(? string? v) (loop (~a s v "\n"))]
              [_ (copy-port pyg-err (current-output-port)) ;echo error msg
                 (default code)]))]
         [else (default code)]))
