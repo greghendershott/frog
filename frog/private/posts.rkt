@@ -4,11 +4,11 @@
          racket/contract/base
          racket/contract/region
          racket/file
+         racket/format
          (only-in racket/list empty?)
          racket/match
          racket/port
          racket/string
-         rackjure/str
          rackjure/threading
          (only-in srfi/1 break)
          "../config/private/load.rkt"
@@ -54,7 +54,7 @@
         [(pregexp "\\.scrbl$")
          (define img-dest (build-path (www/img-path)
                                       "posts"
-                                      (str dt "-" nm)))
+                                      (~a dt "-" nm)))
          (read-scribble-file path
                              #:img-local-path img-dest
                              #:img-uri-prefix (canonical-uri
@@ -70,14 +70,14 @@
         [(pregexp "\\.(?:md|markdown)$")
          ;; Footnote prefix is date & name w/o ext
          ;; e.g. "2010-01-02-a-name"
-         (define footnote-prefix (~> (str dt "-" nm) string->symbol))
+         (define footnote-prefix (~> (~a dt "-" nm) string->symbol))
          (parse-markdown path footnote-prefix)]
         [(pregexp "\\.mdt$")
-         (define footnote-prefix (~> (str dt "-" nm) string->symbol))
+         (define footnote-prefix (~> (~a dt "-" nm) string->symbol))
          (define text (render-template path-to (path->string name) '()))
          (parse-markdown text footnote-prefix)]))
     ;; Split to the meta-data and the body
-    (match-define (list title date tags body) (meta-data xs name))
+    (match-define (list title date-str tags body) (meta-data xs name))
     (when (member "DRAFT" tags)
       (prn0 "Skipping ~a because it has the tag, 'DRAFT'"
             (abs->rel/src path))
@@ -85,11 +85,9 @@
     ;; Split out the blurb (may be less than the entire body)
     (define-values (blurb more?) (above-the-fold body))
     ;; Make the destination HTML pathname
-    (define year (substring date 0 4))
-    (define month (substring date 5 7))
-    (define day (substring date 8 10))
+    (define date-struct (date-string->struct/user-error path date-str))
     (define dest-path
-      (permalink-path year month day
+      (permalink-path date-struct
                       (~> title string-downcase slug)
                       (match (path->string name)
                         [(pregexp post-file-px (list _ _ s)) s])
@@ -99,13 +97,23 @@
           (file-or-directory-modify-seconds path)
           dest-path
           (canonical-uri (post-path->link dest-path))
-          date
+          date-str
           #f ;; older
           #f ;; newer
           tags
           (~> blurb enhance-body xexprs->string)
           more?
           (~> body enhance-body xexprs->string))))
+
+(define (date-string->struct/user-error path s)
+  (with-handlers
+    ([exn:fail?
+      (λ (e)
+        (raise-user-error
+         (~a (path->string path)
+             ": Date metadata must be ISO-8601 format -- yyyy-mm-ddThr:mn:sc -- but is")
+         s))])
+    (date->date-struct s)))
 
 ;; (listof xexpr?) path? -> (list string? string? (listof string?) (listof xexpr?))
 (define (meta-data xs path)
@@ -145,7 +153,7 @@
                         tag-string->tags
                         (map make-author-tag)))
            more)]
-    [(cons x _) (err (str "found:\n" (format "~v" x)))]
+    [(cons x _) (err (~a "found:\n" (format "~v" x)))]
     [_ (err "none found")]))
 
 (module+ test

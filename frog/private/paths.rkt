@@ -2,6 +2,7 @@
 
 (require racket/contract/base
          racket/contract/region
+         racket/format
          racket/match
          racket/runtime-path
          "../paths.rkt")
@@ -19,21 +20,26 @@
 ;; For interactive development and for --init feature.
 (define-runtime-path example "../../example/")
 
-(define/contract (permalink-path year month day title filename pattern)
-  (-> string? string? string? string? string? string? path?)
+(define/contract (permalink-path d title filename pattern)
+  (-> date? string? string? string? path?)
+  (define (~2d n)
+    (~a #:min-width       2
+        #:align           'right
+        #:left-pad-string "0"
+        n))
   (build-path (www-path)
               (regexp-replaces pattern
-                               `([#rx"{year}" ,year]
-                                 [#rx"{month}" ,month]
-                                 [#rx"{day}" ,day]
+                               `([#rx"{year}" ,(~a (date-year d))]
+                                 [#rx"{month}" ,(~2d (date-month d))]
+                                 [#rx"{day}" ,(~2d (date-day d))]
                                  [#rx"{title}" ,title]
                                  [#rx"{filename}",filename]
                                  [#rx"^/" ""]))))
 
 (module+ test
   (parameterize ([top (find-system-path 'home-dir)])
-    (define f (curry permalink-path
-                     "2012" "05" "31" "title-of-post" "file-name"))
+    (define dt (date 0 0 0 31 5 2012 0 0 #f 0))
+    (define f (curry permalink-path dt "title-of-post" "file-name"))
     (check-equal? (f "/{year}/{month}/{title}.html")
                   (build-path (top) "2012/05/title-of-post.html"))
     (check-equal? (f "/blog/{year}/{month}/{day}/{title}.html")
