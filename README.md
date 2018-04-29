@@ -6,7 +6,7 @@
 
 [![Build Status](https://travis-ci.org/greghendershott/frog.png?branch=master)](https://travis-ci.org/greghendershott/frog)
 [![raco pkg install frog](https://img.shields.io/badge/raco_pkg_install-frog-aa00ff.svg)](http:pkgs.racket-lang.org/#[frog])
-![MIT License](https://img.shields.io/badge/license-MIT-118811.svg)
+[![MIT License](https://img.shields.io/badge/license-MIT-118811.svg)](frog/LICENSE)
 [![Documentation](https://img.shields.io/badge/Docs-Documentation-blue.svg)](http://docs.racket-lang.org/frog/index.html)
 
 Frog is a static web site generator written in [Racket][].
