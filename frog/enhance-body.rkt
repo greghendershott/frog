@@ -21,7 +21,7 @@
          "private/xexpr-map.rkt")
 
 (define/doc (syntax-highlight
-             [xs (listof xexpr/c)]
+             [x-expressions (listof xexpr/c)]
              [#:python-executable python-executable path-string? "python"]
              [#:line-numbers? line-numbers? boolean? #t]
              [#:css-class css-class string? "source"]
@@ -34,19 +34,24 @@
     @racket[find-executable-path], so the default @racket["python"]
     will work if the version of Python that Pygments wants is on the
     path.}
-  (for/list ([x xs])
-    (match x
-      [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
-           `(pre ([class ,brush]) ,(? string? texts) ...))
-       (match brush
-         [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-          `(div ([class ,(str "brush: " lang)])
-            ,@(pygmentize (apply string-append texts) lang
-                          #:python-executable python-executable
-                          #:line-numbers? line-numbers?
-                          #:css-class css-class))]
-         [_ `(pre ,@texts)])]
-      [x x])))
+  (let recur ([xs x-expressions])
+    (for/list ([x xs])
+      (match x
+        [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
+             `(pre ([class ,brush]) ,(? string? texts) ...))
+         (match brush
+           [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
+            `(div ([class ,(str "brush: " lang)])
+              ,@(pygmentize (apply string-append texts) lang
+                            #:python-executable python-executable
+                            #:line-numbers? line-numbers?
+                            #:css-class css-class))]
+           [_ `(pre ,@texts)])]
+        ;; Check child elements, too. For example as in issue #217
+        ;; could be (ol () (li () (pre () ___))).
+        [(list* (? symbol? tag) (? list? attributes) elements)
+         (list* tag attributes (recur elements))]
+        [x x]))))
 
 ;; This intentionally only works for an <a> element that's nested
 ;; alone in a <p>. (In Markdown source this means for example an
