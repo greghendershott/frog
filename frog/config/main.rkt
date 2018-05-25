@@ -40,11 +40,16 @@
          (match (exn:fail:syntax-exprs exn)
            [(cons stx _) (syntax-e stx)]
            [_            #f]))
+       (define (provided-identifier-message? e)
+         (define msg (exn-message e))
+         (define rxs '(#rx"provided identifier not defined or imported"      ;v6
+                       #rx"provided identifier is not defined or required")) ;v7
+         (for/or ([rx (in-list rxs)])
+           (regexp-match? rx msg)))
        (with-handlers
          ([(λ (e)
              (and (exn:fail:syntax? e)
-                  (regexp-match? #rx"provided identifier not defined or imported"
-                                 (exn-message e))
+                  (provided-identifier-message? e)
                   (memq (fail-sym e) provide-syms)))
            (λ (e)
              (raise-syntax-error
