@@ -39,24 +39,55 @@
                                [older-title (or/c #f string?)]
                                [newer-uri (or/c #f string?)]
                                [newer-title (or/c #f string?)]
+                               [#:for-bs for-bs (or/c 3 4) 3]
                                list?)
-  @{Returns HTML for a Bootstrap @tt{pager} style older/newer navigation.}
-  @list{
-        <ul class="pager">
-        @(when newer-uri
-          @list{
-                <li class="previous">
-                  <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
-                </li>
-                })
-        @(when older-uri
-          @list{
-                <li class="next">
-                  <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
-                </li>
-                })
-        </ul>
-        })
+  @{Returns HTML either for for a Bootstrap 3 @tt{pager} style
+    older/newer navigation, or for a Bootstrap 4 @tt{page-navigation} one,
+    depending on the @tt{for-bs} argument which can be either 3 or 4}
+  (case for-bs
+    [(3)
+     @list{
+           <ul class="pager">
+           @(when newer-uri
+             @list{
+                   <li class="previous">
+                     <a href="@newer-uri">&larr; <em>@|newer-title|</em></a>
+                   </li>
+                   })
+           @(when older-uri
+             @list{
+                   <li class="next">
+                     <a href="@older-uri"><em>@|older-title|</em> &rarr;</a>
+                   </li>
+                   })
+           </ul>
+           }]
+    [(4)
+     @list{
+       <div class="row justify-content-center">
+         <nav aria-label="Page Navigation">
+           <ul class="pagination">
+             @(when older-uri
+               @list{
+                 <li class="page-item">
+                   <a class="page-link" href="@|older-uri|"
+                      aria-label="Previous">
+                     <span aria-hidden="true">&larr; @|older-title|</span>
+                   </a>
+                 </li>
+               })
+             @(when newer-uri
+               @list{
+                 <li class="page-item">
+                   <a class="page-link" href="@|newer-uri|"
+                      aria-label="Next">
+                     <span aria-hidden="true">@|newer-title| &rarr;</span>
+                   </a>
+                 </li>
+               })
+           </ul>
+         </nav>
+       </div>}]))
 
 (define/doc (disqus-comments [short-name string?] list?)
   @{@hyperlink["https://disqus.com/"]{Disqus} comments. Typically used in
