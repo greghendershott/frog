@@ -267,16 +267,22 @@
         <script src="//gist.github.com/@|username|/@|id|.js"></script>
        })
 
-(define/doc (math-jax list?)
+(define/doc (math-jax [#:src src string?
+                       "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js"]
+                      [#:config config string? "TeX-AMS-MML_HTMLorMML"]
+                      list?)
   @{@itemlist[#:style 'ordered
               @item{Use this in the @tt{<head>} of your @secref["page-template"].}
               @item{In your markdown source files, use @litchar{\\( some math \\)}
                     for inline and @litchar{\\[ some math \\]} for display. Note
                     the @italic{double} backslashes, @litchar{\\}, because in
-                    markdown @litchar{\} already has a meaning.}]}
+                    markdown @litchar{\} already has a meaning.}
+              @item{You can specify the source URL and configuration options
+                    with the @tt{src} & &tt{config} arguments: they default to
+                    something reasonable.}]}
   @list{
         <script type="text/javascript" async
-                src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+                src="@|src|?config=@|config|">
         </script>
        })
 
