@@ -163,19 +163,27 @@
 
 (define (bootstrap-pagination base-file page-num num-pages)
   `(ul ([class "pagination"])
-       ,(cond [(zero? page-num) `(li ([class "disabled"])
-                                     (a ([href "#"]) 'larr))]
-              [else `(li (a ([href ,(~> (file/page base-file (sub1 page-num))
+       ,(cond [(zero? page-num) `(li ([class "page-item disabled"])
+                                     (a ([class "page-link"]
+                                         [href "#"]) 'larr))]
+              [else `(li ([class "page-item"])
+                         (a ([class "page-link"]
+                             [href ,(~> (file/page base-file (sub1 page-num))
                                         abs->rel/www canonical-uri)])
                             'larr))])
        ,@(for/list ([n (in-range num-pages)])
-           `(li (,@(cond [(= n page-num) `([class "active"])] [else '()]))
-                (a ([href ,(~> (file/page base-file n) abs->rel/www
+           `(li (,@(cond [(= n page-num) `([class "page-item active"])]
+                         [else '([class "page-item"])]))
+                (a ([class "page-link"]
+                    [href ,(~> (file/page base-file n) abs->rel/www
                                canonical-uri)])
                    ,(number->string (add1 n)))))
-       ,(cond [(= (add1 page-num) num-pages) `(li ([class "disabled"])
-                                                  (a ([href "#"]) 'rarr))]
-              [else `(li (a ([href ,(~> (file/page base-file (add1 page-num))
+       ,(cond [(= (add1 page-num) num-pages)
+               `(li ([class "page-item disabled"])
+                    (a ([class "page-link"] [href "#"]) 'rarr))]
+              [else `(li ([class "page-item"])
+                         (a ([class "page-link"]
+                             [href ,(~> (file/page base-file (add1 page-num))
                                         abs->rel/www canonical-uri)])
                             'rarr))]) ))
 
