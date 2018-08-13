@@ -43,12 +43,12 @@
 Issues} to report bugs or make feature requests.}
 
 Frog is a static web site generator written in
-@hyperlink["http://www.racket-lang.org"]{Racket}.
+@hyperlink["https://www.racket-lang.org"]{Racket}.
 
 You write content in
-@hyperlink["http://daringfireball.net/projects/markdown/syntax"]{markdown}
+@hyperlink["https://daringfireball.net/projects/markdown/syntax"]{markdown}
 or
-@hyperlink["http://docs.racket-lang.org/scribble/index.html"]{scribble} formats.
+@hyperlink["https://docs.racket-lang.org/scribble/index.html"]{scribble} formats.
 
 You generate files. To deploy, you push them to a GitHub Pages repo
 (or copy them to Amazon S3, or whatever).
@@ -58,7 +58,7 @@ Posts get a variety of automatic blog features.
 You can also create non-post pages.
 
 The default templates use
-@hyperlink["http://getbootstrap.com/"]{Bootstrap}, which is
+@hyperlink["https://getbootstrap.com/"]{Bootstrap}, which is
 @hyperlink["https://en.wikipedia.org/wiki/Responsive_web_design"]{``responsive''}
 (adapts to various screen sizes).
 
@@ -73,36 +73,19 @@ Why ``Frog''? @bold{Fr}ozen bl@bold{og}.
 
 @itemlist[#:style 'ordered
 
-@item{
-Install @hyperlink["http://racket-lang.org/download/"]{Racket}.
+@item{Install @hyperlink["https://racket-lang.org/download/"]{Racket}.
 
-On macOS you will need to add @litchar{/Applications/Racket\
-6.8/bin} (or similar) to your @envvar{PATH} in order to be able to run
-things like @exec{racket} or @exec{raco} at the command line. }
+On macOS you will need to add @tt{/Applications/Racket\
+7.0/bin} (or similar) to your @envvar{PATH} in order to be able to run
+things like @exec{racket} or @exec{raco} at the command line.}
 
-@item{
-Install Frog:
+@item{Install Frog: @pre{$ raco pkg install frog}}
 
-@pre{$ raco pkg install frog}
-}
+@item{Optional: If you want syntax highlighting for fenced code blocks:
 
-@item{
-Optional: Install Pygments if you want syntax highlighting for
-fenced code blocks:
-
-@pre{$ sudo easy_install --upgrade Pygments}
-
-@margin-note{Why @DFlag{upgrade}? You probably want the most recent
-version of Pygments because new languages are constantly being added.
-For example, Racket is supported starting in Pygments 1.6.}
-
-If that fails, try again after installing @exec{easy_install}:
-
-@pre{$ sudo apt-get install python-setuptools}
-
-}
-
-]
+@itemlist[#:style 'ordered
+@item{Install the latest version of @hyperlink["https://www.python.org/downloads/"]{Python}.}
+@item{Install @hyperlink["http://pygments.org/"]{Pygments}: @pre{$ python3 -m pip install pygments}}]}]
 
 @subsection{Updating Frog}
 
@@ -175,13 +158,13 @@ project/
     @comment{# May be in subdirs.}
   css/
     bootstrap.min.css        @comment{# get these files}
-    bootstrap.min.css.map    @comment{# from @url["http://getbootstrap.com"]}
+    bootstrap.min.css.map    @comment{# from @url["https://getbootstrap.com"]}
     pygments.css             @comment{# style code elements from Pygments}
     custom.css               @comment{# other styles you provide; may be empty}
     scribble.css
   js/
     jquery-3.2.1.slim.min.js @comment{# local copy of jQuery for Bootstrap}
-    bootstrap.bundle.min.js  @comment{# from @url["http://getbootstrap.com/"]}
+    bootstrap.bundle.min.js  @comment{# from @url["https://getbootstrap.com/"]}
   img/
     feed.png
   favicon.ico
