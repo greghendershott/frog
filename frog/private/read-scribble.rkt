@@ -30,7 +30,7 @@
                           "--html"
                           "--dest" dir
                           "--dest-name" "frog.html"
-                          "--redirect-main" "http://docs.racket-lang.org"
+                          "--redirect-main" "https://docs.racket-lang.org"
                           "++xref-in" "setup/xref" "load-collections-xref"
                           (path->string path))])
     (dynamic-require 'scribble/run #f))
