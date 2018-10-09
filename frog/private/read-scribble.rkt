@@ -30,6 +30,7 @@
                           "--html"
                           "--dest" dir
                           "--dest-name" "frog.html"
+                          "--redirect" "https://docs.racket-lang.org/local-redirect/"
                           "--redirect-main" "https://docs.racket-lang.org"
                           "++xref-in" "setup/xref" "load-collections-xref"
                           (path->string path))])
