@@ -115,10 +115,11 @@
      #:once-each
      [("-w" "--watch")
       (""
-       "(Experimental: Only rebuilds some files.)"
-       "Supply this flag before -s/--serve or -p/--preview."
-       "Watch for changed files, and generate again."
-       "(You'll need to refresh the browser yourself.)")
+       "(Experimental!) Supply this flag before -s/--serve or -p/--preview."
+       "Watch for changed files, and regenerate the project."
+       "(You'll need to refresh the browser yourself.)"
+       "Customize which files should trigger the regeneration"
+       "by using current-rebuild?")
       (set! watch? #t)]
      [("--port") number
       (""
@@ -387,13 +388,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (watch-callback path what)
-  (match (path->string path)
-    ;; Output file
-    [(pregexp "\\.(?:html|xml|txt)") (void)]
-    ;; Source file
-    [_ (build)
-       (displayln #"\007")])) ;beep (hopefully)
+(define (watch-callback path change-type)
+  (when ((current-rebuild?) path change-type)
+    (build)
+    (displayln #"\007"))) ; beep (hopefully)
 
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
