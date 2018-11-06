@@ -11,6 +11,7 @@
          racket/runtime-path
          racket/set
          racket/vector
+         racket/exn
          rackjure/threading
          web-server/dispatchers/dispatch
          web-server/servlet-env
@@ -390,8 +391,9 @@
 
 (define (watch-callback path change-type)
   (when ((current-rebuild?) path change-type)
-    (build)
-    (displayln #"\007"))) ; beep (hopefully)
+    (with-handlers ([exn:fail? (compose1 displayln exn->string)])
+      (build))
+    (display #"\007"))) ; beep (hopefully)
 
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
