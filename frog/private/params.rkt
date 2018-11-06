@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/match)
+(require racket/match
+         "./util.rkt")
 
 (provide (all-defined-out))
 
@@ -31,3 +32,7 @@
 (define current-posts-index-uri (make-parameter "/index.html"))
 (define current-source-dir (make-parameter "_src"))
 (define current-output-dir (make-parameter "."))
+(define current-rebuild?
+  (make-parameter
+   (λ (path change-type)
+     (not (member (path-get-extension path) '(#".html" #".txt" #".xml"))))))

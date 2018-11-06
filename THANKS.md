@@ -12,7 +12,7 @@ Thanks to the following people for contributing pull requests!
 - [Tim Bradshaw](https://github.com/tfeb)
 - [Konrad Hinsen](https://github.com/khinsen)
 - [Leif Andersen](https://github.com/LeifAndersen)
-- [sorawee](https://github.com/sorawee)
+- [Sorawee Porncharoenwase](https://github.com/sorawee)
 - [Jordan Johnson](https://github.com/RenaissanceBug)
 - [Gabriel Scherer](https://github.com/gasche)
 - [Brian Mastenbrook](https://github.com/bmastenbrook)
