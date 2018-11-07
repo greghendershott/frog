@@ -3,6 +3,7 @@
 (require (for-syntax racket/base
                      racket/syntax)
          racket/contract/base
+         racket/format
          racket/string
          racket/function
          scribble/srcdoc
@@ -89,21 +90,43 @@
          </nav>
        </div>}]))
 
-(define/doc (disqus-comments [short-name string?] list?)
+(define/doc (disqus-comments [short-name string?]
+                             [#:identifier identifier (or/c #f string? number?) #f]
+                             [#:title title (or/c #f string?) #f]
+                             [#:url url (or/c #f string?) #f]
+                             [#:category-id category-id (or/c #f string?) #f]
+                             list?)
   @{@hyperlink["https://disqus.com/"]{Disqus} comments. Typically used in
-    @secref["post-template"].}
+    @secref["post-template"]. See
+    @hyperlink[
+      "https://help.disqus.com/developer/javascript-configuration-variables"
+    ]{the documentation} for the usage of each parameter. @racket[#f] in an optional
+    parameter indicates the parameter is left undefined.}
+  ;; a helper function that converts a Racket value to a JavaScript value
+  (define (config val)
+    (cond
+      [(number? val) (number->string val)]
+      [(string? val) (~v val)]
+      [(not val) "undefined"]
+      [else (error 'disqus-comments "unexpected value: ~a" val)]))
   @list{
+        <div id="disqus_thread"></div>
         <script type="text/javascript">
+          var disqus_config = function () {
+            this.page.identifier = @(config identifier);
+            this.page.url = @(config url);
+            this.page.title = @(config title);
+            this.page.category_id = @(config category-id);
+          };
           var disqus_shortname = '@|short-name|';
           (function() {
               var dsq = document.createElement('script');
               dsq.type = 'text/javascript';
               dsq.async = true;
               dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+              (document.head || document.body).appendChild(dsq);
           })();
         </script>
-        <div id="disqus_thread"></div>
         })
 
 (define/doc (livefyre [site-id string?] list?)
