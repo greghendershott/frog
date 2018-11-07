@@ -124,7 +124,7 @@
               dsq.type = 'text/javascript';
               dsq.async = true;
               dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-              (document.head || document.body).appendChild(dsq)
+              (document.head || document.body).appendChild(dsq);
           })();
         </script>
         })
