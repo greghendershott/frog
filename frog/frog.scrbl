@@ -924,6 +924,9 @@ This may be an absolute or relative path. If relative, it's relative
 to the project top directory, i.e. to where @secref["config"] is
 located.}
 
+@defparam[current-watch-rate rate exact-positive-integer? #:value 5]{
+The number of seconds to wait between each change watching.}
+
 @defparam[current-rebuild?
           rebuild?
           (path? (or/c 'create 'delete 'modify) . -> . boolean?)]{
@@ -934,8 +937,9 @@ on every file change (create, delete, modify) in the project. If @racket[rebuild
 returns @racket[#f], then Frog will not rebuild the project
 (for this particular change). Otherwise, Frog will rebuild the project.
 
-By default, any file change will trigger a rebuild, except the case where
-the changed file has an extension either @tt{html}, @tt{txt}, or @tt{xml},
+By default, @racket[rebuild?] will return @racket[#t] and also make a beep,
+except the case where the changed file has an extension either
+@tt{html}, @tt{txt}, or @tt{xml} which will return @racket[#f],
 as it is likely that the file will be an output.}
 
 @section[#:tag "body-enhancers"]{Body enhancers}

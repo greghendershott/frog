@@ -391,8 +391,7 @@
 (define (watch-callback path change-type)
   (when ((current-rebuild?) path change-type)
     (with-handlers ([exn:fail? (compose1 displayln exn->string)])
-      (build))
-    (display #"\007"))) ; beep (hopefully)
+      (build))))
 
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
@@ -406,7 +405,7 @@
                   (watch-directory (build-path watch-path)
                                    '(file)
                                    watch-callback
-                                   #:rate 5)]
+                                   #:rate (current-watch-rate))]
           [else (thread (thunk (sync never-evt)))]))
   (when launch-browser?
     (ensure-external-browser-preference))

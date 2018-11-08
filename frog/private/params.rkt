@@ -32,7 +32,12 @@
 (define current-posts-index-uri (make-parameter "/index.html"))
 (define current-source-dir (make-parameter "_src"))
 (define current-output-dir (make-parameter "."))
+(define current-watch-rate (make-parameter 5))
 (define current-rebuild?
   (make-parameter
    (λ (path change-type)
-     (not (member (path-get-extension path) '(#".html" #".txt" #".xml"))))))
+     (cond
+       [(not (member (path-get-extension path) '(#".html" #".txt" #".xml")))
+        (display #"\007") ; beep (hopefully)
+        #t]
+       [else #f]))))
