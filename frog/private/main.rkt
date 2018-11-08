@@ -11,7 +11,6 @@
          racket/runtime-path
          racket/set
          racket/vector
-         racket/exn
          rackjure/threading
          web-server/dispatchers/dispatch
          web-server/servlet-env

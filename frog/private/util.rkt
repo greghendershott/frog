@@ -16,7 +16,8 @@
          delete-files*
          in-slice
          split-common-prefix
-         path-get-extension)
+         path-get-extension
+         exn->string)
 
 ;; Less typing, and also returns its value so good for sticking in
 ;; threading macros for debugging.
@@ -104,6 +105,18 @@
          [name (and name (path->bytes name))])
     (cond [(and name (regexp-match #rx#"(?<=.)([.][^.]+)$" name)) => cadr]
           [else #f])))
+
+
+;; NOTE: these functions are copied from
+;; https://github.com/racket/racket/blob/master/racket/collects/racket/exn.rkt
+;; once we decide to drop the support of versions below 6.3, delete them
+;; and switch to use exn->string from racket/exn instead
+(define (exn->string exn)
+  (if (exn? exn)
+      (parameterize ([current-error-port (open-output-string)])
+        ((error-display-handler) (exn-message exn) exn)
+        (get-output-string (current-error-port)))
+      (format "~s\n" exn)))
 
 (module+ test
   (require rackunit)
