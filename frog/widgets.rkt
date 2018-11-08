@@ -124,9 +124,14 @@
               dsq.type = 'text/javascript';
               dsq.async = true;
               dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              dsq.setAttribute('data-timestamp', +new Date());
               (document.head || document.body).appendChild(dsq);
           })();
         </script>
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
         })
 
 (define/doc (livefyre [site-id string?] list?)
