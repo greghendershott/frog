@@ -413,19 +413,24 @@ Scribble non-post page} for more information.
 
 @defmodule[frog/scribble]
 
-@defproc[(pygment-code [#:lang lang string?][str string?] ...) paragraph?]{
+@defproc[(pygment-code [#:lang lang string?][#:hl-lines hl-lines list? '()][str string?] ...) paragraph?]{
 In Scribble source files of course you can use @racket[codeblock],
 @racket[racketblock], and friends to write code blocks for languages
 that have DrRacket style syntax-coloring parsers.
 
 For other languages, you can emit a @tt{<pre>} block with a language
 tag (as happens with @secref["markdown-code-blocks"]) so that it can
-be highlighted by Pygments.
+be highlighted by Pygments. You can also additionally supply lines to be
+highlighted via @racket[#:hl-lines].
 
 Example usage:
 @pre|{
 @(require frog/scribble)
-@pygment-code[#:lang "js"]{function foo() {return 1;}}
+@pygment-code[#:lang "js" #:hl-lines '(1 2)]{
+  function foo() {
+    return 1;
+  }
+}
 }|
 }
 

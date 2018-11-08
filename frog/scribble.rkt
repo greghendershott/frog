@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require (only-in scribble/core style)
+(require racket/string
+         (only-in scribble/core style)
          (only-in scribble/manual para)
          (only-in scribble/html-properties attributes alt-tag)
          (only-in scribble/base literal))
@@ -17,8 +18,12 @@
 ;;
 ;; @pygment-code[#:lang "js"]{function foo() {return 1;}}
 ;;
-(define (pygment-code #:lang lang . xs)
-  (para #:style (style "brush:"
-                       (list (attributes `([class . ,lang]))
-                             (alt-tag "pre")))
+(define (pygment-code #:lang lang #:hl-lines [hl-lines '()] . xs)
+  (para #:style
+        (style "brush:"
+               (list (attributes
+                      `([class . ,lang]
+                        [data-hl-lines . ,(string-join (map number->string hl-lines)
+                                                       " ")]))
+                     (alt-tag "pre")))
         (apply literal xs)))

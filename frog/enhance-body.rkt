@@ -34,19 +34,28 @@
     @racket[find-executable-path], so the default @racket["python"]
     will work if the version of Python that Pygments wants is on the
     path.}
+  (define (highlight brush texts hl-lines)
+    (match brush
+      [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
+       `(div ([class ,(str "brush: " lang)])
+         ,@(pygmentize (apply string-append texts) lang
+                       #:python-executable python-executable
+                       #:line-numbers? line-numbers?
+                       #:css-class css-class
+                       #:hl-lines hl-lines))]
+      [_ `(pre ,@texts)]))
+
   (let recur ([xs x-expressions])
     (for/list ([x xs])
       (match x
         [(or `(pre ([class ,brush]) (code () ,(? string? texts) ...))
              `(pre ([class ,brush]) ,(? string? texts) ...))
-         (match brush
-           [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-            `(div ([class ,(str "brush: " lang)])
-              ,@(pygmentize (apply string-append texts) lang
-                            #:python-executable python-executable
-                            #:line-numbers? line-numbers?
-                            #:css-class css-class))]
-           [_ `(pre ,@texts)])]
+         (highlight brush texts '())]
+        [(or `(pre ([class ,brush] [data-hl-lines ,hl-lines])
+               (code () ,(? string? texts) ...))
+             `(pre ([class ,brush] [data-hl-lines ,hl-lines])
+               ,(? string? texts) ...))
+         (highlight brush texts (map string->number (string-split hl-lines " ")))]
         ;; Check child elements, too. For example as in issue #217
         ;; could be (ol () (li () (pre () ___))).
         [(list* (? symbol? tag) (? list? attributes) elements)

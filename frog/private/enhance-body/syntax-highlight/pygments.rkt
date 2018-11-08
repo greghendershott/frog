@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/format
+         racket/string
          racket/function
          racket/match
          racket/port
@@ -66,13 +67,15 @@
 (define (pygmentize code lang
                     #:python-executable python-executable
                     #:line-numbers? line-numbers?
-                    #:css-class css-class)
+                    #:css-class css-class
+                    #:hl-lines [hl-lines '()])
   (define (default code)
     `((pre () (code () ,code))))
   (unless (running?)
     (start python-executable line-numbers? css-class))
   (cond [(running?)
          (displayln lang pyg-out)
+         (displayln (string-join (map number->string hl-lines) " ") pyg-out)
          (displayln code pyg-out)
          (displayln "__END__" pyg-out)
          (let loop ([s ""])
