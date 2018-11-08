@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/match racket/path)
+(require racket/match
+         "./util.rkt")
 
 (provide (all-defined-out))
 

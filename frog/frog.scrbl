@@ -926,7 +926,7 @@ located.}
 
 @defparam[current-rebuild?
           rebuild?
-          (path-string? (or/c 'create 'delete 'modify) . -> . boolean?)]{
+          (path? (or/c 'create 'delete 'modify) . -> . boolean?)]{
 The procedure to test if a file change during a watch needs a rebuild.
 
 If Frog is run with the @tt{-w} or @tt{--watch} flag, @racket[rebuild?] will be invoked

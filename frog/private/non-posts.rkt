@@ -13,7 +13,7 @@
          "read-scribble.rkt"
          "stale.rkt"
          "template.rkt"
-         "util.rkt"
+         (except-in "util.rkt" path-get-extension)
          "verbosity.rkt"
          "xexpr2text.rkt")
 

@@ -29,7 +29,7 @@
          "serialize-posts.rkt"
          "stale.rkt"
          "tags.rkt"
-         "util.rkt"
+         (except-in "util.rkt" path-get-extension)
          "verbosity.rkt"
          "watch-dir.rkt")
 

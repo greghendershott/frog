@@ -15,7 +15,8 @@
          delete-file*
          delete-files*
          in-slice
-         split-common-prefix)
+         split-common-prefix
+         path-get-extension)
 
 ;; Less typing, and also returns its value so good for sticking in
 ;; threading macros for debugging.
@@ -86,6 +87,23 @@
 (define split-common-prefix
   (with-handlers ([exn:fail? (λ _ -split-common-prefix)])
     (dynamic-require 'racket/list 'split-common-prefix)))
+
+;; NOTE: these functions are copied from
+;; https://github.com/racket/racket/blob/master/racket/collects/racket/path.rkt
+;; once we decide to drop the support of versions below 6.5, delete them
+;; and switch to use path-get-extension from racket/path instead
+(define (file-name who name dir-ok?)
+  (unless (or (path-string? name)
+              (path-for-some-system? name))
+    (raise-argument-error who "(or/c path-string? path-for-some-system?)" name))
+  (let-values ([(base file dir?) (split-path name)])
+    (and (or dir-ok? (not dir?))
+         (path-for-some-system? file) file)))
+(define (path-get-extension name)
+  (let* ([name (file-name 'path-get-extension name #t)]
+         [name (and name (path->bytes name))])
+    (cond [(and name (regexp-match #rx#"(?<=.)([.][^.]+)$" name)) => cadr]
+          [else #f])))
 
 (module+ test
   (require rackunit)
