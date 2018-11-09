@@ -136,6 +136,16 @@
                         (div . ,_)
                         ,_ ...          ;varies: line numbers?
                         (div ([class "brush: racket"]) . ,_))
+                      `(span ([class ,(and c (not "c1") (not "hll"))]) . ,xs))
+                     (if code?
+                         `(span ([class ,c]) ,@(->racket-doc-links xs))
+                         x)]
+                    ;; This is the case where the line is highlighted.
+                    [(`((span ([class "hll"]) . ,_)
+                        (pre . ,_)
+                        (div . ,_)
+                        ,_ ...          ;varies: line numbers?
+                        (div ([class "brush: racket"]) . ,_))
                       `(span ([class ,(and c (not "c1"))]) . ,xs))
                      (if code?
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
