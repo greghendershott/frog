@@ -135,7 +135,8 @@
                     [(`((pre . ,_)
                         (div . ,_)
                         ,_ ...          ;varies: line numbers?
-                        (div ([class "brush: racket"]) . ,_))
+                        (div ([class "brush: racket"]) . ,_)
+                        ,_ ...)
                       `(span ([class ,(and c (not "c1") (not "hll"))]) . ,xs))
                      (if code?
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
@@ -145,7 +146,8 @@
                         (pre . ,_)
                         (div . ,_)
                         ,_ ...          ;varies: line numbers?
-                        (div ([class "brush: racket"]) . ,_))
+                        (div ([class "brush: racket"]) . ,_)
+                        ,_ ...)
                       `(span ([class ,(and c (not "c1"))]) . ,xs))
                      (if code?
                          `(span ([class ,c]) ,@(->racket-doc-links xs))
