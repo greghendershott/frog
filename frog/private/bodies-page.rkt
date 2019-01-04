@@ -3,6 +3,7 @@
 (require markdown
          net/uri-codec
          racket/dict
+         racket/date
          (only-in racket/list add-between)
          racket/match
          racket/port
