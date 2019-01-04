@@ -3,6 +3,7 @@
 (require markdown
          net/uri-codec
          racket/dict
+         racket/date
          (only-in racket/list add-between)
          racket/match
          racket/port
@@ -169,9 +170,10 @@
 (define (date->date-struct YYYY-MM-DD-string)
   (match YYYY-MM-DD-string
     [(pregexp "(\\d{4})-(\\d{2})-(\\d{2})" (list _ y m d))
-     (date 0 0 0
-           (string->number d) (string->number m) (string->number y)
-           0 0 #f 0)]))
+     (seconds->date (find-seconds 0 0 0
+                                  (string->number d)
+                                  (string->number m)
+                                  (string->number y)))]))
 
 (define (date+tags->xexpr date tags)
   `(p ([class "date-and-tags"])
