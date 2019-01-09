@@ -63,6 +63,6 @@
     ;; dict. `include/text` effectively evaluates the template as if
     ;; it were written in #lang scribble/text.
     (eval `(let (,@(for/list ([(k v) (in-dict dict)])
-                     (list k v)))
+                     (list k `',v)))
              (include-template ,filename))
           (current-namespace))))
