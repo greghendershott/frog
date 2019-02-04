@@ -332,7 +332,7 @@
                     the @italic{double} backslashes, @litchar{\\}, because in
                     markdown @litchar{\} already has a meaning.}
               @item{You can specify the source URL and configuration options
-                    with the @tt{src} & &tt{config} arguments: they default to
+                    with the @tt{src} & @tt{config} arguments: they default to
                     something reasonable.}]}
   @list{
         <script type="text/javascript" async
