@@ -1,7 +1,7 @@
 #lang info
-(define version "0.29")
+(define version "0.30")
 (define collection 'multi)
-(define deps '(["base" #:version "6.1"]
+(define deps '(["base" #:version "6.2"]
                "find-parent-dir"
                "html-lib"
                ["markdown" #:version "0.25"]
