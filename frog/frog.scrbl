@@ -518,6 +518,8 @@ they are used in the default template.
 
 @deftv[keywords string?]{The keywords for the page (for @tt{<meta>} keywords element).}
 
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
+
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
 @deftv[full-uri string?]{The full URI, e.g. @tt{http://example.com/path/to/file.html}.}
@@ -588,6 +590,8 @@ they are used in the default template.
 
 @deftv[title string?]{The title of the post.}
 
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
+
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
 @deftv[full-uri string?]{The full URI, e.g. @tt{http://example.com/path/to/file.html}.}
@@ -649,6 +653,8 @@ these should be self-explanatory from their name and from seeing how
 they are used in the default template.
 
 @deftv[title string?]{The title of the post.}
+
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
 
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
