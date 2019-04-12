@@ -518,6 +518,8 @@ they are used in the default template.
 
 @deftv[keywords string?]{The keywords for the page (for @tt{<meta>} keywords element).}
 
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
+
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
 @deftv[full-uri string?]{The full URI, e.g. @tt{http://example.com/path/to/file.html}.}
@@ -588,6 +590,8 @@ they are used in the default template.
 
 @deftv[title string?]{The title of the post.}
 
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
+
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
 @deftv[full-uri string?]{The full URI, e.g. @tt{http://example.com/path/to/file.html}.}
@@ -649,6 +653,8 @@ these should be self-explanatory from their name and from seeing how
 they are used in the default template.
 
 @deftv[title string?]{The title of the post.}
+
+@deftv[uri-prefix string?]{Effectively @racket[(or (current-uri-prefix) "")].}
 
 @deftv[uri-path string?]{The path portion of the URI, e.g. @tt{/path/to/file.html}.}
 
@@ -924,6 +930,23 @@ This may be an absolute or relative path. If relative, it's relative
 to the project top directory, i.e. to where @secref["config"] is
 located.}
 
+@defparam[current-watch-rate rate exact-positive-integer? #:value 5]{
+The number of seconds to wait between each change watching.}
+
+@defparam[current-rebuild?
+          rebuild?
+          (path? (or/c 'create 'delete 'modify) . -> . boolean?)]{
+The procedure to test if a file change during a watch needs a rebuild.
+
+If Frog is run with the @tt{-w} or @tt{--watch} flag, @racket[rebuild?] will be invoked
+on every file change (create, delete, modify) in the project. If @racket[rebuild?]
+returns @racket[#f], then Frog will not rebuild the project
+(for this particular change). Otherwise, Frog will rebuild the project.
+
+By default, @racket[rebuild?] will return @racket[#t] and also make a beep,
+except the case where the changed file has an extension either
+@tt{html}, @tt{txt}, or @tt{xml} which will return @racket[#f],
+as it is likely that the file will be an output.}
 
 @section[#:tag "body-enhancers"]{Body enhancers}
 

@@ -28,7 +28,7 @@
          "serialize-posts.rkt"
          "stale.rkt"
          "tags.rkt"
-         "util.rkt"
+         (except-in "util.rkt" path-get-extension)
          "verbosity.rkt"
          "watch-dir.rkt")
 
@@ -115,10 +115,11 @@
      #:once-each
      [("-w" "--watch")
       (""
-       "(Experimental: Only rebuilds some files.)"
-       "Supply this flag before -s/--serve or -p/--preview."
-       "Watch for changed files, and generate again."
-       "(You'll need to refresh the browser yourself.)")
+       "(Experimental!) Supply this flag before -s/--serve or -p/--preview."
+       "Watch for changed files, and regenerate the project."
+       "(You'll need to refresh the browser yourself.)"
+       "Customize which files should trigger the regeneration"
+       "by using current-rebuild?")
       (set! watch? #t)]
      [("--port") number
       (""
@@ -387,13 +388,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (watch-callback path what)
-  (match (path->string path)
-    ;; Output file
-    [(pregexp "\\.(?:html|xml|txt)") (void)]
-    ;; Source file
-    [_ (build)
-       (displayln #"\007")])) ;beep (hopefully)
+(define (watch-callback path change-type)
+  (when ((current-rebuild?) path change-type)
+    (with-handlers ([exn:fail? (compose1 displayln exn->string)])
+      (build))))
 
 (define (serve #:launch-browser? launch-browser?
                #:watch? watch?
@@ -407,7 +405,7 @@
                   (watch-directory (build-path watch-path)
                                    '(file)
                                    watch-callback
-                                   #:rate 5)]
+                                   #:rate (current-watch-rate))]
           [else (thread (thunk (sync never-evt)))]))
   (when launch-browser?
     (ensure-external-browser-preference))
