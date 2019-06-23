@@ -22,7 +22,9 @@
 
 (define/doc (syntax-highlight
              [x-expressions (listof xexpr/c)]
-             [#:python-executable python-executable path-string? "python"]
+             [#:python-executable python-executable path-string? (if (eq? (system-type) 'windows)
+                                                                     "python.exe"
+                                                                     "python")]
              [#:line-numbers? line-numbers? boolean? #t]
              [#:css-class css-class string? "source"]
              (listof xexpr/c))
