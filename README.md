@@ -32,3 +32,41 @@ automatically adapting to various screen sizes.
 [Pygments]: http://pygments.org/
 [Bootstrap]: http://getbootstrap.com/
 [responsive]: https://en.wikipedia.org/wiki/Responsive_web_design
+
+# What to expect in the future
+
+TL;DR: This project is in low-maintenance mode.
+
+I have enjoyed working on Frog for many years. In the beginning, it
+was intended to be a "just-works", "any color you want, so long as
+it's black" simple application.
+
+I envisioned it as an _application_ that happened to be written in
+Racket -- which some people might use even if they weren't Racket
+programmers. That didn't happen. At the same time, it evolved to be
+more configurable. And finally to use a `#lang` for configuration. At
+which point it felt more like what is really was: A tool for Racket
+programmers to do a static blog.
+
+Eventually I felt even that was too complicated, and [my own blog
+should simply be a Makefile driving a few pieces of code inherited
+from Frog][explode]. In other words, I no longer use Frog for my own
+blog.
+
+As a result, although you're welcome to open issues about new features
+or off-label uses, please don't expect much. I expect I will still try
+to fix bugs, at least as/when I have time and I believe a fix would
+not result in more and/or worse bugs.
+
+As I write this in July 2019, I think the situation has already been
+clear from the repo activity for a long time. Even so, I want to be
+super up-front about where the project is headed, or not. That way
+people can make an informed choice how to spend their limited time and
+energy.
+
+Finally a big thank you to people who contributed things over the
+years.
+
+
+[explode]: https://www.greghendershott.com/2019/04/exploding-frog.html
+
