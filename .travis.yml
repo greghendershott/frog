@@ -36,6 +36,8 @@ env:
     - RACKET_VERSION=7.1
     - RACKET_VERSION=7.2
     - RACKET_VERSION=7.3
+    - RACKET_VERSION=7.4
+    - RACKET_VERSION=7.5
     - RACKET_VERSION=HEAD
     - RACKET_VERSION=HEADCS
 
@@ -50,19 +52,12 @@ matrix:
   # fail have succeeded.
   fast_finish: true
 
-before_install:
-  - git clone https://github.com/greghendershott/travis-racket.git
-  - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
-  - export PATH="${RACKET_DIR}/bin:${PATH}" #install-racket.sh can't set for us
-
 install:
-
-before_script:
+  - bash <(curl https://raw.githubusercontent.com/greghendershott/travis-racket/master/install-racket.sh)
+  - export PATH="${RACKET_DIR}/bin:${PATH}" #install-racket.sh can't set for us
 
 script:
   - make install
   - make check-deps
   - make test
   - make ci-extra-checks
-
-after_script:
