@@ -1,11 +1,7 @@
 #lang racket/base
 
-(require racket/contract/base
-         racket/contract/region
-         racket/file
-         racket/format
-         racket/match
-         racket/pretty
+(require racket/require
+         (multi-in racket (contract file format match pretty))
          threading
          (only-in xml xexpr?)
          "html.rkt"

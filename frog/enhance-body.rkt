@@ -1,24 +1,19 @@
 #lang at-exp racket/base
 
-(require json
-         net/uri-codec
-         net/url
-         racket/contract/base
-         racket/format
-         racket/list
-         racket/match
-         racket/string
-         racket/port
+(require racket/require
+         json
+         (multi-in net (uri-codec url))
+         (multi-in racket (contract/base format list match string port))
          threading
          scribble/srcdoc
          (for-doc racket/base
                   scribble/manual)
          xml/xexpr
-         "private/define-doc.rkt"
-         "private/enhance-body/add-doc-links/doc-uri.rkt"
-         "private/enhance-body/syntax-highlight/pygments.rkt"
-         "private/html.rkt"
-         "private/xexpr-map.rkt")
+         (multi-in "private" ("define-doc.rkt"
+                              "html.rkt"
+                              "xexpr-map.rkt"))
+         (multi-in "private/enhance-body" ("add-doc-links/doc-uri.rkt"
+                                           "syntax-highlight/pygments.rkt")))
 
 (define/doc (syntax-highlight
              [x-expressions (listof xexpr/c)]

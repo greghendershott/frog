@@ -1,12 +1,8 @@
 #lang racket/base
 
-(require net/uri-codec
-         racket/contract/base
-         racket/contract/region
-         racket/format
-         racket/file
-         racket/match
-         racket/string
+(require racket/require
+         net/uri-codec
+         (multi-in racket (contract format file match string))
          threading
          (only-in markdown xexpr->string)
          "bodies-page.rkt"

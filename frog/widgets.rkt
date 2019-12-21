@@ -1,11 +1,9 @@
 #lang at-exp racket/base
 
-(require (for-syntax racket/base
+(require racket/require
+         (for-syntax racket/base
                      racket/syntax)
-         racket/contract/base
-         racket/format
-         racket/string
-         racket/function
+         (multi-in racket (contract/base format string function))
          scribble/srcdoc
          (for-doc racket/base
                   scribble/manual)

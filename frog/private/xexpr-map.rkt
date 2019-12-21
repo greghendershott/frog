@@ -1,8 +1,7 @@
 #lang racket/base
 
-(require racket/function
-         racket/list
-         racket/match)
+(require racket/require
+         (multi-in racket (function list match)))
 
 (provide xexpr-map)
 

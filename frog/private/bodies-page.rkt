@@ -1,14 +1,10 @@
 #lang racket/base
 
-(require markdown
+(require racket/require
+         markdown
          net/uri-codec
-         racket/dict
-         racket/date
-         racket/format
+         (multi-in racket (dict date format match port string))
          (only-in racket/list add-between)
-         racket/match
-         racket/port
-         racket/string
          threading
          "author.rkt"
          "feeds.rkt"

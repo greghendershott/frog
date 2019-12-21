@@ -1,10 +1,7 @@
 #lang racket/base
 
-(require racket/contract/base
-         racket/contract/region
-         racket/format
-         racket/match
-         racket/runtime-path
+(require racket/require
+         (multi-in racket (contract format match runtime-path))
          "../paths.rkt")
 
 (provide (all-from-out "../paths.rkt")

@@ -1,17 +1,18 @@
 #lang racket/base
 
-(require racket/cmdline
-         racket/contract/base
-         racket/contract/region
-         racket/help
-         racket/file
-         racket/function
-         racket/match
-         racket/set
-         racket/vector
+(require racket/require
+         (multi-in racket (cmdline
+                           contract/base
+                           contract/region
+                           help
+                           file
+                           function
+                           match
+                           set
+                           vector))
          threading
-         web-server/dispatchers/dispatch
-         web-server/servlet-env
+         (multi-in web-server (dispatchers/dispatch
+                               servlet-env))
          (except-in xml xexpr->string)
          (only-in find-parent-dir find-parent-containing)
          "bodies-page.rkt"

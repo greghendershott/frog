@@ -1,8 +1,7 @@
 #lang racket/base
 
-(require racket/list
-         racket/match
-         racket/string
+(require racket/require
+         (multi-in racket (list match string))
          "params.rkt"
          "post-struct.rkt")
 

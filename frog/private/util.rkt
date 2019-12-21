@@ -1,8 +1,7 @@
 #lang racket/base
 
-(require racket/contract
-         racket/file
-         racket/pretty
+(require racket/require
+         (multi-in racket (contract file pretty))
          threading
          (only-in markdown display-xexpr)
          "verbosity.rkt")

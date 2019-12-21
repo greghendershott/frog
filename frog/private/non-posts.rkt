@@ -1,10 +1,8 @@
 #lang racket/base
 
-(require markdown
-         racket/file
-         racket/match
-         racket/path
-         racket/string
+(require racket/require
+         markdown
+         (multi-in racket (file match path string))
          threading
          "../config/private/load.rkt"
          "bodies-page.rkt"

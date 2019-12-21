@@ -1,11 +1,7 @@
 #lang racket/base
 
-(require racket/contract/base
-         racket/contract/region
-         racket/format
-         racket/function
-         racket/match
-         racket/string
+(require racket/require
+         (multi-in racket (contract format function match string))
          threading
          xml)
 

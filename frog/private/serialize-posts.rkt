@@ -1,9 +1,7 @@
 #lang racket/base
 
-(require racket/contract/base
-         racket/contract/region
-         racket/file
-         racket/serialize
+(require racket/require
+         (multi-in racket (contract file serialize))
          "paths.rkt"
          "post-struct.rkt"
          "util.rkt")

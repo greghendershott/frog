@@ -1,9 +1,7 @@
 #lang racket/base
 
-(require racket/file
-         racket/match
-         racket/path
-         racket/runtime-path
+(require racket/require
+         (multi-in racket (file match path runtime-path))
          setup/getinfo
          syntax/parse/define)
 

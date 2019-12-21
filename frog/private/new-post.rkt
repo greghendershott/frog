@@ -1,10 +1,7 @@
 #lang at-exp racket/base
 
-(require racket/contract/base
-         racket/contract/region
-         racket/date
-         racket/format
-         racket/system
+(require racket/require
+         (multi-in racket (contract date format system))
          threading
          "params.rkt"
          "paths.rkt"

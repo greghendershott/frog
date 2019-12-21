@@ -16,12 +16,10 @@
 ;; works, but it does, following this Racket mailing list thread:
 ;; http://www.mail-archive.com/users@racket-lang.org/msg18108.html
 
-(require (for-syntax racket/base)
+(require racket/require
+         (for-syntax racket/base)
          frog/widgets
-         racket/contract/base
-         racket/contract/region
-         racket/dict
-         racket/function
+         (multi-in racket (contract dict function))
          web-server/templates)
 
 (provide render-template)

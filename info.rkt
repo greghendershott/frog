@@ -10,7 +10,7 @@
                "scribble-lib"
                "scribble-text-lib"
                "srfi-lite-lib"
-               "threading"
+               "threading-lib"
                "web-server-lib"))
 (define build-deps '("at-exp-lib"
                      "net-doc"
@@ -18,5 +18,6 @@
                      "rackunit-lib"
                      "scribble-doc"
                      "scribble-text-lib"
+                     "threading-doc"
                      "web-server-doc"))
 (define test-omit-paths '("example/"))

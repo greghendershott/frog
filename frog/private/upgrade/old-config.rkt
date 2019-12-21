@@ -3,11 +3,8 @@
 ;; This is only used to read the deprecated .frogrc -- from which we attempt
 ;; to create an equivalent frog.rkt for users.
 
-(require racket/dict
-         racket/file
-         racket/match
-         racket/runtime-path
-         racket/string
+(require racket/require
+         (multi-in racket (dict file match runtime-path string))
          "../verbosity.rkt")
 
 (provide maybe-frogrc->frog.rkt

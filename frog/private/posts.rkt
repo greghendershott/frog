@@ -1,14 +1,9 @@
 #lang racket/base
 
-(require markdown
-         racket/contract/base
-         racket/contract/region
-         racket/file
-         racket/format
+(require racket/require
+         markdown
+         (multi-in racket (contract file format match port string))
          (only-in racket/list empty?)
-         racket/match
-         racket/port
-         racket/string
          threading
          (only-in srfi/1 break)
          "../config/private/load.rkt"

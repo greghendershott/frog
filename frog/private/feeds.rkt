@@ -1,10 +1,8 @@
 #lang racket/base
 
-(require net/uri-codec
-         racket/date
-         racket/format
-         racket/match
-         racket/string
+(require racket/require
+         net/uri-codec
+         (multi-in racket (date format match string))
          threading
          (only-in markdown xexpr->string)
          "author.rkt"
