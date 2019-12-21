@@ -5,20 +5,17 @@
          racket/path
          racket/runtime-path
          setup/getinfo
-         (for-syntax racket/base syntax/parse))
+         syntax/parse/define)
 
 (provide frog-version)
 
 (define (frog-version)
-  (trying (version-from-get-info)
-          (version-from-info.txt-file)
-          "version can't be found from package info.rkt"))
+  (or/fail ((get-info/full "frog") 'version)
+           ((get-info/full "../..") 'version)
+           (version-from-info.txt-file)
+           "-- version cannot be found from the Frog package's info.rkt"))
 
-(define (version-from-get-info)
-  ((get-info/full "frog") 'version))
-
-;; As fallback for some older versions of Racket, try the ugly hack of
-;; regexp-ing info.rkt as text.
+;; As a fallback try the ugly hack of regexp-ing info.rkt as text.
 (define-runtime-path info.rkt "../../info.rkt")
 (define (version-from-info.txt-file . _)
   (match (file->string info.rkt #:mode 'text)
@@ -26,19 +23,17 @@
               (list _ v))
      v]))
 
-;;; trying
+;;; or/fail
 
-(define-syntax (trying stx)
-  (syntax-parse stx
-    [(_ e:expr)
-     #'e]
-    [(_ e:expr more:expr ...)
-     #'(with-handlers ([exn:fail? (λ _ (trying more ...))])
-         e)]))
+(define-simple-macro (fail->false e:expr)
+  (with-handlers ([exn:fail? (λ _ #f)]) e))
+
+(define-simple-macro (or/fail e:expr ...)
+  (or (fail->false e) ...))
 
 (module+ test
   (require rackunit)
-  (check-equal? (trying 42) 42)
-  (check-equal? (trying (error '0) 42) 42)
-  (check-equal? (trying (error '0) (error '1) 42) 42)
-  (check-equal? (trying 42 (error '0)) 42))
+  (check-equal? (or/fail 42) 42)
+  (check-equal? (or/fail (error '0) 42) 42)
+  (check-equal? (or/fail (error '0) (error '1) 42) 42)
+  (check-equal? (or/fail 42 (error '0)) 42))
