@@ -72,7 +72,7 @@
 
 (module+ test
   (unless (string<? (version) "6")
-    (check-equal? (main-distribution? 'rackjure/threading) #f)
+    (check-equal? (main-distribution? 'threading) #f)
     (check-equal? (main-distribution? "/x/y") #f))
   (check-equal? (main-distribution? 'racket) 'racket)
   (check-equal? (main-distribution? 'racket/contract) 'racket/contract)

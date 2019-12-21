@@ -9,7 +9,7 @@
          racket/match
          racket/set
          racket/vector
-         rackjure/threading
+         threading
          web-server/dispatchers/dispatch
          web-server/servlet-env
          (except-in xml xexpr->string)

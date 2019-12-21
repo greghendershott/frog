@@ -5,7 +5,7 @@
          racket/contract/region
          racket/file
          racket/function
-         rackjure/threading)
+         threading)
 
 (provide watch-directory
          checksum-path

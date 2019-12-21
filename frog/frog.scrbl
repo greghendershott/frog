@@ -234,7 +234,7 @@ The @racketmodname[frog/config] language provides bindings from:
 @item{@racketmodname[racket/contract/base]}
 @item{@racketmodname[racket/contract/region]}
 @item{@racketmodname[xml/xexpr]}
-@item{@racketmodname[rackjure/threading]}
+@item{@racketmodname[threading]}
 @item{@racketmodname[frog/params]}
 @item{@racketmodname[frog/paths]}
 @item{@racketmodname[frog/enhance-body]}

@@ -5,7 +5,7 @@
          racket/match
          racket/path
          racket/string
-         rackjure/threading
+         threading
          "../config/private/load.rkt"
          "bodies-page.rkt"
          "paths.rkt"

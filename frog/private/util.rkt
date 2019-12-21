@@ -3,7 +3,7 @@
 (require racket/contract
          racket/file
          racket/pretty
-         rackjure/threading
+         threading
          (only-in markdown display-xexpr)
          "verbosity.rkt")
 

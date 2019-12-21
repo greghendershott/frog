@@ -4,12 +4,12 @@
          net/uri-codec
          net/url
          racket/contract/base
+         racket/format
          racket/list
          racket/match
          racket/string
          racket/port
-         rackjure/str
-         rackjure/threading
+         threading
          scribble/srcdoc
          (for-doc racket/base
                   scribble/manual)
@@ -43,7 +43,7 @@
              `(pre ([class ,brush]) ,(? string? texts) ...))
          (match brush
            [(pregexp "\\s*brush:\\s*(.+?)\\s*$" (list _ lang))
-            `(div ([class ,(str "brush: " lang)])
+            `(div ([class ,(~a "brush: " lang)])
               ,@(pygmentize (apply string-append texts) lang
                             #:python-executable python-executable
                             #:line-numbers? line-numbers?
@@ -84,12 +84,12 @@
        ;; browser to do an OAuth flow, yada yada yada).
        (define oembed-url
          (string->url
-          (str "https://api.twitter.com/1/statuses/oembed.json?"
-               "url=" (uri-encode uri)
-               "&align=center"
-               (if parents?
-                   ""
-                   "&hide_thread=true"))))
+          (~a "https://api.twitter.com/1/statuses/oembed.json?"
+              "url=" (uri-encode uri)
+              "&align=center"
+              (if parents?
+                  ""
+                  "&hide_thread=true"))))
        (define js (call/input-url oembed-url get-pure-port read-json))
        (match (hash-ref js 'html)
          [html (~>> (with-input-from-string html read-html-as-xexprs)

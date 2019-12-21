@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require racket/match
-         rackjure/threading
+         threading
          xml
          (only-in html read-html-as-xml))
 

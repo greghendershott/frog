@@ -2,11 +2,11 @@
 
 (require racket/contract/base
          racket/contract/region
+         racket/format
          racket/function
          racket/match
          racket/string
-         rackjure/str
-         rackjure/threading
+         threading
          xml)
 
 (provide xexprs->description
@@ -23,7 +23,7 @@
   (define sub (substring s 0 (min max-len len)))
   (define esc (escape-double-quotes sub))
   (cond [(< len (string-length sub)) esc]
-        [else (str esc "...")]))
+        [else (~a esc "...")]))
 
 (define (substring* s from upto)
   (substring s from (min upto (string-length s))))
@@ -50,19 +50,19 @@
   (define (block? s)
     (memq s '(p div li)))
   (define (->s es) ;convert entities to string
-    (apply str (map (curryr xexpr->markdown block-suffix) es)))
+    (apply ~a (map (curryr xexpr->markdown block-suffix) es)))
   (define (normalize x) ;; ensure xexpr has explicit attributes
     (match x
       [`(,(? symbol? tag) ([,(? symbol? ks) ,(? string? vs)] ...) . ,es) x]
       [`(,(? symbol? tag)                                         . ,es) `(,tag () ,@es)]
       [_                                                                 x]))
   (match (normalize x)
-    [`(em            ,_ . ,es) (str "_" (->s es) "_")]
-    [`(strong        ,_ . ,es) (str "**" (->s es) "**")]
-    [`(code          ,_ . ,es) (str "`" (->s es) "`")]
-    [`(,(? heading?) ,_ . ,es) (str (->s es) ": ")]
-    [`(,(? block?)   ,_ . ,es) (str (->s es) block-suffix)]
-    [`(,(? symbol?)  ,_ . ,es) (str (->s es))]
+    [`(em            ,_ . ,es) (~a "_" (->s es) "_")]
+    [`(strong        ,_ . ,es) (~a "**" (->s es) "**")]
+    [`(code          ,_ . ,es) (~a "`" (->s es) "`")]
+    [`(,(? heading?) ,_ . ,es) (~a (->s es) ": ")]
+    [`(,(? block?)   ,_ . ,es) (~a (->s es) block-suffix)]
+    [`(,(? symbol?)  ,_ . ,es) (~a (->s es))]
     [(? string? s)             s]
     ['ndash                    "-"]
     ['mdash                    "--"]

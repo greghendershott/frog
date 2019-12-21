@@ -16,7 +16,7 @@
 
 (reprovide racket/contract/base
            racket/contract/region
-           rackjure/threading
+           threading
            xml/xexpr
            "../params.rkt"
            "../paths.rkt"

@@ -1,17 +1,15 @@
 #lang at-exp racket/base
 
-(require net/uri-codec
-         racket/contract/base
-         racket/contract/region
-         racket/match
-         racket/string
-         rackjure/threading
+(require racket/require
+         net/uri-codec
+         (multi-in racket/contract (base region))
+         (multi-in racket (match string))
+         threading
          scribble/srcdoc
          (for-doc racket/base
                   scribble/manual)
          "params.rkt"
-         "private/define-doc.rkt"
-         "private/util.rkt")
+         (multi-in "private" ("define-doc.rkt" "util.rkt")))
 
 (module+ test
   (require rackunit

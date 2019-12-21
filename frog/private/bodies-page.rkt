@@ -4,12 +4,12 @@
          net/uri-codec
          racket/dict
          racket/date
+         racket/format
          (only-in racket/list add-between)
          racket/match
          racket/port
          racket/string
-         rackjure/str
-         rackjure/threading
+         threading
          "author.rkt"
          "feeds.rkt"
          "html.rkt"
@@ -146,10 +146,10 @@
                       ,(current-author))))))
 
 (define (tag->pair s [display values])
-  `(,(display s) . ,(canonical-uri (str "/tags/" (slug s) ".html"))))
+  `(,(display s) . ,(canonical-uri (~a "/tags/" (slug s) ".html"))))
 
 (define (tag->xexpr s [display values])
-  `(a ([href ,(canonical-uri (str "/tags/" (slug s) ".html"))])
+  `(a ([href ,(canonical-uri (~a "/tags/" (slug s) ".html"))])
       ,(display s)))
 
 (define (blurb->description s)

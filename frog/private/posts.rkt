@@ -9,7 +9,7 @@
          racket/match
          racket/port
          racket/string
-         rackjure/threading
+         threading
          (only-in srfi/1 break)
          "../config/private/load.rkt"
          "author.rkt"
