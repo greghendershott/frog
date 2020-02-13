@@ -15,7 +15,7 @@ remove:
 # Primarily for day-to-day dev.
 # Note: Also builds docs (if any) and checks deps.
 setup:
-	raco setup --tidy $(DEPS-FLAGS) --pkgs $(PACKAGE-NAME)
+	raco setup --tidy --avoid-main $(DEPS-FLAGS) --pkgs $(PACKAGE-NAME)
 
 # Note: Each collection's info.rkt can say what to clean, for example
 # (define clean '("compiled" "doc" "doc/<collect>")) to clean
