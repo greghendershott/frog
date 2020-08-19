@@ -16,7 +16,7 @@
           scribble/extract)
 
 @(define (grey . contents)
-   (elem #:style (style #f (list (color-property "grey")))
+   (elem #:style (style #f (list (color-property (list 127 127 127))))
          contents))
 
 @(define (comment . contents)
