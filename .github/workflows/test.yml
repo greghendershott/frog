@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        racket_version:
+          - '6.9'
+          - '7.9'
+          - 'current'
+        include:
+          - racket_version: 'current'
+            allow_failure: true
+    name: Test Racket ${{ matrix.racket_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v0.8
+        with:
+          architecture: 'x64'
+          distribution: 'full'
+          version: ${{ matrix.racket_version }}
+      - name: Install Package
+        run: make install
+      - name: Check Deps
+        run: make check-deps
+      - name: Run Tests
+        run: make test
+      - name: CI Extra Checks
+        run: make ci-extra-checks
