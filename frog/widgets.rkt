@@ -326,7 +326,8 @@
 
 (define/doc (math-jax [#:src src string?
                        "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js"]
-                      [#:config config string? "TeX-AMS-MML_HTMLorMML"]
+                      [#:config config (or/c #f string?)
+                       "TeX-AMS-MML_HTMLorMML"]
                       list?)
   @{@itemlist[#:style 'ordered
               @item{Use this in the @tt{<head>} of your @secref["page-template"].}
@@ -336,12 +337,20 @@
                     markdown @litchar{\} already has a meaning.}
               @item{You can specify the source URL and configuration options
                     with the @tt{src} & @tt{config} arguments: they default to
-                    something reasonable.}]}
-  @list{
-        <script type="text/javascript" async
-                src="@|src|?config=@|config|">
-        </script>
-       })
+                    something reasonable.  If the @tt{config} argument is
+                    given as @tt{#f} then the configuration is omitted, which
+                    which is right for MathJax 3.  In this case you either
+                    will need to use one of the default setups or hand-craft
+                    your own configuration.}]}
+  @(if (not config)
+       @list{
+             <script type="text/javascript" async
+                     src="@|src|">
+             </script>}
+       @list{
+             <script type="text/javascript" async
+                     src="@|src|?config=@|config|">
+             </script>}))
 
  (define/doc (piwik [site string?]
                     [domain string?]
