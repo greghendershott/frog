@@ -110,15 +110,56 @@ Below the fold.
 EOF
 ])
     (with-output-to-file path #:exists 'replace (λ () (display s)))
-    (check-equal?
-     (read-scribble-file path
-                         #:img-local-path (find-system-path 'temp-dir)
-                         #:img-uri-prefix "/")
-     '((h1 () (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title")
-      (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
-      (p () "Here is some text.")
-      (!HTML-COMMENT () "more")
-      (p () "Below the fold.")))
+    (define xe (read-scribble-file path
+                                   #:img-local-path (find-system-path 'temp-dir)
+                                   #:img-uri-prefix "/"))
+    (check-true
+     (or
+      ;; Before 8.10.0.3
+      (equal?
+       xe
+       '((h1 () (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title")
+         (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
+         (p () "Here is some text.")
+         (!HTML-COMMENT () "more")
+         (p () "Below the fold.")))
+      ;; 8.10.0.3 +
+      (equal?
+       xe
+       '((h1
+          ()
+          "The Post"
+          rsquo
+          "s Title "
+          (span
+           ((class "button-group"))
+           (a
+            ((href "#(part._.The_.Post_s_.Title)")
+             (name "(part._.The_.Post_s_.Title)"))
+            (span ((class "heading-anchor") (title "Link here")) "🔗"))
+           " "
+           (a
+            ((class "heading-source")
+             (title "Internal Scribble link and Scribble source"))
+            "ℹ")))
+         (h1
+          ()
+          "1"
+          (tt () nbsp)
+          "Section 1 "
+          (span
+           ((class "button-group"))
+           (a
+            ((href "#(part._.Section_1)") (name "(part._.Section_1)"))
+            (span ((class "heading-anchor") (title "Link here")) "🔗"))
+           " "
+           (a
+            ((class "heading-source")
+             (title "Internal Scribble link and Scribble source"))
+            "ℹ")))
+         (p () "Here is some text.")
+         (!HTML-COMMENT () "more")
+         (p () "Below the fold.")))))
     (delete-file path))
   ;; regression test for https://github.com/greghendershott/frog/issues/75
   (let ([path (make-temporary-file)]
