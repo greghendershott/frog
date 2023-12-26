@@ -126,37 +126,8 @@ EOF
       ;; 8.10.0.3 +
       (equal?
        xe
-       '((h1
-          ()
-          "The Post"
-          rsquo
-          "s Title "
-          (span
-           ((class "button-group"))
-           (a
-            ((href "#(part._.The_.Post_s_.Title)")
-             (name "(part._.The_.Post_s_.Title)"))
-            (span ((class "heading-anchor") (title "Link here")) "🔗"))
-           " "
-           (a
-            ((class "heading-source")
-             (title "Internal Scribble link and Scribble source"))
-            "ℹ")))
-         (h1
-          ()
-          "1"
-          (tt () nbsp)
-          "Section 1 "
-          (span
-           ((class "button-group"))
-           (a
-            ((href "#(part._.Section_1)") (name "(part._.Section_1)"))
-            (span ((class "heading-anchor") (title "Link here")) "🔗"))
-           " "
-           (a
-            ((class "heading-source")
-             (title "Internal Scribble link and Scribble source"))
-            "ℹ")))
+       '((h1 ((class "heading")) (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.The_.Post_s_.Title)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
+         (h1 ((class "heading")) "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
          (p () "Here is some text.")
          (!HTML-COMMENT () "more")
          (p () "Below the fold.")))))
