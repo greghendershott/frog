@@ -120,7 +120,8 @@
     [`(,(or `(pre () (code () . ,metas)) ;Markdown
             `(pre () . ,metas)           ;Markdown
             `(pre . ,metas)              ;Markdown
-            `(p () . ,metas))            ;Scribble
+            `(p () . ,metas)             ;Scribble
+            `(section ,_ (p () . ,metas) . ,_)) ;Scribble
        . ,more)
      ;; We don't want HTML entities like &ndash;
      (define plain-text (string-join (map xexpr->markdown metas) ""))
