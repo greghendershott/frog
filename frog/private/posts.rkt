@@ -117,10 +117,15 @@
   (define (warn x)
     (prn0 (format "~a: Ignoring unknown metadata: ~v" path x)))
   (match xs
-    [`(,(or `(pre () (code () . ,metas)) ;Markdown
-            `(pre () . ,metas)           ;Markdown
-            `(pre . ,metas)              ;Markdown
-            `(p () . ,metas))            ;Scribble
+    [`(,(or
+         ;; Markdown
+         `(pre () (code () . ,metas))
+         `(pre () . ,metas)
+         `(pre . ,metas)
+         ;; Scribble: older
+         `(p () . ,metas)
+         ;; Scribble: 8.18+
+         `(section ,_ (p () . ,metas) . ,_))
        . ,more)
      ;; We don't want HTML entities like &ndash;
      (define plain-text (string-join (map xexpr->markdown metas) ""))

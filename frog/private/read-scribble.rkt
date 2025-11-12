@@ -108,29 +108,35 @@ Here is some text.
 
 Below the fold.
 EOF
-])
+           ]
+        [title-h1 '(h1 ((class "heading")) (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.The_.Post_s_.Title)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))])
     (with-output-to-file path #:exists 'replace (λ () (display s)))
-    (define xe (read-scribble-file path
-                                   #:img-local-path (find-system-path 'temp-dir)
-                                   #:img-uri-prefix "/"))
-    (check-true
+    (check-match
+     (read-scribble-file path
+                         #:img-local-path (find-system-path 'temp-dir)
+                         #:img-uri-prefix "/")
      (or
       ;; Before 8.10.0.3
-      (equal?
-       xe
-       '((h1 () (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title")
-         (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
-         (p () "Here is some text.")
-         (!HTML-COMMENT () "more")
-         (p () "Below the fold.")))
+      '((h1 () (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title")
+        (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
+        (p () "Here is some text.")
+        (!HTML-COMMENT () "more")
+        (p () "Below the fold."))
       ;; 8.10.0.3 +
-      (equal?
-       xe
-       '((h1 ((class "heading")) (a ((name "(part._.The_.Post_s_.Title)"))) "The Post" rsquo "s Title" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.The_.Post_s_.Title)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
-         (h1 ((class "heading")) "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
-         (p () "Here is some text.")
-         (!HTML-COMMENT () "more")
-         (p () "Below the fold.")))))
+      `(,(== title-h1)
+        (h1 ((class "heading")) "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
+        (p () "Here is some text.")
+        (!HTML-COMMENT () "more")
+        (p () "Below the fold."))
+      ;; 8.18+
+      `((section ((class "SsectionLevel1") (id "section 0")) ,(== title-h1)
+         (section
+          ((class "SsectionLevel2") (id "section 1"))
+          (h1
+           ((class "heading")) "1" (span ((class "stt")) nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
+          (p () "Here is some text.")
+          (!HTML-COMMENT () "more")
+          (p () "Below the fold."))))))
     (delete-file path))
   ;; regression test for https://github.com/greghendershott/frog/issues/75
   (let ([path (make-temporary-file)]
@@ -138,12 +144,15 @@ EOF
 #lang scribble/manual
 @hyperlink["https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47" "Aur"]
 EOF
-])
+           ]
+        [para '(p () (a ((href "https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47")) "Aur"))])
     (with-output-to-file path #:exists 'replace (λ () (display s)))
-    (check-equal?
+    (check-match
      (read-scribble-file path
                          #:img-local-path (find-system-path 'temp-dir)
                          #:img-uri-prefix "/")
-     '((p ()
-          (a ((href "https://aur.archlinux.org/packages/?SeB=m&K=bluephoenix47")) "Aur"))))
+     (or
+      `(,(== para))
+      ;; 8.18+
+      `((section ((class "SsectionLevel1") (id "section 0")) ,(== para)))))
     (delete-file path)))
