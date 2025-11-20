@@ -54,14 +54,15 @@ retain comments:
   #t)
 ]
 
-Here is a @racket[interaction]:
+Here is an @racket[interaction]:
 
 @(require racket/sandbox
           scribble/eval)
 @(define my-tr-evaluator
    (parameterize ([sandbox-output 'string]
                   [sandbox-error-output 'string]
-                  [sandbox-memory-limit 500])
+                  [sandbox-memory-limit #f]
+                  [sandbox-eval-limits #f])
      (make-evaluator 'typed/racket/base)))
 @interaction[#:eval my-tr-evaluator
 (: my-sqr (Real -> Real))

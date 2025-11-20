@@ -65,7 +65,7 @@ retain comments:
   #t)
 ]
 
-Here is a @racket[interaction]:
+Here is an @racket[interaction]:
 
 @(require racket/sandbox
           scribble/eval)
