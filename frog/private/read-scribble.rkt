@@ -74,7 +74,11 @@
      '()]))
 
 (define (adjust-scribble-html xs img-uri)
-  (for/list ([x (in-list xs)])
+  (define xs-sans-section
+    (match xs
+      [`((section ,_ . ,xs)) xs]
+      [_                     xs]))
+  (for/list ([x (in-list xs-sans-section)])
     (xexpr-map
      (lambda (x _)
        (list
@@ -129,14 +133,14 @@ EOF
         (!HTML-COMMENT () "more")
         (p () "Below the fold."))
       ;; 8.18+
-      `((section ((class "SsectionLevel1") (id "section 0")) ,(== title-h1)
-         (section
-          ((class "SsectionLevel2") (id "section 1"))
-          (h1
-           ((class "heading")) "1" (span ((class "stt")) nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
-          (p () "Here is some text.")
-          (!HTML-COMMENT () "more")
-          (p () "Below the fold."))))))
+      `(,(== title-h1)
+        (section
+         ((class "SsectionLevel2") (id "section 1"))
+         (h1
+          ((class "heading")) "1" (span ((class "stt")) nbsp) (a ((name "(part._.Section_1)"))) "Section 1" (span ((class "button-group")) (a ((class "heading-anchor") (href "#(part._.Section_1)") (title "Link to here")) "🔗") (span ((style "visibility: hidden")) " ")))
+         (p () "Here is some text.")
+         (!HTML-COMMENT () "more")
+         (p () "Below the fold.")))))
     (delete-file path))
   ;; regression test for https://github.com/greghendershott/frog/issues/75
   (let ([path (make-temporary-file)]
