@@ -116,45 +116,48 @@
     (raise-user-error 'error "~a: Must start with metadata but ~a" path x))
   (define (warn x)
     (prn0 (format "~a: Ignoring unknown metadata: ~v" path x)))
-  (match xs
-    [`(,(or
+  (define-values (metas body)
+    (match xs
+      [`(,(or
          ;; Markdown
          `(pre () (code () . ,metas))
          `(pre () . ,metas)
          `(pre . ,metas)
          ;; Scribble: older
-         `(p () . ,metas)
-         ;; Scribble: 8.18+
-         `(section ,_ (p () . ,metas) . ,_))
-       . ,more)
-     ;; We don't want HTML entities like &ndash;
-     (define plain-text (string-join (map xexpr->markdown metas) ""))
-     (define h
-       (for/fold ([h (hash)])
-                 ([s (string-split plain-text "\n")])
-         (match s
-           [(pregexp "^ *(.+?): *(.*?) *$" (list _ k v))
-            #:when (member k '("Title" "Date" "Tags" "Authors"))
-            (hash-set h k v)]
-           [s (warn s) h])))
-     (define (required k)
-       (define (fail [pre ""])
-         (err (format "missing ~a~v" pre k)))
-       (match (string-trim (hash-ref h k fail))
-         ["" (fail "non-blank ")]
-         [v  v]))
-     (define (optional k)
-       (hash-ref h k ""))
-     (list (required "Title")
-           (required "Date" )
-           (append (~>> (optional "Tags")
-                        tag-string->tags)
-                   (~>> (optional "Authors")
-                        tag-string->tags
-                        (map make-author-tag)))
-           more)]
-    [(cons x _) (err (~a "found:\n" (format "~v" x)))]
-    [_ (err "none found")]))
+         `(p () . ,metas))
+         . ,more)
+       (values metas more)]
+      ;; Scribble: 8.18+
+      [`((section ,as (p () . ,metas) . ,more))
+       (values metas `((section ,as . ,more)))]
+      [(cons x _) (err (~a "found:\n" (format "~v" x)))]
+      [_ (err "none found")]))
+  ;; We don't want HTML entities like &ndash;
+  (define plain-text (string-join (map xexpr->markdown metas) ""))
+  (define h
+    (for/fold ([h (hash)])
+              ([s (string-split plain-text "\n")])
+      (match s
+        [(pregexp "^ *(.+?): *(.*?) *$" (list _ k v))
+         #:when (member k '("Title" "Date" "Tags" "Authors"))
+         (hash-set h k v)]
+        [s (warn s) h])))
+  (define (required k)
+    (define (fail [pre ""])
+      (err (format "missing ~a~v" pre k)))
+    (match (string-trim (hash-ref h k fail))
+      ["" (fail "non-blank ")]
+      [v  v]))
+  (define (optional k)
+    (hash-ref h k ""))
+  (list (required "Title")
+        (required "Date" )
+        (append (~>> (optional "Tags")
+                     tag-string->tags)
+                (~>> (optional "Authors")
+                     tag-string->tags
+                     (map make-author-tag)))
+        body))
 
 (module+ test
   (define p (string->path "/path/to/file"))
@@ -224,8 +227,11 @@
                 '("some" "post" "tags")))
 
 (define (above-the-fold xs)
-  (define-values (above below) (break more-xexpr? xs))
-  (values above (not (empty? below))))
+  (let ([xs (match xs
+              [`((section ,_ . ,xs)) xs] ;Scribble 8.18+
+              [xs xs])])
+    (define-values (above below) (break more-xexpr? xs))
+    (values above (not (empty? below)))))
 
 (define (more-xexpr? x)
   (match x
