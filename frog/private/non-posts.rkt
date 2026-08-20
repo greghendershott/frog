@@ -82,16 +82,17 @@
     (cons uri-path v)))
 
 (define (make-title xs path)
+  ;; Recursively search for the first h1, including inside sections (Racket 8.18+)
+  (define (find-first-h1 x)
+    (match x
+      [`(h1 ,_ . ,els)
+       (apply string-append (map xexpr->markdown els))]
+      [`(section ,_ . ,children)
+       (for/or ([child (in-list children)])
+         (find-first-h1 child))]
+      [_ #f]))
   (or (for/or ([x (in-list xs)])
-        (match x
-          ;; First h1 header, if any -- Scribble style with <a> anchor
-          [`(h1 (,_ ...) (a . ,_) . ,els)
-           (string-join (map xexpr->markdown els) "")]
-          ;; First h1 header, if any -- otherwise
-          [`(h1 (,_ ...) . ,els)
-           (string-join (map xexpr->markdown els) "")]
-          [_ #f]))
-      ;; Else name of the source file
+        (find-first-h1 x))
       (~> path
           (path-replace-suffix "")
           file-name-from-path
@@ -110,4 +111,20 @@
       (h1 () "1" (tt () nbsp) (a ((name "(part._.Section_1)"))) "Section 1")
       (p () "Here is some text."))
     #f)
-   "The Title"))
+   "The Title")
+  ;; Racket 8.18+ wraps content in sections
+  (check-equal?
+   (make-title
+    '((section ((class "SsectionLevel1") (id "section 0"))
+        (h1 ((class "heading"))
+            (a ((name "(part._.The_.Title)")))
+            "The Title"
+            (span ((class "button-group"))
+                  (a ((class "heading-anchor")
+                      (href "#(part._.The_.Title)")
+                      (title "Link to here"))
+                     "🔗")
+                  (span ((style "visibility: hidden")) " ")))
+        (p () "Some content")))
+    #f)
+   "The Title🔗 "))
