@@ -86,7 +86,7 @@
   (define (find-first-h1 x)
     (match x
       [`(h1 ,_ . ,els)
-       (string-join (map xexpr->markdown els) "")]
+       (apply string-append (map xexpr->markdown els))]
       [`(section ,_ . ,children)
        (for/or ([child (in-list children)])
          (find-first-h1 child))]
