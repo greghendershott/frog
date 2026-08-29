@@ -15,8 +15,8 @@
   ;; Here we pass the xexprs through a series of functions.
   (~> xs
       (syntax-highlight #:python-executable (if (eq? (system-type) 'windows)
-                                                "python.exe"
-                                                "python")
+                                                "python3.exe"
+                                                "python3")
                         #:line-numbers? #t
                         #:css-class "source")
       (auto-embed-tweets #:parents? #t)
